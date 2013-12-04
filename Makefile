@@ -8,7 +8,7 @@ nihilum.bin: nihilum.asm
 	nasm -f bin -o nihilum.bin nihilum.asm
 	dd conv=notrunc if=nihilum.bin of=cdiso/nihilum.flp
 
-run:
+run: nihilum
 	qemu -fda cdiso/nihilum.flp
 
 iso: nihilum.bin
