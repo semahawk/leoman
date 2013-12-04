@@ -17,7 +17,7 @@ loop_string:
 
   jmp $                      ; infinity!
 
-  text_string db 'Nihilum says Salve ;)', 0ah, 0
+  text_string db 'Nihilum says Salve ;)', 0dh, 0ah, 0
 
 print_string:
   mov ah, 0Eh                ; routine: output string in SI to screen
