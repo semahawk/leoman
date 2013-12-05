@@ -1,36 +1,58 @@
 BITS 16
+[ORG 0]
+
+jmp 07C0h:start
+
+welcome_msg db 'Nihilum says Salve ;)', 0
+pressany_msg db 'Press any key to reboot..', 0
+
+; {{{ print a newline
+printnl:
+  mov ah, 0Eh
+  mov al, 0Dh
+  int 10h       ; print carriage return
+  mov al, 0Ah
+  int 10h       ; print new line feed
+  ret
+; }}}
+
+; {{{ print a string from SI with a newline appended
+puts:
+  mov ah, 0Eh
+
+  .repeat:
+    lodsb                      ; get character from string
+    cmp al, 0
+    je .done                   ; if char is zero, end of string
+    int 10h                    ; otherwise print it
+    jmp .repeat
+
+  .done:
+    call printnl
+    ret
+; }}}
 
 start:
-  mov ax, 07C0h              ; set up 4k stack space after this bootloader
-  add ax, 288                ; (4096 + 512) / 16 bytes per paragraph
-  mov ss, ax
-  mov sp, 4096
-
-  mov ax, 07C0h              ; set data segment to where we're loaded
+  ; update the segment registers
+  mov ax, cs
   mov ds, ax
+  mov es, ax
 
-  mov cx, 10                 ; set the loop's counter to 10
-loop_string:
-  mov si, text_string        ; put string position into SI
-  call print_string          ; call our string-printing routine
-  loop loop_string           ; jump to loop_string if cx != 0
+  mov si, welcome_msg        ;
+  call puts                  ; print the welcoming message
+  call printnl               ; print a new line
+
+  mov si, pressany_msg       ;
+  call puts                  ; print the second message
+
+  ; wait for any key to be pressed
+  mov ah, 0
+  int 16h
+
+  ; reboot
+  jmp 0xFFFF:0x0000
 
   jmp $                      ; infinity!
-
-  text_string db 'Nihilum says Salve ;)', 0dh, 0ah, 0
-
-print_string:
-  mov ah, 0Eh                ; routine: output string in SI to screen
-
-.repeat:
-  lodsb                      ; get character from string
-  cmp al, 0
-  je .done                   ; if char is zero, end of string
-  int 10h                    ; otherwise print it
-  jmp .repeat
-
-.done:
-  ret
 
   times 510-($-$$) db 0      ; pad remainder of boot sector with 0s
   dw 0xAA55                  ; the standard PC boot signature
