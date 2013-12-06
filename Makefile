@@ -1,4 +1,4 @@
-.PHONY: all run iso clean
+.PHONY: all nihilum run iso clean
 
 all: nihilum
 
@@ -6,15 +6,18 @@ nihilum: nihilum.bin
 
 nihilum.bin: nihilum.asm
 	nasm -f bin -o nihilum.bin nihilum.asm
-	dd conv=notrunc if=nihilum.bin of=cdiso/nihilum.flp
 
-run: nihilum
-	qemu -fda cdiso/nihilum.flp
+nihilum.flp: nihilum.bin
+	dd conv=notrunc if=nihilum.bin of=nihilum.flp
 
-iso: nihilum.bin
-	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o cdiso/nihilum.iso -b nihilum.flp cdiso/
+run: nihilum.flp
+	qemu -fda nihilum.flp
+
+iso: nihilum.flp
+	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o nihilum.iso -b nihilum.flp .
 
 clean:
-	rm -f cdiso/*.iso
+	rm -f *.flp
+	rm -f *.iso
 	rm -f *.bin
 
