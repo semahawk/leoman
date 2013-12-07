@@ -51,7 +51,7 @@ bootloader:
 reset:
   ; reset the floppy drive
   mov ax, 0
-  mov dl, 0         ; drive = 0
+  mov dl, [bootdrv]
   int 13h
 
   jc reset          ; error -> try again
