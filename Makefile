@@ -1,25 +1,33 @@
-.PHONY: all nihilum img run iso clean
+.PHONY: all img run iso clean
+.SUFFIXES: .asm .bin
+
+OBJS = bootsector.bin \
+			 loadsector.bin
 
 all: nihilum
 
-nihilum: nihilum.bin
+nihilum: $(OBJS)
+	cat $(OBJS) > $@
 
-nihilum.bin: nihilum.asm bootsector.asm loadsector.asm
-	nasm -f bin -o nihilum.bin nihilum.asm
+.asm.bin:
+	nasm -f bin $< -o $@
 
-nihilum.img: nihilum.bin
-	dd conv=notrunc if=nihilum.bin of=nihilum.img
+nihilum.img: nihilum
+	dd conv=notrunc if=nihilum of=nihilum.img
 
 img: nihilum.img
 
-run: nihilum.bin
-	qemu -fda nihilum.bin
+run: nihilum
+	qemu -fda nihilum -monitor stdio
 
 iso: nihilum.img
 	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o nihilum.iso -b nihilum.img .
 
 clean:
+	rm -f *.bin
 	rm -f *.img
 	rm -f *.iso
-	rm -f *.bin
+
+distclean: clean
+	rm nihilum
 

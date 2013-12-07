@@ -104,14 +104,10 @@ ok               db ' ok!', 0dh, 0ah, 0
 sectors_read db 0
 bootdrv db 0
 
-db 'BTSEC_END'
 ; pad the remainder of the boot sector with n's
 times 510-($-$$) db 0
 ; the standard PC boot signature
 dw 0xAA55
-
-  print ok
-  print_newline
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 
