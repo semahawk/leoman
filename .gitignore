@@ -1,3 +1,4 @@
-*.flp
+*.img
 *.iso
 *.bin
+*.core
