@@ -1,4 +1,4 @@
-.PHONY: all nihilum run iso clean
+.PHONY: all nihilum img run iso clean
 
 all: nihilum
 
@@ -9,6 +9,8 @@ nihilum.bin: nihilum.asm bootsector.asm loadsector.asm
 
 nihilum.img: nihilum.bin
 	dd conv=notrunc if=nihilum.bin of=nihilum.img
+
+img: nihilum.img
 
 run: nihilum.img
 	qemu -fda nihilum.img
