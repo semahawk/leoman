@@ -109,6 +109,9 @@ db 'BTSEC_END'
 times 510-($-$$) db 0
 ; the standard PC boot signature
 dw 0xAA55
-print ok
+
+  print ok
+  print_newline
+
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

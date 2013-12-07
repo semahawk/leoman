@@ -12,8 +12,8 @@ nihilum.img: nihilum.bin
 
 img: nihilum.img
 
-run: nihilum.img
-	qemu -fda nihilum.img
+run: nihilum.bin
+	qemu -fda nihilum.bin
 
 iso: nihilum.img
 	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o nihilum.iso -b nihilum.img .

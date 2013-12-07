@@ -7,7 +7,6 @@ loadsector:
   mov ax, 0x0500
   mov ds, ax
 
-  print_newline
   mov ah, 0xE
   mov al, 'N'
   int 10h
