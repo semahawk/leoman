@@ -1,6 +1,9 @@
 ; stage two of the bootloader
 
 jmp near loadsector
+
+%include "utils.asm"
+
 ; it's actually two sectors wide :)
 loadsector:
   ; update the segment register
@@ -8,18 +11,41 @@ loadsector:
   mov ds, ax
   mov es, ax
 
-  call print_m
+  ; finish the ok! thing
+  print ok
+  print
 
-  jmp $  ; infinity!
+  ; print the menu
+  print menu_boot
+  print menu_reboot
+  print
 
-print_m:
-  mov ah, 0xE
-  mov al, 'm'
-  int 10h
-  ret
+keypress:
+  ; wait for a pressed key
+  mov ah, 0
+  int 16h
+  ; user pressed 'b'
+  cmp al, 98
+  je boot
+  ; user pressed Enter (carriage return)
+  cmp al, 0dh
+  je boot
+  ; user pressed 'r'
+  cmp al, 114
+  je reboot
+  jmp keypress
 
+boot:
+  print not_working
+  jmp keypress
+
+reboot:
+  jmp 0xFFFF:0x0000
+
+ok db ' ok!', 0dh, 0ah, 0
 menu_boot   db '  [b] Boot [Enter]', 0dh, 0ah, 0
 menu_reboot db '  [r] Reboot', 0dh, 0ah, 0
+not_working db "Meh, booting's not working yet, come on! :P", 0dh, 0
 
 ; pad the remaining of the two sectors with 0s
 times 1024-($-$$) db 0

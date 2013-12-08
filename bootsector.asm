@@ -3,30 +3,7 @@ ORG 0
 
 jmp 0x07C0:bootloader
 
-; {{{ the 'print' macro
-%macro print 1
-  mov si, word %1
-  mov ah, 0xE
-
-  %%print_char:
-    lodsb
-    cmp al, 0
-    je %%done
-    int 10h
-    jmp %%print_char
-
-  %%done:
-%endmacro
-; }}}
-; {{{ the 'print_newline' macro
-%macro print_newline 0
-  mov ah, 0xE
-  mov al, 0xD
-  int 10h
-  mov al, 0xA
-  int 10h
-%endmacro
-; }}}
+%include "utils.asm"
 
 bootloader:
   ; update the segment register
@@ -44,8 +21,8 @@ bootloader:
   mov [bootdrv], dl
 
   print welcome_msg
-  print_newline
-  print_newline
+  print
+  print
   print reset_msg
 
 reset:
@@ -87,7 +64,7 @@ read:
                     ; more than 10 (or actually 16 ;) sectors)
   int 10h           ; print the number of sectors read
 
-  print_newline
+  print
   print stage_two_msg
 
   ; jump to stage two
