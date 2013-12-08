@@ -9,7 +9,7 @@ all: nihilum
 nihilum: $(OBJS)
 	cat $(OBJS) > $@
 
-.asm.bin:
+.asm.bin: utils.asm
 	nasm -f bin $< -o $@
 
 nihilum.img: nihilum

@@ -59,7 +59,7 @@ read:
 welcome_msg1 db 'Welcome to Nihilum  v0.01  http://github.com/semahawk/nihilum', 0dh, 0ah, 0dh, 0ah, 0
 welcome_msg2 db '  Copyright (c) 2013 - Szymon Urbas', 0dh, 0ah, 0dh, 0ah, 0
 welcome_msg3 db 'The source code is licensed under the 3 Clause BSD License.', 0dh, 0ah, 0
-welcome_msg4 db 'For more licensing information, please visit the LICENSE file.', 0dh, 0ah, 0
+welcome_msg4 db 'For more information in that matter, please visit the LICENSE file.', 0dh, 0ah, 0dh, 0ah, 0
 ; some variables
 sectors_read db 0
 bootdrv db 0
