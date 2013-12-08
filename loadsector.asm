@@ -11,11 +11,9 @@ loadsector:
   mov ds, ax
   mov es, ax
 
-  ; finish the ok! thing
-  print ok
-  print
-
   ; print the menu
+  print
+  print
   print menu_boot
   print menu_reboot
   print

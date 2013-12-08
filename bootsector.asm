@@ -3,8 +3,6 @@ ORG 0
 
 jmp 0x07C0:bootloader
 
-%include "utils.asm"
-
 bootloader:
   ; update the segment register
   mov ax, 0x07C0
@@ -20,10 +18,48 @@ bootloader:
   ; save the device's number from which we've booted
   mov [bootdrv], dl
 
-  print welcome_msg
-  print
-  print
-  print reset_msg
+  mov si, welcome_msg
+  mov ah, 0xE
+
+  .print_char:
+    lodsb
+    cmp al, 0
+    je .done
+    int 10h
+    jmp .print_char
+
+  .done:
+    %macro increment_si 1
+      push cx
+      mov cx, %1
+      %%repeat:
+        cmp cx, 0
+        jle %%inc_done
+        inc si
+        dec cx
+        jmp %%repeat
+        %%inc_done:
+          pop cx
+    %endmacro
+
+    %macro printhex 1
+      mov si, hexadecimal
+      increment_si %1
+      mov ah, 0xE
+      mov al, byte [si]
+      int 10h
+    %endmacro
+
+    ; print the version
+    mov ch, 0
+    mov cl, [$$ + 509]
+    mov ax, cx
+    mov bx, 0x10
+    ; divide the version by 16
+    div bx
+    ; now, ax = ax / 16 (quotient); dx = ax % 16 (remainder)
+    printhex ax
+    printhex dx
 
 reset:
   ; reset the floppy drive
@@ -32,9 +68,6 @@ reset:
   int 13h
 
   jc reset          ; error -> try again
-
-  print ok
-  print read_msg
 
 read:
   mov ax, 0x0500
@@ -55,34 +88,20 @@ read:
   ; save the number of sectors read
   mov [sectors_read], al
 
-  print ok
-  print sectors_read_msg
-
-  mov ah, 0xE
-  mov al, [sectors_read]
-  add al, 48        ; convert it to ASCII number (should work unless we load
-                    ; more than 10 (or actually 16 ;) sectors)
-  int 10h           ; print the number of sectors read
-
-  print
-  print stage_two_msg
-
   ; jump to stage two
   jmp 0500h:0000h
 
-; strings
-welcome_msg      db 'Nihilum bootloader 0x01', 0
-reset_msg        db '* resetting the floppy disk...', 0
-read_msg         db '* loading stage two... ', 0
-sectors_read_msg db '*    sectors read: ', 0
-stage_two_msg    db '* hopping on to stage two!... ', 0
-ok               db ' ok!', 0dh, 0ah, 0
+; the string
+welcome_msg db 'Nihilum bootloader 0x', 0
+hexadecimal db '0123456789ABCDEF'
 ; some variables
 sectors_read db 0
 bootdrv db 0
 
 ; pad the remainder of the boot sector with n's
-times 510-($-$$) db 0
+times 509-($-$$) db 0
+; the bootloaders version
+db 0x1
 ; the standard PC boot signature
 dw 0xAA55
 
