@@ -34,13 +34,6 @@ loadsector:
   mov al, ' '
   int 10h
 
-  mov ax, dx
-  shl ax, 2
-  print_hex ax
-  mov ah, 0xE
-  mov al, '?'
-  int 10h
-
   jmp print_menu
 
 .low_memory_unknown:
