@@ -11,7 +11,7 @@ loadsector:
   mov ds, ax
   mov es, ax
 
-  ; detect the 'low' and 'upper' memory
+  ; detect the 'low' memory
   print low_memory
   xor ax, ax
   int 12h
@@ -47,10 +47,14 @@ print_menu:
   print menu_reboot
   print
 
+
 keypress:
   ; wait for a pressed key
   mov ah, 0
   int 16h
+  ; user pressed 'e'
+  cmp al, 101
+  je easter
   ; user pressed 'b'
   cmp al, 98
   je boot
@@ -60,6 +64,10 @@ keypress:
   ; user pressed 'r'
   cmp al, 114
   je reboot
+  jmp keypress
+
+easter:
+  print easter_msg
   jmp keypress
 
 boot:
@@ -75,6 +83,7 @@ unknown     db 'unknown :c', 0
 menu_boot   db '  [b] Boot [Enter]', 0dh, 0ah, 0
 menu_reboot db '  [r] Reboot', 0dh, 0ah, 0
 boot_msg    db 'Nope.', 0dh, 0
+easter_msg  db 'Easter egg!', 0dh, 0
 
 ; pad the remaining of the two sectors with 0s
 times 1024-($-$$) db 0

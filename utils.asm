@@ -1,66 +1,59 @@
 ; a few handy macros
 
-; saves the registers
-%macro regsave 0
-  push ax
-  push bx
-  push cx
-  push dx
-%endmacro
-; restores the registers
-%macro regrest 0
-  pop dx
-  pop cx
-  pop bx
-  pop ax
-%endmacro
-
-%macro print 0
-  regsave
+utils_print_newline:
   mov ah, 0xE
   mov al, 0xD
   int 10h
   mov al, 0xA
   int 10h
-  regrest
+  ret
+
+; a simple little function to print a string from SI
+utils_print_string:
+  mov ah, 0xE
+
+  .print_char:
+    lodsb
+    cmp al, 0
+    je .done
+    int 10h
+    jmp .print_char
+
+  .done:
+    ret
+
+%macro print 0
+  call utils_print_newline
 %endmacro
 
 %macro print 1
-  regsave
-  ; set the registers
-  mov si, word %1
-  mov ah, 0xE
-
-  %%print_char:
-    lodsb
-    cmp al, 0
-    je %%done
-    int 10h
-    jmp %%print_char
-
-  %%done:
-    regrest
+  mov si, %1
+  call utils_print_string
 %endmacro
 
-; {{{ print a given, single number as uppercase hexadecimal
+; {{{ prints a given number in either decimal (if less than 10) or in upper
+; hexadecimal. I guess it's safe to say it simply prints the number in hexadecimal.
+utils_print_digit:
+  cmp al, 10
+  jl .ten_less
+  .ten_more:
+    add al, 55
+    jmp .print
+  .ten_less:
+    add al, 48
+  .print:
+    mov ah, 0xE
+    int 10h
+    ret
+
 %macro print_digit 1
   mov al, %1
-  cmp al, 10
-  jl %%ten_less
-%%ten_more:
-  add al, 55
-  jmp %%print
-%%ten_less:
-  add al, 48
-%%print:
-  mov ah, 0xE
-  int 10h
+  call utils_print_digit
 %endmacro
 ; }}}
 
 ; {{{ print a word in decimal format
 %macro print_dec 1
-  regsave
   mov dx, word %1
 
   %%print_5:
@@ -142,13 +135,11 @@
     mov ah, 0xE
     mov al, cl
     int 10h
-    regrest
 %endmacro
 ; }}}
 
 ; {{{ print a word in hexadecimal format
 %macro print_hex 1
-  regsave
   mov dx, word %1
 
   mov bx, 0
