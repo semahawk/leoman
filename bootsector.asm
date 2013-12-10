@@ -1,30 +1,30 @@
 BITS 16
 ORG 0
 
-jmp 0x07C0:bootloader
+start:
+  jmp 0x07C0:bootloader
 
 ; The standard BIOS Parameter Block
 ; Taken from http://www.brokenthorn.com/Resources/OSDev6.html
-db '......'     ; the BPB should start at offset 0xB
-; removed the labels, I'm not using the data right now anyway :P
-DW 512
-DB 1
-DW 1
-DB 2
-DW 224
-DW 2880
-DB 0xF0
-DW 9
-DW 18
-DW 2
-DD 0
-DD 0
-DB 0
-DB 0
-DB 0x29
-DD 0xa0a1a2a3
-DB "MOS FLOPPY "
-DB "FAT12   "
+times 0xB-$+start db 0x6E    ; the BPB should start at offset 0xB
+BytesPerSector dw 512
+SectorsPerCluster db 1
+ReservedSectors dw 1
+FatCopies db 2
+RootDirEntries dw 224
+NumSectors dw 2880
+MediaType db 0xF0
+SectorsPerFAT dw 9
+SectorsPerTrack dw 18
+NumberOfHeads dw 2
+HiddenSectors dd 0
+SectorsBig dd 0
+DriveNumber db 0
+Reserved db 0
+ExtendedBootSignature db 0x29
+VolumeSerialNumber dd 0xDEAFBEEF
+VolubeLabel db "NIHILUM    "
+FileSystemType db "FAT12   "
 
 %include "utils.asm"
 
