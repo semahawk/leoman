@@ -3,8 +3,6 @@ ORG 0
 
 jmp 0x07C0:boot0
 
-%include "utils.asm"
-
 boot0:
   ; update the segment register
   mov ax, 0x07C0
@@ -19,11 +17,6 @@ boot0:
 
   ; save the device's number from which we've booted
   mov [bootdrv], dl
-
-  print welcome_msg1
-  print welcome_msg2
-  print welcome_msg3
-  print welcome_msg4
 
 reset:
   ; reset the floppy drive
@@ -53,12 +46,7 @@ read:
   ; jump to stage two
   jmp 0500h:0000h
 
-; the strings
-welcome_msg1 db 'Welcome to Nihilum  v0.01  http://github.com/semahawk/nihilum', 0dh, 0ah, 0dh, 0ah, 0
-welcome_msg2 db '  Copyright (c) 2013 - Szymon Urbas', 0dh, 0ah, 0dh, 0ah, 0
-welcome_msg3 db 'The source code is licensed under the 3 Clause BSD License.', 0dh, 0ah, 0
-welcome_msg4 db 'For more information in that matter, please visit the LICENSE file.', 0dh, 0ah, 0dh, 0ah, 0
-; some variables
+; number of the drive we have booted from
 bootdrv db 0
 
 ; pad the remainder of the boot sector with n's
