@@ -1,8 +1,8 @@
 .PHONY: all img run iso clean
 .SUFFIXES: .asm .bin
 
-OBJS = bootsector.bin \
-			 loadsector.bin
+OBJS = boot0.bin \
+			 boot1.bin
 
 all: nihilum
 

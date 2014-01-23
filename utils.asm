@@ -51,7 +51,6 @@ utils_print_digit:
   call utils_print_digit
 %endmacro
 ; }}}
-
 ; {{{ print a word in decimal format
 %macro print_dec 1
   mov dx, word %1
@@ -137,7 +136,6 @@ utils_print_digit:
     int 10h
 %endmacro
 ; }}}
-
 ; {{{ print a word in hexadecimal format
 %macro print_hex 1
   mov dx, word %1
