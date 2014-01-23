@@ -10,7 +10,8 @@ boot1:
   mov ds, ax
   mov es, ax
 
-
+  cli
+  hlt
 
 ; pad the remaining of the two sectors with 0s
 times 1024-($-$$) db 0
