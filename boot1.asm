@@ -87,6 +87,21 @@ welcome:
   ; print the welcomming message (d'oh!)
   print welcome_msg
 
+  ; print the partition's (types) located in the MBR
+  mov cx, 4
+  mov ax, 0x0090
+  mov es, ax
+  mov si, 0x1C2   ; 1BEh + 4h
+print_partitions:
+  push cx
+  print_hex [es:si]
+  call utils_print_newline
+  pop cx
+  ; 'go' to the next partition entry
+  add si, 16
+  ; next
+  loop print_partitions
+
 halt:
   ; stop right there!
   jmp $
