@@ -28,9 +28,9 @@ reset:
 
 read:
   ; read the stage two of the bootloader
-  mov ax, 0x0500
+  mov ax, 0x0050
   mov es, ax
-  mov bx, 0x0000    ; es:bx = 0500h:0000h
+  mov bx, 0x0000    ; es:bx = 0050h:0000h (= 0x0500)
 
   ; load the second sector from the floppy
   mov ah, 0x02      ; the instruction
@@ -44,7 +44,7 @@ read:
   jc read           ; error -> try again
 
   ; jump to stage two
-  jmp 0500h:0000h
+  jmp 0050h:0000h
 
 ; number of the drive we have booted from
 bootdrv db 0

@@ -6,7 +6,7 @@ jmp near boot1
 
 boot1:
   ; update the segment register
-  mov ax, 0x0500
+  mov ax, 0x0050
   mov ds, ax
   mov es, ax
 
