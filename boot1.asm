@@ -58,13 +58,40 @@ load_gdt:
   lgdt [gdt_ptr]
   sti
 
+reset:
+  ; reset the first hard drive
+  mov ah, 00h
+  mov dl, 80h
+  int 13h
+
+  jc reset          ; error -> try again
+
+read:
+  ; set up the registers
+  mov ax, 0x0090
+  mov es, ax
+  mov bx, 0x0000    ; es:bx = 0090h:0000h (= 0x0900)
+
+  ; load the MBR from the first hard drive
+  mov ah, 0x02      ; the instruction
+  mov al, 1         ; load one sector
+  mov ch, 0         ; cylinder no. 0
+  mov cl, 1         ; sector no. 1
+  mov dh, 0         ; head no. 0
+  mov dl, 0x80      ; the first hard drive
+  int 13h           ; read!
+
+  jc read           ; error -> try again
+
+welcome:
   ; print the welcomming message (d'oh!)
   print welcome_msg
 
+halt:
   ; stop right there!
   jmp $
 
-welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0
+welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA, 0
 
 ; pad the remaining of the two sectors with 0s
 times 1024-($-$$) db 0

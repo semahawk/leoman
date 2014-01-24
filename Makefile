@@ -2,7 +2,8 @@
 .SUFFIXES: .asm .bin
 
 OBJS = boot0.bin \
-			 boot1.bin
+			 boot1.bin \
+			 phony-mbr.bin
 
 all: nihilum
 
@@ -17,8 +18,8 @@ nihilum.img: nihilum
 
 img: nihilum.img
 
-run: nihilum
-	qemu -fda nihilum -monitor stdio
+run: nihilum phony-mbr.bin
+	qemu -boot order=a -hda phony-mbr.bin -fda nihilum -monitor stdio
 
 iso: nihilum.img
 	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o nihilum.iso -b nihilum.img .
