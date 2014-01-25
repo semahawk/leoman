@@ -17,59 +17,6 @@ welcome:
   ; print the welcomming message (d'oh!)
   print welcome_msg
 
-  ; enable the A20 line
-enable_a20:
-  ; try using BIOS first
-  mov ax, 0x2401
-  int 0x15
-  jnc load_gdt  ; jump straight away to load the GDT
-  ; BIOS doesn't support INT 15, 2401
-  ; try using FAST A20
-  in al, 0x92
-  test al, 2
-  jnz load_gdt  ; jump straight... yes
-  or al, 2
-  and al, 0xFE
-  out 0x92, al
-  ; if this doesn't work we're gonna have a problem
-  jmp load_gdt
-
-  ;
-  ; GDT
-  ;
-gdt_data:
-  ; the null descriptor
-  dq 0          ; nothing!
-  ; the code descriptor (rw, ring 0)
-  dw 0xFFFF     ; limit low
-  dw 0x0        ; base low
-  db 0x0        ; base middle
-  db 10011010b  ; access
-  db 11001111b  ; granularity
-  db 0x0        ; base high
-  ; the data descriptor
-  dw 0xFFFF     ; limit low
-  dw 0x0        ; base low
-  db 0x0        ; base middle
-  db 10010010b  ; access
-  db 11001111b  ; granularity
-  db 0x0        ; base high
-  ; other descriptors? (if so, here's the place)
-gdt_end:
-gdt_ptr:
-  dw gdt_end - gdt_data - 1 ; limit (sizeof GDT)
-  dd gdt_data               ; base of GDT
-
-; enable_a20 jumps here
-load_gdt:
-  print a20_enabled_msg
-
-  cli
-  lgdt [gdt_ptr]
-  sti
-
-  print gdt_loaded_msg
-
 reset:
   ; reset the drive from which we've booted from
   mov ah, 00h
@@ -94,9 +41,6 @@ read:
   int 13h           ; read!
 
   jc read           ; error -> try again
-
-  print mbr_loaded_msg
-  call utils_print_newline
 
   ; print the partition's (types) located in the MBR
   mov cx, 5       ; starting from 5 because of the 'dec cx'
@@ -127,9 +71,9 @@ print_partitions:
     int 10h
 
     cmp byte [es:si], 0xA5    ; FreeBSD
-    je .print_sys_id_freebsd
+    je .print_sys_id_bsd
     cmp byte [es:si], 0xA6    ; OpenBSD
-    je .print_sys_id_openbsd
+    je .print_sys_id_bsd
     cmp byte [es:si], 0x39    ; Plan 9
     je .print_sys_id_plan9
     cmp byte [es:si], 0x83    ; Linux (any)
@@ -140,13 +84,8 @@ print_partitions:
     print os_unknown
     jmp .print_sys_id_after
 
-  .print_sys_id_freebsd:
-    print os_freebsd
-    ; increment the partition's menu id
-    inc dl
-    jmp .print_sys_id_after
-  .print_sys_id_openbsd:
-    print os_openbsd
+  .print_sys_id_bsd:
+    print os_bsd
     ; increment the partition's menu id
     inc dl
     jmp .print_sys_id_after
@@ -178,18 +117,50 @@ print_partitions:
   ; print the additional menu items
   print boot_from_hd_msg
 
+  ; save the number of systems
+  mov [syscount], dl
+
+keypress:
+  ; wait for a key to be pressed
+  mov ah, 0
+  int 16h
+  ; switch (al):
+  ; case  'a':
+  cmp al, 'a'
+  je boot_from_hd
+  ; al = al - '0'
+  sub al, 48
+  ; case  0 <= al < [syscount]:
+  cmp al, 0
+  jge boot_preamble
+  ; default:
+  jmp keypress
+
+boot_preamble:
+  ; al should be less than '# of systems'
+  cmp al, [syscount]
+  jl  boot
+  jmp keypress
+
+boot:
+  print booting_msg
+  jmp keypress
+
+boot_from_hd:
+  ; TODO: load the first sector from 80h, load it into 0x0000:0x7C00 and jmp there
+  print booting_from_hd_msg
+  jmp keypress
+
 halt:
   ; stop right there!
   jmp $
 
 welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA, 0
-a20_enabled_msg db 'A20 gate: enabled', 0xD, 0xA, 0
-gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
-mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
-boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0
+boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0xD, 0xA, 0
+booting_msg db 'booting...', 0xD, 0xA, 0
+booting_from_hd_msg db 'booting from HD...', 0xD, 0xA, 0
 
-os_freebsd db 'FreeBSD', 0
-os_openbsd db 'OpenBSD', 0
+os_bsd db 'BSD', 0
 os_plan9 db 'Plan 9', 0
 os_linux db 'GNU/Linux', 0
 os_windoze db 'Windows', 0
@@ -197,6 +168,8 @@ os_unknown db 'unknown', 0
 
 ; number of the drive we have booted from
 bootdrv db 0
+; number of system partitions
+syscount db 0
 
 ; pad the remaining of the sector with zeros
 times 512-($-$$) db 0
