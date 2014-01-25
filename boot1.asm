@@ -10,6 +10,10 @@ boot1:
   mov ds, ax
   mov es, ax
 
+welcome:
+  ; print the welcomming message (d'oh!)
+  print welcome_msg
+
   ; enable the A20 line
 enable_a20:
   ; try using BIOS first
@@ -54,9 +58,13 @@ gdt_ptr:
 
 ; enable_a20 jumps here
 load_gdt:
+  print a20_enabled_msg
+
   cli
   lgdt [gdt_ptr]
   sti
+
+  print gdt_loaded_msg
 
 reset:
   ; reset the first hard drive
@@ -83,9 +91,8 @@ read:
 
   jc read           ; error -> try again
 
-welcome:
-  ; print the welcomming message (d'oh!)
-  print welcome_msg
+  print mbr_loaded_msg
+  call utils_print_newline
 
   ; print the partition's (types) located in the MBR
   mov cx, 4
@@ -102,11 +109,18 @@ print_partitions:
   ; next
   loop print_partitions
 
+  call utils_print_newline
+  print done_msg
+
 halt:
   ; stop right there!
   jmp $
 
 welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA, 0
+a20_enabled_msg db 'A20 gate: enabled', 0xD, 0xA, 0
+gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
+mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
+done_msg db 'Done.', 0xD, 0xA, 0
 
 ; pad the remaining of the two sectors with 0s
 times 1024-($-$$) db 0
