@@ -90,7 +90,7 @@ read:
   mov ch, 0         ; cylinder no. 0
   mov cl, 1         ; sector no. 1
   mov dh, 0         ; head no. 0
-  mov dl, [bootdrv] ; the first hard drive
+  mov dl, [bootdrv] ; the boot device
   int 13h           ; read!
 
   jc read           ; error -> try again
@@ -103,15 +103,16 @@ read:
   mov ax, 0x0090
   mov es, ax
   mov si, 0x1C2   ; 1BEh + 4h
+
 print_partitions:
   ; print the system's identification string
   .print_sys_id:
     cmp byte [es:si], 0x00    ; None
     je .print_sys_id_after
     cmp byte [es:si], 0xA5    ; FreeBSD
-    je .print_sys_id_bsd
+    je .print_sys_id_freebsd
     cmp byte [es:si], 0xA6    ; OpenBSD
-    je .print_sys_id_bsd
+    je .print_sys_id_openbsd
     cmp byte [es:si], 0x39    ; Plan 9
     je .print_sys_id_plan9
     cmp byte [es:si], 0x83    ; Linux (any)
@@ -122,8 +123,11 @@ print_partitions:
     print os_unknown
     jmp .print_sys_id_after
 
-  .print_sys_id_bsd:
-    print os_bsd
+  .print_sys_id_freebsd:
+    print os_freebsd
+    jmp .print_sys_id_after
+  .print_sys_id_openbsd:
+    print os_openbsd
     jmp .print_sys_id_after
   .print_sys_id_plan9:
     print os_plan9
@@ -155,7 +159,8 @@ gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
 mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
 done_msg db 'Done.', 0xD, 0xA, 0
 
-os_bsd db 'BSD', 0
+os_freebsd db 'FreeBSD', 0
+os_openbsd db 'OpenBSD', 0
 os_plan9 db 'Plan 9', 0
 os_linux db 'GNU/Linux', 0
 os_windoze db 'Windows', 0
