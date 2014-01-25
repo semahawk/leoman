@@ -126,6 +126,7 @@ read_mbr:
   jg print_partitions
   ; print the additional menu items
   print boot_from_hd_msg
+  print reboot_msg
 
   ; save the number of systems
   mov [syscount], dl
@@ -167,7 +168,8 @@ read_boot1:
 
 ; the messages
 welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA, 0
-boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0xD, 0xA, 0
+boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0
+reboot_msg db '[m] reboot', 0xD, 0xA, 0xD, 0xA, 0
 ; the OS IDs
 os_bsd db 'BSD', 0
 os_plan9 db 'Plan 9', 0

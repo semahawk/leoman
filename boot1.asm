@@ -21,6 +21,9 @@ keypress:
   ; case  'a':
   cmp al, 'a'
   je boot_from_hd
+  ; case  'm':
+  cmp al, 'm'
+  je reboot
   ; al = al - '0'
   sub al, 48
   ; case  1 <= al < [syscount]:
@@ -28,6 +31,9 @@ keypress:
   jge boot_preamble
   ; default:
   jmp keypress
+
+reboot:
+  jmp 0xFFFF:0x0000
 
 boot_preamble:
   ; al should be less than '# of systems'
@@ -63,7 +69,7 @@ boot_from_hd:
     mov dl, 0x81      ; the hard drive
     int 13h           ; read!
 
-    jc .read           ; error -> try again
+    jc .read          ; error -> try again
 
     ; execute the MBR
     jmp 0x0000:0x7C00
