@@ -23,12 +23,16 @@ utils_print_string:
     ret
 
 %macro print 0
+  pusha
   call utils_print_newline
+  popa
 %endmacro
 
 %macro print 1
+  pusha
   mov si, %1
   call utils_print_string
+  popa
 %endmacro
 
 ; {{{ prints a given number in either decimal (if less than 10) or in upper

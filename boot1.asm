@@ -104,10 +104,39 @@ read:
   mov es, ax
   mov si, 0x1C2   ; 1BEh + 4h
 print_partitions:
-  push cx
-  print_hex [es:si]
+  ; print the system's identification string
+  .print_sys_id:
+    cmp byte [es:si], 0x00    ; None
+    je .print_sys_id_after
+    cmp byte [es:si], 0xA5    ; FreeBSD
+    je .print_sys_id_bsd
+    cmp byte [es:si], 0xA6    ; OpenBSD
+    je .print_sys_id_bsd
+    cmp byte [es:si], 0x39    ; Plan 9
+    je .print_sys_id_plan9
+    cmp byte [es:si], 0x83    ; Linux (any)
+    je .print_sys_id_linux
+    cmp byte [es:si], 0x07    ; Windows
+    je .print_sys_id_windoze
+    ; none of the above matches the system's id
+    print os_unknown
+    jmp .print_sys_id_after
+
+  .print_sys_id_bsd:
+    print os_bsd
+    jmp .print_sys_id_after
+  .print_sys_id_plan9:
+    print os_plan9
+    jmp .print_sys_id_after
+  .print_sys_id_linux:
+    print os_linux
+    jmp .print_sys_id_after
+  .print_sys_id_windoze:
+    print os_windoze
+    jmp .print_sys_id_after
+
+  .print_sys_id_after:
   call utils_print_newline
-  pop cx
   ; 'go' to the next partition entry
   add si, 16
   ; next
@@ -125,6 +154,12 @@ a20_enabled_msg db 'A20 gate: enabled', 0xD, 0xA, 0
 gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
 mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
 done_msg db 'Done.', 0xD, 0xA, 0
+
+os_bsd db 'BSD', 0
+os_plan9 db 'Plan 9', 0
+os_linux db 'GNU/Linux', 0
+os_windoze db 'Windows', 0
+os_unknown db 'unknown', 0
 
 ; number of the drive we have booted from
 bootdrv db 0
