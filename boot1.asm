@@ -165,7 +165,7 @@ boot_from_hd:
     ; set up the registers
     mov ax, 0x0000
     mov es, ax
-    mov bx, 0x07C0    ; es:bx = 0000h:07C0h (= 0x7C00)
+    mov bx, 0x7C00    ; es:bx = 0000h:7C00h (= 0x7C00)
 
     ; load the MBR from the first hard drive
     mov ah, 0x02      ; the instruction
@@ -179,7 +179,7 @@ boot_from_hd:
     jc .read           ; error -> try again
 
     ; execute the MBR
-    jmp 0x0000:0x07C0
+    jmp 0x0000:0x7C00
 
 halt:
   ; stop right there!
