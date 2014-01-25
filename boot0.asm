@@ -34,7 +34,7 @@ read:
 
   ; load the second sector from the floppy
   mov ah, 0x02      ; the instruction
-  mov al, 2         ; load two sectors
+  mov al, 1         ; load one sector
   mov ch, 0         ; cylinder no. 0
   mov cl, 2         ; sector no. 2
   mov dh, 0         ; head no. 0

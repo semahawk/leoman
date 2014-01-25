@@ -123,8 +123,8 @@ gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
 mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
 done_msg db 'Done.', 0xD, 0xA, 0
 
-; pad the remaining of the two sectors with 0s
-times 1024-($-$$) db 0
+; pad the remaining of the sector with zeros
+times 512-($-$$) db 0
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 
