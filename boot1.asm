@@ -10,6 +10,8 @@ boot1:
   mov ds, ax
   mov es, ax
 
+  ; save the device's number from which we've booted
+  mov [bootdrv], dl
   ; save the # of system partitions
   mov [syscount], cl
 
@@ -71,6 +73,10 @@ boot_from_hd:
 
     jc .read          ; error -> try again
 
+    mov ax, 0x0000
+    mov es, ax
+    mov si, 0x7DBE    ; 0x7C00 + 0x01BE (MBR offset)
+    mov dl, [bootdrv]
     ; execute the MBR
     jmp 0x0000:0x7C00
 
@@ -79,6 +85,8 @@ halt:
   jmp $
 
 booting_msg db 'booting...', 0xD, 0xA, 0
+; number of the drive we have booted from
+bootdrv db 0
 ; number of system partitions
 syscount db 0
 
