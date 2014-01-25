@@ -65,6 +65,10 @@ read_mbr:
   .print_sys_id:
     cmp byte [es:si], 0x00    ; None
     je .print_sys_id_after_nolf
+    ; print ' '
+    mov ah, 0xE
+    mov al, ' '
+    int 10h
     ; print '['
     mov ah, 0xE
     mov al, '['
@@ -168,12 +172,12 @@ read_boot1:
 
 ; the messages
 welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA, 0
-boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0
-reboot_msg db '[m] reboot', 0xD, 0xA, 0xD, 0xA, 0
+boot_from_hd_msg db ' [a] boot from HD', 0xD, 0xA, 0
+reboot_msg db ' [m] reboot', 0xD, 0xA, 0xD, 0xA, 0
 ; the OS IDs
 os_bsd db 'BSD', 0
 os_plan9 db 'Plan 9', 0
-os_linux db 'GNU/Linux', 0
+os_linux db 'Linux', 0
 os_windoze db 'Windows', 0
 os_unknown db 'unknown', 0
 ; number of the drive we have booted from
