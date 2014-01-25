@@ -4,13 +4,27 @@
 ; Phony Bootstrap code area
 ;
 
-mov ah, 0xE
-mov al, '#'
-int 10h
+code:
+  ; update the segment register
+  mov ax, 0x07C0
+  mov ds, ax
 
-halt:
-  ; hello, infinity
+  ; load and print the message
+  mov si, message
+  mov ah, 0xE
+
+  print_char:
+    lodsb
+    cmp al, 0
+    je done
+    int 10h
+    jmp print_char
+
+  done:
+  ; hello, infinity!
   jmp $
+
+message db 'The HD has booted.', 0
 
 ; fill out the empty space with zeros
 times 446-($-$$) db 0
