@@ -4,6 +4,11 @@
 ; Phony Bootstrap code area
 ;
 
+mov ah, 0xE
+mov al, '#'
+int 10h
+
+halt:
   ; hello, infinity
   jmp $
 
