@@ -51,7 +51,7 @@ utils_print_digit:
     ret
 
 %macro print_digit 1
-  mov al, %1
+  mov al, byte %1
   call utils_print_digit
 %endmacro
 ; }}}

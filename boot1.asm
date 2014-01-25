@@ -99,16 +99,33 @@ read:
   call utils_print_newline
 
   ; print the partition's (types) located in the MBR
-  mov cx, 4
+  mov cx, 5       ; starting from 5 because of the 'dec cx'
   mov ax, 0x0090
   mov es, ax
   mov si, 0x1C2   ; 1BEh + 4h
+  mov dl, 0       ; the partition's menu id
 
 print_partitions:
+  dec cx
   ; print the system's identification string
   .print_sys_id:
     cmp byte [es:si], 0x00    ; None
-    je .print_sys_id_after
+    je .print_sys_id_after_nolf
+    ; print '['
+    mov ah, 0xE
+    mov al, '['
+    int 10h
+    ; print the partition's menu id
+    print_digit dl
+    ; print ']'
+    mov ah, 0xE
+    mov al, ']'
+    int 10h
+    ; print ' '
+    mov ah, 0xE
+    mov al, ' '
+    int 10h
+
     cmp byte [es:si], 0xA5    ; FreeBSD
     je .print_sys_id_freebsd
     cmp byte [es:si], 0xA6    ; OpenBSD
@@ -125,29 +142,41 @@ print_partitions:
 
   .print_sys_id_freebsd:
     print os_freebsd
+    ; increment the partition's menu id
+    inc dl
     jmp .print_sys_id_after
   .print_sys_id_openbsd:
     print os_openbsd
+    ; increment the partition's menu id
+    inc dl
     jmp .print_sys_id_after
   .print_sys_id_plan9:
     print os_plan9
+    ; increment the partition's menu id
+    inc dl
     jmp .print_sys_id_after
   .print_sys_id_linux:
     print os_linux
+    ; increment the partition's menu id
+    inc dl
     jmp .print_sys_id_after
   .print_sys_id_windoze:
     print os_windoze
+    ; increment the partition's menu id
+    inc dl
     jmp .print_sys_id_after
 
   .print_sys_id_after:
   call utils_print_newline
+  .print_sys_id_after_nolf:
   ; 'go' to the next partition entry
   add si, 16
-  ; next
-  loop print_partitions
-
-  call utils_print_newline
-  print done_msg
+  ; it's kind of strange, but doing 'loop print_partitions' here gives me 'short
+  ; jump out of range' error
+  cmp cx, 0
+  jg print_partitions
+  ; print the additional menu items
+  print boot_from_hd_msg
 
 halt:
   ; stop right there!
@@ -157,7 +186,7 @@ welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA,
 a20_enabled_msg db 'A20 gate: enabled', 0xD, 0xA, 0
 gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
 mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
-done_msg db 'Done.', 0xD, 0xA, 0
+boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0
 
 os_freebsd db 'FreeBSD', 0
 os_openbsd db 'OpenBSD', 0

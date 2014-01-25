@@ -99,6 +99,9 @@ dd 0x0
 ; # of sectors in the partition
 dd 0x0
 ; }}}
+; partition entry #4 {{{
+dq 0, 0
+; }}}
 ; partition entry #3 {{{
 ; status (bit 7 set: active / bootable; old MBRs only accept 80h)
 ;
@@ -121,9 +124,6 @@ db 00000000b   ; cylinder (bits 0-7)
 dd 0x0
 ; # of sectors in the partition
 dd 0x0
-; }}}
-; partition entry #4 {{{
-dq 0, 0
 ; }}}
 
 ; the standard PC boot signature
