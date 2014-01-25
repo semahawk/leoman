@@ -43,6 +43,7 @@ read:
 
   jc read           ; error -> try again
 
+  mov dl, [bootdrv] ; save the boot drive (so boot1 can use it)
   ; jump to stage two
   jmp 0050h:0000h
 

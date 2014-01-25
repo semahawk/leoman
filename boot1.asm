@@ -10,6 +10,9 @@ boot1:
   mov ds, ax
   mov es, ax
 
+  ; save the device's number from which we've booted
+  mov [bootdrv], dl
+
 welcome:
   ; print the welcomming message (d'oh!)
   print welcome_msg
@@ -122,6 +125,9 @@ a20_enabled_msg db 'A20 gate: enabled', 0xD, 0xA, 0
 gdt_loaded_msg db 'GDT: loaded', 0xD, 0xA, 0
 mbr_loaded_msg db 'MBR: loaded', 0xD, 0xA, 0
 done_msg db 'Done.', 0xD, 0xA, 0
+
+; number of the drive we have booted from
+bootdrv db 0
 
 ; pad the remaining of the sector with zeros
 times 512-($-$$) db 0
