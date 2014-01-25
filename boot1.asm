@@ -10,37 +10,9 @@ boot1:
   mov ds, ax
   mov es, ax
 
-  ; save the device's number from which we've booted
-  mov [bootdrv], dl
-
 welcome:
   ; print the welcomming message (d'oh!)
   print welcome_msg
-
-reset:
-  ; reset the drive from which we've booted from
-  mov ah, 00h
-  mov dl, [bootdrv]
-  int 13h
-
-  jc reset          ; error -> try again
-
-read:
-  ; set up the registers
-  mov ax, 0x0090
-  mov es, ax
-  mov bx, 0x0000    ; es:bx = 0090h:0000h (= 0x0900)
-
-  ; load the MBR from the drive from which we've booted from
-  mov ah, 0x02      ; the instruction
-  mov al, 1         ; load one sector
-  mov ch, 0         ; cylinder no. 0
-  mov cl, 1         ; sector no. 1
-  mov dh, 0         ; head no. 0
-  mov dl, [bootdrv] ; the boot device
-  int 13h           ; read!
-
-  jc read           ; error -> try again
 
   ; print the partition's (types) located in the MBR
   mov cx, 5       ; starting from 5 because of the 'dec cx'
@@ -189,8 +161,6 @@ os_linux db 'GNU/Linux', 0
 os_windoze db 'Windows', 0
 os_unknown db 'unknown', 0
 
-; number of the drive we have booted from
-bootdrv db 0
 ; number of system partitions
 syscount db 0
 
