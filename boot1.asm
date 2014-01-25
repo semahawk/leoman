@@ -47,7 +47,7 @@ read:
   mov ax, 0x0090
   mov es, ax
   mov si, 0x1C2   ; 1BEh + 4h
-  mov dl, 0       ; the partition's menu id
+  mov dl, 1       ; the partition's menu id
 
 print_partitions:
   dec cx
@@ -130,8 +130,8 @@ keypress:
   je boot_from_hd
   ; al = al - '0'
   sub al, 48
-  ; case  0 <= al < [syscount]:
-  cmp al, 0
+  ; case  1 <= al < [syscount]:
+  cmp al, 1
   jge boot_preamble
   ; default:
   jmp keypress
