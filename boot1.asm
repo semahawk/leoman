@@ -147,16 +147,10 @@ boot:
   jmp keypress
 
 boot_from_hd:
-  print booting_from_hd_msg
-  ; clear the screen
-  mov ah, 00h
-  mov al, 07h
-  int 10h
-
   .reset:
-    ; reset the first hard drive
+    ; reset the hard drive
     mov ah, 00h
-    mov dl, 80h
+    mov dl, 81h
     int 13h
 
     jc .reset          ; error -> try again
@@ -167,13 +161,13 @@ boot_from_hd:
     mov es, ax
     mov bx, 0x7C00    ; es:bx = 0000h:7C00h (= 0x7C00)
 
-    ; load the MBR from the first hard drive
+    ; load the MBR from the hard drive
     mov ah, 0x02      ; the instruction
     mov al, 1         ; load one sector
     mov ch, 0         ; cylinder no. 0
     mov cl, 1         ; sector no. 1
     mov dh, 0         ; head no. 0
-    mov dl, 0x80      ; the first hard drive
+    mov dl, 0x81      ; the hard drive
     int 13h           ; read!
 
     jc .read           ; error -> try again
@@ -188,7 +182,6 @@ halt:
 welcome_msg db 'Quidquid Latine dictum, sit altum videtur.', 0xD, 0xA, 0xD, 0xA, 0
 boot_from_hd_msg db '[a] boot from HD', 0xD, 0xA, 0xD, 0xA, 0
 booting_msg db 'booting...', 0xD, 0xA, 0
-booting_from_hd_msg db 'booting from HD...', 0xD, 0xA, 0
 
 os_bsd db 'BSD', 0
 os_plan9 db 'Plan 9', 0

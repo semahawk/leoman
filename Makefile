@@ -19,7 +19,7 @@ nihilum.img: nihilum
 img: nihilum.img
 
 run: nihilum phony-mbr.bin
-	qemu -boot order=a -hda phony-mbr.bin -fda nihilum -monitor stdio
+	qemu -hda nihilum -hdb phony-mbr.bin -monitor stdio
 
 iso: nihilum.img
 	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o nihilum.iso -b nihilum.img .
