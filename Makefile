@@ -8,7 +8,7 @@ OBJS = boot0.bin \
 all: nihilum
 
 nihilum: $(OBJS)
-	cat $(OBJS) > $@
+	cat boot0.bin boot1.bin > $@
 
 .asm.bin: utils.asm
 	nasm -f bin $< -o $@

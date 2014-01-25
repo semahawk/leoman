@@ -148,9 +148,13 @@ boot:
 
 boot_from_hd:
   print booting_from_hd_msg
+  ; clear the screen
+  mov ah, 00h
+  mov al, 07h
+  int 10h
 
   .reset:
-    ; reset the drive from which we've booted from
+    ; reset the first hard drive
     mov ah, 00h
     mov dl, 80h
     int 13h
