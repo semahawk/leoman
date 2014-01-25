@@ -29,6 +29,7 @@ enable_a20:
   and al, 0xFE
   out 0x92, al
   ; if this doesn't work we're gonna have a problem
+  jmp load_gdt
 
   ;
   ; GDT
