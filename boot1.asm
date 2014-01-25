@@ -71,9 +71,9 @@ load_gdt:
   print gdt_loaded_msg
 
 reset:
-  ; reset the first hard drive
+  ; reset the drive from which we've booted from
   mov ah, 00h
-  mov dl, 80h
+  mov dl, [bootdrv]
   int 13h
 
   jc reset          ; error -> try again
@@ -84,13 +84,13 @@ read:
   mov es, ax
   mov bx, 0x0000    ; es:bx = 0090h:0000h (= 0x0900)
 
-  ; load the MBR from the first hard drive
+  ; load the MBR from the drive from which we've booted from
   mov ah, 0x02      ; the instruction
   mov al, 1         ; load one sector
   mov ch, 0         ; cylinder no. 0
   mov cl, 1         ; sector no. 1
   mov dh, 0         ; head no. 0
-  mov dl, 0x80      ; the first hard drive
+  mov dl, [bootdrv] ; the first hard drive
   int 13h           ; read!
 
   jc read           ; error -> try again

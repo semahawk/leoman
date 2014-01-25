@@ -50,7 +50,7 @@ read:
 ; number of the drive we have booted from
 bootdrv db 0
 
-; pad the remainder of the boot sector with n's
+; pad the remainder of the boot sector with zeros
 times 510-($-$$) db 0
 ; the standard PC boot signature
 dw 0xAA55
