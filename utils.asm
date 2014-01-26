@@ -1,4 +1,16 @@
-; a few handy macros
+; a few handy macros / functions
+
+reset_drive:
+  xor ah, ah   ; ah = 0
+  int 13h
+  ; error -> try again
+  jc reset_drive
+  ret
+
+print_char:
+  mov ah, 0xE
+  int 10h
+  ret
 
 utils_print_newline:
   mov ah, 0xE
