@@ -10,9 +10,9 @@ boot0:
 
   ; set up the stack
   cli
-  mov ax, 0x9000
+  xor ax, ax
   mov ss, ax
-  mov sp, 0xffff
+  mov sp, 0x7c00   ; put the stack right below the bootsector
   sti
 
   ; save the device's number from which we've booted
