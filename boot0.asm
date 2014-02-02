@@ -18,10 +18,6 @@ boot0:
   ; save the device's number from which we've booted
   mov [bootdrv], dl
 
-  ; print the message
-  mov si, msg
-  call putstr
-
   ; relocate to 0x7e00
   cld                   ; go downwards
   mov si, boot0         ; source
@@ -35,11 +31,32 @@ relocated:
   mov ax, 0x07e0
   mov ds, ax
 
-  ; print the message (again)
+  ; read the partition table
+  mov es, ax
+  mov si, 0x01be  ; es:si = 0x07e0:0x01be (= 0x7fbe)
+  mov cx, 4       ; four loops
+  ; 'parse' the partition table, see which partition is active / bootable, and
+  ; then 'boot' it
+printpart:
+  ; is it marked active / bootable?
+  cmp byte [si], 0x80
+  ; yup!
+  je blastoff
+
+  ; go to the next partition entry
+  add si, 0x10
+  ; continue
+  loop printpart
+  ; if we got here, it means that no partition is active
+  jmp halt
+
+blastoff:
   mov si, msg
   call putstr
 
-hang:
+; "This is the end of the road; this is the end of the line
+;  This is the end of your life; this is the..." -- Endgame
+halt:
   cli
   hlt
 
@@ -58,23 +75,23 @@ putstr:
     popa
     ret
 
-msg db 'hello, 16-bit world', 0xd, 0xa, 0
+msg: db 'blastoff', 0xd, 0xa, 0
 ; number of the drive we have booted from
-bootdrv db 0
+bootdrv: db 0
 
 ; pad the remainder of the code section with zeros
 times 446-($-$$) db 0
 
 ; the phony partition table
-; three blank partition entries (3 * 16)
-%rep 48
-  db 0x00
-%endrep
-; the Nihilum's entry (shamelessly copied from /usr/src/sys/boot/i386/boot0.S)
+; Nihilum's entry (shamelessly copied from /usr/src/sys/boot/i386/boot2/boot1.S)
 db 0x80, 0x00, 0x01, 0x00
 db 0x7f, 0xfe, 0xff, 0xff
 db 0x00, 0x00, 0x00, 0x00
 db 0x50, 0xc3, 0x00, 0x00
+; three blank partition entries (3 * 16)
+%rep 48
+  db 0x00
+%endrep
 
 ; the standard PC boot signature
 dw 0xaa55
