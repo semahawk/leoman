@@ -1,12 +1,13 @@
 .PHONY: all img run iso clean
 .SUFFIXES: .asm .bin
 
-OBJS = boot0.bin
+OBJS = boot0.bin \
+			 boot1.bin
 
 all: nihilum
 
 nihilum: $(OBJS)
-	cat boot0.bin > nihilum
+	cat boot0.bin boot1.bin > nihilum
 
 .asm.bin:
 	nasm -f bin $< -o $@

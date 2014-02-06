@@ -98,7 +98,8 @@ blastoff:
   mov al, 0x4d
   int 10h
 
-  jmp $
+  ; buenos aires!
+  jmp 0x0000:0x7c00
 
 ; "This is the end of the road; this is the end of the line
 ;  This is the end of your life; this is the..." -- Endgame
@@ -118,7 +119,7 @@ times 446-($-$$) db 0
   db 0x00
 %endrep
 ; Nihilum's entry (shamelessly copied from /usr/src/sys/boot/i386/boot2/boot1.S)
-db 0x80, 0x00, 0x01, 0x00
+db 0x80, 0x00, 0x02, 0x00
 db 0x7f, 0xfe, 0xff, 0xff
 db 0x00, 0x00, 0x00, 0x00
 db 0x50, 0xc3, 0x00, 0x00
