@@ -81,22 +81,32 @@ blastoff:
   mov ah, 0x02         ; the instruction
   mov al, 1            ; load one sector
   mov dl, [bootdrv]    ; the drive we've booted from
+  push dx              ; save dl for later
   int 13h              ; read!
   ; error, let's try again
   jc .read
-
-  ; I'm not sure if int 13h preserves `dl'
-  ; it probably does, but still..
-  mov dl, [bootdrv]
-  ; set ds:si to 0x07c0:0x01.e (whatever the active partition was)
-  mov ax, 0x07c0
-  mov ds, ax
-  pop si
 
   ; print 'M'
   mov ah, 0xe
   mov al, 0x4d
   int 10h
+  ; print two newlines
+  mov cx, 2
+twonls:
+  mov ah, 0xe
+  mov al, 0xd
+  int 10h
+  mov ah, 0xe
+  mov al, 0xa
+  int 10h
+  loop twonls
+
+  ; restore dl
+  pop dx
+  ; set ds:si to 0x07c0:0x01.e (whatever the active partition was)
+  mov ax, 0x07c0
+  mov ds, ax
+  pop si
 
   ; buenos aires!
   jmp 0x0000:0x7c00

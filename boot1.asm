@@ -1,20 +1,228 @@
 BITS 16
 ORG 0
 
-jmp near start
+jmp 0x07c0:boot1
 
-start:
-  ; print '.'
-  mov ah, 0xe
-  mov al, '.'
-  int 10h
+boot1:
+  ; update the segment register
+  mov ax, 0x07c0
+  mov ds, ax
+
+  ; set up the stack
+  cli
+  xor ax, ax
+  mov ss, ax
+  mov sp, 0x7c00   ; put the stack right below the bootsector
+  sti
+
+  ; save the drive number from which we've booted
+  mov [bootdrv], dl
+  call puthex
+  call putnl
+  call putnl
+
+get_drive_params:
+  ; fetch the drive geometry
+  ;
+  ; let's see if we're on a hardrive or a floppy
+  ; if it's a hard drive, then we'll calculate/retrieve the values
+  ; if it's a floppy, then we'll use the defaults
+  cmp dl, 0x80
+  ;jl .floppy
+  jmp .floppy    ; the BIOS gives strange results :c
+  ; here, it's a harddrive
+  xor dx, dx
+  xor cx, cx  ; zero out dx and cx
+  ; call uncle BIOS
+  mov ah, 8
+  mov dl, [bootdrv]
+  int 13h
+  ; now dh contains the number of heads - 1, so let's retrieve it
+  add dh, 1
+  mov [number_of_heads], byte dh
+  ; cl holds the sector number, but, only the first 6 bits contain the actual number
+  and cx, 0x003f
+  mov [sectors_per_track], byte cl
+  jmp .end
+
+.floppy:
+  ; here, it's a floppy
+  mov byte [number_of_heads], 16
+  mov byte [sectors_per_track], 63
+
+.end:
+;
+; Load the superblock
+;
+reset_sblk:
+  ; reset the boot drive
+  xor ah, ah
+  mov dl, [bootdrv]
+  int 13h
+  ; error, let's try again
+  jc reset_sblk
+
+read_sblk:
+  ; the primary superblock is 8KiB (16 sectors) wide, and is at
+  ; offset 0x10000 (128 sectors), which makes it an LBA 128
+  ; so yup, let's translate it into CHS
+
+  ; temp     = LBA / sectors per track
+  ; sector   = (LBA % sectors per track) + 1
+  ; cylinder = temp / number of heads
+  ; head     = temp % number of heads
+
+  mov ax, 128         ; LBA / sectors per track
+  div byte [sectors_per_track]
+  xor dx, dx          ; dx will be the temp 'variable'
+  mov dl, ah          ; dl = ah = LBA / sectors per track
+                      ; al = LBA % sectors per track
+  inc al              ; al++
+  mov [sector], al    ; sector = al
+
+  mov ax, dx          ; temp / number of heads
+  div byte [number_of_heads]
+  mov [cylinder], ah  ; cylinder = ah = temp / number of heads
+  mov [head], al      ; head = al = temp % number of heads
+
+  xor dx, dx
+  mov dl, [number_of_heads]
+  call puthex
+  call putnl
+
+  mov dl, [sectors_per_track]
+  call puthex
+  call putnl
+  call putnl
+
+  ; print the CHS values
+  xor dx, dx
+  mov dl, [head]
+  call puthex
+  call putnl
+
+  mov dl, [cylinder]
+  call puthex
+  call putnl
+
+  mov dl, [sector]
+  call puthex
+  call putnl
+  call putnl
+
+  ; error, let's try again
+  jc read_sblk
+
+welcome:
+  mov si, welcome_msg
+  call putstr
 
 halt:
   cli
   hlt
 
-; pad the remainder of the code section with zeros
-times 512-($-$$) db 0
+; prints a newline
+putnl:
+; {{{
+  pusha
+  mov ah, 0xe
+  mov al, 0xd
+  int 10h
+  mov al, 0xa
+  int 10h
+  popa
+  ret
+; }}}
+
+; prints characters from SI until a nul is found
+putstr:
+; {{{
+  pusha
+  mov ah, 0xe
+  .putchar:
+    lodsb
+    cmp al, 0
+    je .done
+    int 10h
+    jmp .putchar
+  .done:
+    popa
+    ret
+; }}}
+
+; print the value in AL as a digit (0-9 as decimal, 10-15 as
+; lowercase hexadecimal)
+putdigit:
+; {{{
+  pusha
+  cmp al, 10
+  jl .ten_less
+  .ten_more:
+    add al, 87
+    jmp .print
+  .ten_less:
+    add al, 48
+  .print:
+    mov ah, 0xE
+    int 10h
+    popa
+    ret
+; }}}
+
+; print the value in DX as a hexadecimal word
+puthex:
+; {{{
+  pusha
+  mov bx, 0
+  mov cx, 0
+  mov ah, 0xE
+  mov al, '0'
+  int 10h
+  mov al, 'x'
+  int 10h          ; print the leading '0x'
+
+  mov cx, dx
+  and cx, 0xF000   ; fetch the first nibble
+  shr cx, 12       ; shift twelve bits right
+  mov al, cl
+  call putdigit    ; print it
+  mov cx, dx
+  and cx, 0x0F00   ; fetch the second nibble
+  shr cx, 8        ; shift eight bits right
+  mov al, cl
+  call putdigit    ; print it
+  mov cx, dx
+  and cx, 0x00F0   ; fetch the third nibble
+  shr cx, 4        ; shift four bits right
+  mov al, cl
+  call putdigit    ; print it
+  mov cx, dx
+  and cx, 0x000F   ; fetch the fourth nibble
+                   ; no need to shift
+  mov al, cl
+  call putdigit    ; print it
+  popa
+  ret
+; }}}
+
+; the messages
+welcome_msg: db 'Welcome.', 0xd, 0xa, 0
+
+; number of heads
+number_of_heads: db 0
+; sectors per track
+sectors_per_track: db 0
+; when loading the kernel, this is the head value
+head: db 0
+; this is the cylinder number
+cylinder: db 0
+; and the sector
+sector: db 0
+; number of the drive we have booted from
+bootdrv: db 0
+
+; make it be 16 sectors wide
+times 512*16-($-$$) db 0
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 
