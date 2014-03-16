@@ -17,9 +17,10 @@ boot1:
 
   ; save the drive number from which we've booted
   mov [bootdrv], dl
-  call puthex
-  call putnl
-  call putnl
+call puthex
+mov ah, 0eh
+mov al, ' '
+int 10h
 
 get_drive_params:
   ; fetch the drive geometry
@@ -28,9 +29,12 @@ get_drive_params:
   ; if it's a hard drive, then we'll calculate/retrieve the values
   ; if it's a floppy, then we'll use the defaults
   cmp dl, 0x80
-  ;jl .floppy
-  jmp .floppy    ; the BIOS gives strange results :c
+  jb .floppy
+
   ; here, it's a harddrive
+  mov si, hd_msg    ;
+  call putstr       ; deleteme
+
   xor dx, dx
   xor cx, cx  ; zero out dx and cx
   ; call uncle BIOS
@@ -38,15 +42,18 @@ get_drive_params:
   mov dl, [bootdrv]
   int 13h
   ; now dh contains the number of heads - 1, so let's retrieve it
-  add dh, 1
-  mov [number_of_heads], byte dh
+  inc dh
+  mov byte [number_of_heads], dh
   ; cl holds the sector number, but, only the first 6 bits contain the actual number
   and cx, 0x003f
-  mov [sectors_per_track], byte cl
+  mov byte [sectors_per_track], cl
   jmp .end
 
 .floppy:
   ; here, it's a floppy
+  mov si, floppy_msg
+  call putstr
+
   mov byte [number_of_heads], 16
   mov byte [sectors_per_track], 63
 
@@ -62,29 +69,30 @@ reset_sblk:
   ; error, let's try again
   jc reset_sblk
 
-read_sblk:
+calculate_chs:
   ; the primary superblock is 8KiB (16 sectors) wide, and is at
   ; offset 0x10000 (128 sectors), which makes it an LBA 128
   ; so yup, let's translate it into CHS
 
   ; temp     = LBA / sectors per track
-  ; sector   = (LBA % sectors per track) + 1
-  ; cylinder = temp / number of heads
+  ; sector   = LBA % sectors per track + 1
   ; head     = temp % number of heads
+  ; cylinder = temp / number of heads
 
   mov ax, 128         ; LBA / sectors per track
   div byte [sectors_per_track]
   xor dx, dx          ; dx will be the temp 'variable'
-  mov dl, ah          ; dl = ah = LBA / sectors per track
-                      ; al = LBA % sectors per track
-  inc al              ; al++
-  mov [sector], al    ; sector = al
+  mov dl, al          ; al = dl = LBA / sectors per track
+                      ; ah = LBA % sectors per track
+  inc ah              ; ah++
+  mov [sector], ah    ; sector = ah
 
   mov ax, dx          ; temp / number of heads
   div byte [number_of_heads]
-  mov [cylinder], ah  ; cylinder = ah = temp / number of heads
-  mov [head], al      ; head = al = temp % number of heads
+  mov [head], ah      ; head = ah = temp % number of heads
+  mov [cylinder], al  ; cylinder = al = temp / number of heads
 
+  call putnl
   xor dx, dx
   mov dl, [number_of_heads]
   call puthex
@@ -97,11 +105,11 @@ read_sblk:
 
   ; print the CHS values
   xor dx, dx
-  mov dl, [head]
+  mov dl, [cylinder]
   call puthex
   call putnl
 
-  mov dl, [cylinder]
+  mov dl, [head]
   call puthex
   call putnl
 
@@ -110,12 +118,47 @@ read_sblk:
   call putnl
   call putnl
 
+read_sblk:
+  ; all right, calculations are done, now let's roll!
+  ; load the super block into just above the bootloader
+  mov ax, 0x07e0
+  mov es, ax
+  xor bx, bx          ; es:bx = 0x07e0:0x0000 (= 0x7e00)
+
+  mov ah, 02h         ; the instruction
+  mov al, 10h         ; load 16 sectors
+  mov ch, [cylinder]  ; the calculated cylinder
+  mov dh, [head]      ; the calculated head
+  mov cl, [sector]    ; the calculated sector
+  mov dl, [bootdrv]   ; the drive we've booted from
+  int 13h             ; load!
+
   ; error, let's try again
   jc read_sblk
 
 welcome:
   mov si, welcome_msg
   call putstr
+  call putnl
+
+  ; DEBUG: see if the sblk was really loaded
+  mov ax, 0x0
+  mov ds, ax
+  mov si, 0x7e00
+
+  xor dx, dx
+  mov dl, [si + 4]
+  call puthex
+  call putnl
+  mov dl, [si + 8]
+  call puthex
+  call putnl
+  mov dl, [si + 12]
+  call puthex
+  call putnl
+  mov dl, [si + 16]
+  call puthex
+  call putnl
 
 halt:
   cli
@@ -206,7 +249,9 @@ puthex:
 ; }}}
 
 ; the messages
-welcome_msg: db 'Welcome.', 0xd, 0xa, 0
+welcome_msg: db 'sblk tinydump:', 0xd, 0xa, 0
+floppy_msg: db 'Floppy.', 0xd, 0xa, 0
+hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 
 ; number of heads
 number_of_heads: db 0
@@ -221,8 +266,8 @@ sector: db 0
 ; number of the drive we have booted from
 bootdrv: db 0
 
-; make it be 16 sectors wide
-times 512*16-($-$$) db 0
+; make it be 127 sectors wide
+times 512*127-($-$$) db 0
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 
