@@ -234,32 +234,43 @@ loop_through_cgs:
   ; space for some variables
   cgbase: dd 0
   cgimin: dd 0
+  cgtod: dd 0
+  phcgimin: dd 0
   fsb: dd 0
-  phys: dd 0
+  tell: dd 0
 
   varsend:
   ; save the counter
   push ecx
 
-  ; calculate the physical address of the given CG
+  ; calculate the physical address of the current CG
   ;
   ; cgbase(N) = fs_fpg * N
-  ; cgimin(N) = cgbase(N) + fs_cblkno
-  ; phys = fsbtodb(cgimin(ECX)) * d_bsize
+  ; cgtod(N) = cgbase(N) + cblkno
+  ; tell = fsbtodb(cgtod(CURRENT)) * d_bsize
   mov eax, [fs_fpg]     ; eax = fs_fpg
   mul ecx               ; edx:eax = eax * ecx
-  mov ecx, eax
-;jmp $
+  mov ecx, eax          ; ecx = eax
   mov [cgbase], ecx     ; cgbase = ecx
   add ecx, [fs_cblkno]  ; ecx += fs_cblkno
-;jmp $
-  mov [cgimin], ecx     ; cgimin = ecx
+  mov [cgtod], ecx      ; cgtod = ecx
   fsbtodb eax, ecx      ; eax = fsbtodb(ecx)
-;jmp $
   mov [fsb], eax        ; fsb = eax
   mul dword [d_bsize]   ; edx:eax = eax * d_bsize
-;jmp $
-  mov [phys], eax       ; THE RESULT = eax
+  mov [tell], eax       ; THE RESULT = eax
+
+  ; calculate the physical address of the inodes
+  ;
+  ; cgbase(N) = fs_fpg * N
+  ; cgimin(N) = cgbase(N) + iblkno
+  ; phcgimin = fsbtodb(cgimin(CURRENT)) * d_bsize
+  mov eax, [cgbase]     ; eax = cgbase(N)
+  add eax, [fs_iblkno]  ; eax = cgbase(N) + fs_iblkno
+  mov [cgimin], eax     ; cgimin = eax
+  mov ecx, eax
+  fsbtodb eax, ecx      ; eax = fsbtodb(ECX)
+  mul dword [d_bsize]   ; edx:eax = eax * d_bsize
+  mov [phcgimin], eax   ; THE RESULT = eax
 
   mov si, cg_msg
   call putstr
@@ -272,7 +283,12 @@ loop_through_cgs:
   int 10h
   mov al, ' '
   int 10h
-  mov edx, [phys]
+  mov edx, [tell]
+  call puthex
+  mov ah, 0xe
+  mov al, ' '
+  int 10h
+  mov edx, [phcgimin]
   call puthex
   call putnl
 
@@ -370,8 +386,8 @@ bootdrv: db 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 cg_msg: db 'CG #', 0
-welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0
-goodbye_msg: db 'Sit vis vobiscum', 0xd, 0xa, 0
+welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0xd, 0xa, 0
+goodbye_msg: db 0xd, 0xa, 'Sit vis vobiscum', 0xd, 0xa, 0
 
 ; make it be 127 sectors wide
 times 512*127-($-$$) db 0
