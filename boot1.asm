@@ -96,7 +96,32 @@ boot1:
   cli
   xor ax, ax
   mov ss, ax
-  mov sp, 0x7c00   ; put the stack right below the bootsector
+  mov sp, 0x5c00
+  sti
+
+; 'enter' unreal mode
+go_unreal:
+  ; disable interrupts
+  cli
+  ; save the data segment
+  push ds
+  ; load the GDT
+  lgdt [gdt]
+  ; set the PE bit
+  mov eax, cr0
+  or  al, 1
+  mov cr0, eax
+  ; tell 386/486 not to crash
+  jmp $+2
+  ; select the code descriptor
+  mov bx, 0x08
+  mov ds, bx
+  ; unset the PE bit, back to real mode
+  and al, 0xfe
+  mov cr0, eax
+  ; restore the data segment
+  pop ds
+  ; enable interrupts
   sti
 
   ; save the drive number from which we've booted
@@ -205,9 +230,9 @@ calculate_chs:
 read_sblk:
   ; all right, calculations are done, now let's roll!
   ; load the super block into just above the bootloader
-  mov ax, 0x07e0
+  mov ax, 0x05c0
   mov es, ax
-  xor bx, bx          ; es:bx = 0x07e0:0x0000 (= 0x7e00)
+  xor bx, bx          ; es:bx = 0x05c0:0x0000 (= 0x5c00)
 
   mov ah, 02h         ; the instruction
   mov al, 10h         ; load 16 sectors
@@ -228,7 +253,7 @@ welcome:
   ; DEBUG: see if the sblk was really loaded
   mov ax, 0x0
   mov ds, ax
-  mov si, 0x7e00
+  mov si, 0x5c00
 
   xor dx, dx
   mov dl, [si + 4]
@@ -243,31 +268,6 @@ welcome:
   mov dl, [si + 16]
   call puthex
   call putnl
-
-; 'enter' unreal mode
-go_unreal:
-  ; disable interrupts
-  cli
-  ; save the data segment
-  push ds
-  ; load the GDT
-  lgdt [gdt]
-  ; set the PE bit
-  mov eax, cr0
-  or  al, 1
-  mov cr0, eax
-  ; tell 386/486 not to crash
-  jmp $+2
-  ; select the code descriptor
-  mov bx, 0x08
-  mov ds, bx
-  ; unset the PE bit, back to real mode
-  and al, 0xfe
-  mov cr0, eax
-  ; restore the data segment
-  pop ds
-  ; enable interrupts
-  sti
 
   ; print a smiley face
   mov bx, 0x0f01
