@@ -34,5 +34,5 @@ clean:
 	rm -f *.iso
 
 distclean: clean
-	rm nihilum
+	rm -f nihilum
 

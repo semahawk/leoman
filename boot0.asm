@@ -12,28 +12,28 @@ boot0:
   cli
   xor ax, ax
   mov ss, ax
-  mov sp, 0x7c00   ; put the stack right below the bootsector
+  mov sp, 0x7a00   ; put the stack 512 bytes below the bootsector
   sti
 
   ; save the device's number from which we've booted
   mov [bootdrv], dl
 
-  ; relocate to 0x7e00
+  ; relocate itself to 0x7a00
   cld                   ; go downwards
   mov si, boot0         ; source
-  mov di, 0x7e00        ; destination
+  mov di, 0x7a00        ; destination
   mov cx, 0x0100        ; one whole sector (0x100 words - 0x200 bytes)
   rep movsw             ; do it!
-  jmp 0x07e0:relocated  ; jump to the relocated bit
+  jmp 0x07a0:relocated  ; jump to the relocated bit
 
 relocated:
   ; update the segment register
-  mov ax, 0x07e0
+  mov ax, 0x07a0
   mov ds, ax
 
   ; read the partition table
   mov es, ax
-  mov si, 0x01be  ; es:si = 0x07e0:0x01be (= 0x7fbe)
+  mov si, 0x01be  ; es:si = 0x07a0:0x01be (= 0x7bbe)
   mov cx, 4       ; four loops
   ; 'parse' the partition table, see which partition is active / bootable, and
   ; then 'boot' it
@@ -66,20 +66,20 @@ blastoff:
 
 .read:
   ; set up the registers
-  xor ax, ax
+  mov ax, 0x07c0
   mov es, ax
-  mov bx, 0x7c00       ; es:bx = 0000h:7c00h (= 0x7c00)
+  mov bx, 0x0000       ; es:bx = 0x07c0:0x0000 (= 0x7c00)
 
-  ; set the CHS registers
+  ; save the source register
   push si
+
+  ; set the rest of the registers
+  mov ah, 02h          ; the instruction
+  mov al, 7fh          ; load 127 sectors (65024 bytes)
+  mov ch, [si + 0x3]   ; bits 7-0 of cylinder
   mov dh, [si + 0x1]   ; head
   mov cl, [si + 0x2]   ; sector in bits 5-0; bits 7-6 are high bits of
                        ; cylinder
-  mov ch, [si + 0x3]   ; bits 7-0 of cylinder
-
-  ; set the rest of the registers
-  mov ah, 0x02         ; the instruction
-  mov al, 1            ; load one sector
   mov dl, [bootdrv]    ; the drive we've booted from
   push dx              ; save dl for later
   int 13h              ; read!
