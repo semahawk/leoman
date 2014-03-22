@@ -239,6 +239,7 @@ loop_through_cgs:
   phcgimin: dd 0
   phcgdmin: dd 0
   tell: dd 0
+  inodesz: db 0
 
   varsend:
   ; save the counter
@@ -307,6 +308,12 @@ loop_through_cgs:
   mov edx, [phcgdmin]
   call puthex
   call putnl
+
+  xor edx, edx
+  mov eax, [phcgdmin]
+  sub eax, [phcgimin]
+  div dword [fs_ipg]
+  mov [inodesz], eax
 
   ; restore the counter
   pop ecx
