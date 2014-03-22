@@ -179,19 +179,19 @@ welcome:
   mov [fs_%1], eax
 %endmacro
 
-  fetch sblkno,  8
-  fetch cblkno,  12
-  fetch iblkno,  16
-  fetch dblkno,  20
-  fetch ncg,     44
-  fetch bsize,   48
-  fetch fsize,   52
-  fetch frag,    56
-  fetch fsbtodb, 100
-  fetch cgsize,  160
-  fetch ipg,     184
-  fetch fpg,     188
-  fetch size,    1080
+  fetch sblkno,    8
+  fetch cblkno,    12
+  fetch iblkno,    16
+  fetch dblkno,    20
+  fetch ncg,       44
+  fetch bsize,     48
+  fetch fsize,     52
+  fetch frag,      56
+  fetch fsbtodb,   100
+  fetch cgsize,    160
+  fetch ipg,       184
+  fetch fpg,       188
+  fetch size,      1080
 
 ; fetch is no more
 %undef fetch
@@ -234,9 +234,10 @@ loop_through_cgs:
   ; space for some variables
   cgbase: dd 0
   cgimin: dd 0
+  cgdmin: dd 0
   cgtod: dd 0
   phcgimin: dd 0
-  fsb: dd 0
+  phcgdmin: dd 0
   tell: dd 0
 
   varsend:
@@ -246,31 +247,41 @@ loop_through_cgs:
   ; calculate the physical address of the current CG
   ;
   ; cgbase(N) = fs_fpg * N
-  ; cgtod(N) = cgbase(N) + cblkno
+  ; cgtod(N) = cgbase(N) + fs_cblkno
   ; tell = fsbtodb(cgtod(CURRENT)) * d_bsize
-  mov eax, [fs_fpg]     ; eax = fs_fpg
-  mul ecx               ; edx:eax = eax * ecx
-  mov ecx, eax          ; ecx = eax
-  mov [cgbase], ecx     ; cgbase = ecx
-  add ecx, [fs_cblkno]  ; ecx += fs_cblkno
-  mov [cgtod], ecx      ; cgtod = ecx
-  fsbtodb eax, ecx      ; eax = fsbtodb(ecx)
-  mov [fsb], eax        ; fsb = eax
-  mul dword [d_bsize]   ; edx:eax = eax * d_bsize
-  mov [tell], eax       ; THE RESULT = eax
+  mov eax, [fs_fpg]       ; eax = fs_fpg
+  mul ecx                 ; edx:eax = eax * ecx
+  mov ecx, eax            ; ecx = eax
+  mov [cgbase], ecx       ; cgbase = ecx
+  add ecx, [fs_cblkno]    ; ecx += fs_cblkno
+  mov [cgtod], ecx        ; cgtod = ecx
+  fsbtodb eax, ecx        ; eax = fsbtodb(ecx)
+  mul dword [d_bsize]     ; edx:eax = eax * d_bsize
+  mov [tell], eax         ; THE RESULT = eax
 
   ; calculate the physical address of the inodes
   ;
   ; cgbase(N) = fs_fpg * N
-  ; cgimin(N) = cgbase(N) + iblkno
+  ; cgimin(N) = cgbase(N) + fs_iblkno
   ; phcgimin = fsbtodb(cgimin(CURRENT)) * d_bsize
-  mov eax, [cgbase]     ; eax = cgbase(N)
-  add eax, [fs_iblkno]  ; eax = cgbase(N) + fs_iblkno
-  mov [cgimin], eax     ; cgimin = eax
-  mov ecx, eax
-  fsbtodb eax, ecx      ; eax = fsbtodb(ECX)
-  mul dword [d_bsize]   ; edx:eax = eax * d_bsize
-  mov [phcgimin], eax   ; THE RESULT = eax
+  mov ecx, [cgbase]       ; ecx = cgbase(N)
+  add ecx, [fs_iblkno]    ; ecx = cgbase(N) + fs_iblkno
+  mov [cgimin], ecx       ; cgimin = ecx
+  fsbtodb eax, ecx        ; eax = fsbtodb(ecx)
+  mul dword [d_bsize]     ; edx:eax = eax * d_bsize
+  mov [phcgimin], eax     ; THE RESULT = eax
+
+  ; calculate the physical address of the data blocks
+  ;
+  ; cgbase(N) = fs_fpg * N
+  ; cgdmin(N) = cgbase(N) + fs_dblkno
+  ; phcgdmin = fsbtodb(cgdmin(CURRENT)) * d_bsize
+  mov ecx, [cgbase]       ; ecx = cgbase(N)
+  add ecx, [fs_dblkno]    ; ecx = cgbase(N) + fs_dblkno
+  mov [cgdmin], ecx       ; cgdmin = ecx
+  fsbtodb eax, ecx        ; eax = fsbtodb(ecx)
+  mul dword [d_bsize]     ; edx:eax = eax * d_bsize
+  mov [phcgdmin], eax     ; THE RESULT = eax
 
   mov si, cg_msg
   call putstr
@@ -289,6 +300,11 @@ loop_through_cgs:
   mov al, ' '
   int 10h
   mov edx, [phcgimin]
+  call puthex
+  mov ah, 0xe
+  mov al, ' '
+  int 10h
+  mov edx, [phcgdmin]
   call puthex
   call putnl
 
