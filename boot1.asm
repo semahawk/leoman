@@ -1,11 +1,95 @@
 BITS 16
-ORG 0
+ORG 0x7c00
 
-jmp 0x07c0:boot1
+jmp boot1
+
+; prints a newline
+putnl:
+; {{{
+  pusha
+  mov ah, 0xe
+  mov al, 0xd
+  int 10h
+  mov al, 0xa
+  int 10h
+  popa
+  ret
+; }}}
+
+; prints characters from SI until a nul is found
+putstr:
+; {{{
+  pusha
+  mov ah, 0xe
+  .putchar:
+    lodsb
+    cmp al, 0
+    je .done
+    int 10h
+    jmp .putchar
+  .done:
+    popa
+    ret
+; }}}
+
+; print the value in AL as a digit (0-9 as decimal, 10-15 as
+; lowercase hexadecimal)
+putdigit:
+; {{{
+  pusha
+  cmp al, 10
+  jl .ten_less
+  .ten_more:
+    add al, 87
+    jmp .print
+  .ten_less:
+    add al, 48
+  .print:
+    mov ah, 0xE
+    int 10h
+    popa
+    ret
+; }}}
+
+; print the value in DX as a hexadecimal word
+puthex:
+; {{{
+  pusha
+  mov bx, 0
+  mov cx, 0
+  mov ah, 0xE
+  mov al, '0'
+  int 10h
+  mov al, 'x'
+  int 10h          ; print the leading '0x'
+
+  mov cx, dx
+  and cx, 0xF000   ; fetch the first nibble
+  shr cx, 12       ; shift twelve bits right
+  mov al, cl
+  call putdigit    ; print it
+  mov cx, dx
+  and cx, 0x0F00   ; fetch the second nibble
+  shr cx, 8        ; shift eight bits right
+  mov al, cl
+  call putdigit    ; print it
+  mov cx, dx
+  and cx, 0x00F0   ; fetch the third nibble
+  shr cx, 4        ; shift four bits right
+  mov al, cl
+  call putdigit    ; print it
+  mov cx, dx
+  and cx, 0x000F   ; fetch the fourth nibble
+                   ; no need to shift
+  mov al, cl
+  call putdigit    ; print it
+  popa
+  ret
+; }}}
 
 boot1:
   ; update the segment register
-  mov ax, 0x07c0
+  xor ax, ax
   mov ds, ax
 
   ; set up the stack
@@ -160,98 +244,67 @@ welcome:
   call puthex
   call putnl
 
+; 'enter' unreal mode
+go_unreal:
+  ; disable interrupts
+  cli
+  ; save the data segment
+  push ds
+  ; load the GDT
+  lgdt [gdt]
+  ; set the PE bit
+  mov eax, cr0
+  or  al, 1
+  mov cr0, eax
+  ; tell 386/486 not to crash
+  jmp $+2
+  ; select the code descriptor
+  mov bx, 0x08
+  mov ds, bx
+  ; unset the PE bit, back to real mode
+  and al, 0xfe
+  mov cr0, eax
+  ; restore the data segment
+  pop ds
+  ; enable interrupts
+  sti
+
+  ; print a smiley face
+  mov bx, 0x0f01
+  mov eax, 0x0b8000
+  mov word [ds:eax], bx
+
 halt:
   cli
   hlt
 
-; prints a newline
-putnl:
-; {{{
-  pusha
-  mov ah, 0xe
-  mov al, 0xd
-  int 10h
-  mov al, 0xa
-  int 10h
-  popa
-  ret
-; }}}
+;
+; The Global Descriptor Table
+;
+gdt_data:
+; the null selector
+  dq 0x0           ; nothing!
 
-; prints characters from SI until a nul is found
-putstr:
-; {{{
-  pusha
-  mov ah, 0xe
-  .putchar:
-    lodsb
-    cmp al, 0
-    je .done
-    int 10h
-    jmp .putchar
-  .done:
-    popa
-    ret
-; }}}
+; the code selector: base = 0x0, limit = 0xfffff
+  dw 0xffff        ; limit low (0-15)
+  dw 0x0           ; base low (0-15)
+  db 0x0           ; base middle (16-23)
+  db 10011010b     ; access byte
+  db 11001111b     ; flags + limit (16-19)
+  db 0x0           ; base high (24-31)
 
-; print the value in AL as a digit (0-9 as decimal, 10-15 as
-; lowercase hexadecimal)
-putdigit:
-; {{{
-  pusha
-  cmp al, 10
-  jl .ten_less
-  .ten_more:
-    add al, 87
-    jmp .print
-  .ten_less:
-    add al, 48
-  .print:
-    mov ah, 0xE
-    int 10h
-    popa
-    ret
-; }}}
-
-; print the value in DX as a hexadecimal word
-puthex:
-; {{{
-  pusha
-  mov bx, 0
-  mov cx, 0
-  mov ah, 0xE
-  mov al, '0'
-  int 10h
-  mov al, 'x'
-  int 10h          ; print the leading '0x'
-
-  mov cx, dx
-  and cx, 0xF000   ; fetch the first nibble
-  shr cx, 12       ; shift twelve bits right
-  mov al, cl
-  call putdigit    ; print it
-  mov cx, dx
-  and cx, 0x0F00   ; fetch the second nibble
-  shr cx, 8        ; shift eight bits right
-  mov al, cl
-  call putdigit    ; print it
-  mov cx, dx
-  and cx, 0x00F0   ; fetch the third nibble
-  shr cx, 4        ; shift four bits right
-  mov al, cl
-  call putdigit    ; print it
-  mov cx, dx
-  and cx, 0x000F   ; fetch the fourth nibble
-                   ; no need to shift
-  mov al, cl
-  call putdigit    ; print it
-  popa
-  ret
-; }}}
-
-; the messages
-welcome_msg: db 'sblk tinydump:', 0xd, 0xa, 0
-floppy_msg: db 'Floppy.', 0xd, 0xa, 0
-hd_msg: db 'Hard drive.', 0xd, 0xa, 0
+; the data selector: base = 0x0, limit = 0xfffff
+  dw 0xffff        ; limit low (0-15)
+  dw 0x0           ; base low (0-15)
+  db 0x0           ; base middle (16-23)
+  db 10010010b     ; access byte
+  db 11001111b     ; flags + limit (16-19)
+  db 0x0           ; base high (24-31)
+; THE actual descriptor
+gdt_end:
+gdt:
+  dw gdt_end - gdt_data - 1 ; sizeof gdt
+  dd gdt_data
 
 ; number of heads
 number_of_heads: db 0
@@ -265,6 +318,11 @@ cylinder: db 0
 sector: db 0
 ; number of the drive we have booted from
 bootdrv: db 0
+
+; the messages
+welcome_msg: db 'sblk tinydump:', 0xd, 0xa, 0
+floppy_msg: db 'Floppy.', 0xd, 0xa, 0
+hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 
 ; make it be 127 sectors wide
 times 512*127-($-$$) db 0
