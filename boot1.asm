@@ -239,8 +239,11 @@ loop_through_cgs:
   phcgimin: dd 0
   phcgdmin: dd 0
   tell: dd 0
-  inodesz: db 0
-
+  inodesz: dw 0
+  lba: dd 0
+  c: db 0
+  h: db 0
+  s: db 0
   varsend:
   ; save the counter
   push ecx
@@ -313,7 +316,52 @@ loop_through_cgs:
   mov eax, [phcgdmin]
   sub eax, [phcgimin]
   div dword [fs_ipg]
-  mov [inodesz], eax
+  mov [inodesz], ax
+
+  ; calculate the LBA of the physical inodes address
+  xor edx, edx
+  mov eax, [phcgimin]
+  mov ecx, 512
+  div ecx
+  ; LBA = eax = phcgimin / 512
+  mov [lba], eax
+  ; edx = phcgimin % 512
+  xor edx, edx
+  xor ecx, ecx
+  mov cl, [sectors_per_track]
+  div dword ecx
+  ; eax = LBA / sectors_per_track
+  ; edx = LBA % sectors_per_track
+  inc dl
+  and dl, 0x3f
+  mov [s], dl
+  xor edx, edx
+  xor ecx, ecx
+  mov cl, [number_of_heads]
+  div dword ecx
+  ; eax = eax / number of heads
+  ; edx = eax % number of heads
+  mov [h], dl
+  mov [c], al
+  and ax, 0x300
+  shr ax, 2
+  or al, byte [s]
+  mov [s], al
+
+  ; phew! now let's calculate the number of sectors to load
+  mov edx, [lba]
+  call puthex
+  call putnl
+  xor edx, edx
+  mov dl, [c]
+  call puthex
+  call putnl
+  mov dl, [h]
+  call puthex
+  call putnl
+  mov dl, [s]
+  call puthex
+  call putnl
 
   ; restore the counter
   pop ecx
