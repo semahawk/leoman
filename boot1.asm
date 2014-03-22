@@ -225,7 +225,70 @@ welcome:
   mov eax, 0x0b8000
   mov word [ds:eax], bx
 
+; traverse the cylinder groups in search for the kernel
+; initialize the counter (going from 0 to fs_ncg)
+mov ecx, 0
+
+loop_through_cgs:
+  jmp varsend
+  ; space for some variables
+  cgbase: dd 0
+  cgimin: dd 0
+  fsb: dd 0
+  phys: dd 0
+
+  varsend:
+  ; save the counter
+  push ecx
+
+  ; calculate the physical address of the given CG
+  ;
+  ; cgbase(N) = fs_fpg * N
+  ; cgimin(N) = cgbase(N) + fs_cblkno
+  ; phys = fsbtodb(cgimin(ECX)) * d_bsize
+  mov eax, [fs_fpg]     ; eax = fs_fpg
+  mul ecx               ; edx:eax = eax * ecx
+  mov ecx, eax
+;jmp $
+  mov [cgbase], ecx     ; cgbase = ecx
+  add ecx, [fs_cblkno]  ; ecx += fs_cblkno
+;jmp $
+  mov [cgimin], ecx     ; cgimin = ecx
+  fsbtodb eax, ecx      ; eax = fsbtodb(ecx)
+;jmp $
+  mov [fsb], eax        ; fsb = eax
+  mul dword [d_bsize]   ; edx:eax = eax * d_bsize
+;jmp $
+  mov [phys], eax       ; THE RESULT = eax
+
+  mov si, cg_msg
+  call putstr
+  pop ecx
+  mov al, cl
+  push ecx
+  call putdigit
+  mov ah, 0xe
+  mov al, ':'
+  int 10h
+  mov al, ' '
+  int 10h
+  mov edx, [phys]
+  call puthex
+  call putnl
+
+  ; restore the counter
+  pop ecx
+  ; counter++
+  inc ecx
+  ; see if the counter is less than fs_ncg
+  cmp ecx, [fs_ncg]
+  ; if it is then go back to the beginning of the loop
+  jb loop_through_cgs
+
 halt:
+  mov si, goodbye_msg
+  call putstr
+
   cli
   hlt
 
@@ -304,9 +367,11 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
-welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
+cg_msg: db 'CG #', 0
+welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0
+goodbye_msg: db 'Sit vis vobiscum', 0xd, 0xa, 0
 
 ; make it be 127 sectors wide
 times 512*127-($-$$) db 0
