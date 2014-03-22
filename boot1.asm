@@ -248,26 +248,59 @@ read_sblk:
 welcome:
   mov si, welcome_msg
   call putstr
-  call putnl
 
-  ; DEBUG: see if the sblk was really loaded
+  ; set up the segments
   mov ax, 0x0
   mov ds, ax
   mov si, 0x5c00
 
-  xor dx, dx
-  mov dl, [si + 4]
-  call puthex
-  call putnl
-  mov dl, [si + 8]
-  call puthex
-  call putnl
-  mov dl, [si + 12]
-  call puthex
-  call putnl
-  mov dl, [si + 16]
-  call puthex
-  call putnl
+  ; fetch the superblock essentials
+  ; ...with a handy macro!
+%macro fetch 2
+  mov eax, dword [si + %2]
+  mov [fs_%1], eax
+%endmacro
+
+  fetch sblkno,  8
+  fetch cblkno,  12
+  fetch iblkno,  16
+  fetch dblkno,  20
+  fetch ncg,     44
+  fetch bsize,   48
+  fetch fsize,   52
+  fetch frag,    56
+  fetch fsbtodb, 100
+  fetch cgsize,  160
+  fetch ipg,     184
+  fetch fpg,     188
+  fetch size,    1080
+
+; fetch is no more
+%undef fetch
+
+; fsbtodb(reg, val):
+;   reg = val << fs_fsbtodb
+;
+; !! reg must be different than ECX!
+;
+%macro fsbtodb 2
+  ; save
+  push ecx
+  ; shift you!
+  mov %1, %2
+  mov ecx, dword [fs_fsbtodb]
+  shl %1, cl
+  ; restore
+  pop ecx
+%endmacro
+
+  ; d_bsize is not fetched, but calculated
+  xor edx, edx
+  mov eax, [fs_fsize]
+  fsbtodb ebx, 1
+  div dword ebx
+  ; d_bsize = eax = fs_fsize / fsbtodb(1)
+  mov [d_bsize], eax
 
   ; print a smiley face
   mov bx, 0x0f01
@@ -306,6 +339,39 @@ gdt:
   dw gdt_end - gdt_data - 1 ; sizeof gdt
   dd gdt_data
 
+; Superblock variables
+;
+; offset of superblock in filesystem
+fs_sblkno: dd 0
+; offset of cylinder block
+fs_cblkno: dd 0
+; offset of inode blocks
+fs_iblkno: dd 0
+; offset of first data after CG
+fs_dblkno: dd 0
+; # of cylinder groups
+fs_ncg: dd 0
+; size of basic blocks in fs
+fs_bsize: dd 0
+; size of fragment blocks in fs
+fs_fsize: dd 0
+; number of framents in a block
+fs_frag: dd 0
+; fstbtodb and dbtofsb shift constant
+fs_fsbtodb: dd 0
+; cylinder group size
+fs_cgsize: dd 0
+; inodes per group
+fs_ipg: dd 0
+; blocks per group * fs_frag
+fs_fpg: dd 0
+; number of blocks in fs
+fs_size: dq 0
+; number of data blocks in fs
+fs_dsize: dq 0
+; device bsize
+d_bsize: dd 0
+
 ; number of heads
 number_of_heads: db 0
 ; sectors per track
@@ -320,7 +386,7 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
-welcome_msg: db 'sblk tinydump:', 0xd, 0xa, 0
+welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 
