@@ -226,7 +226,7 @@ welcome:
   mov word [ds:eax], bx
 
 ; traverse the cylinder groups in search for the kernel
-; initialize the counter (going from 0 to fs_ncg)
+; initialize the counter (0->fs_ncg)
 mov ecx, 0
 
 loop_through_cgs:
@@ -244,9 +244,16 @@ loop_through_cgs:
   c: db 0
   h: db 0
   s: db 0
+  sectors_to_load: dd 0
+  memloc: dd 0x01000000
   varsend:
   ; save the counter
   push ecx
+  ; initialize memloc back to it's original state
+  ; as we want to override the previous CG's data
+  ; because if we're traversing another CG, it means the previous didn't have
+  ; what we were looking for
+  mov dword [memloc], 0x01000000
 
   ; calculate the physical address of the current CG
   ;
@@ -312,6 +319,7 @@ loop_through_cgs:
   call puthex
   call putnl
 
+  ; calculate the size of a single inode
   xor edx, edx
   mov eax, [phcgdmin]
   sub eax, [phcgimin]
@@ -326,42 +334,110 @@ loop_through_cgs:
   ; LBA = eax = phcgimin / 512
   mov [lba], eax
   ; edx = phcgimin % 512
-  xor edx, edx
-  xor ecx, ecx
-  mov cl, [sectors_per_track]
-  div dword ecx
-  ; eax = LBA / sectors_per_track
-  ; edx = LBA % sectors_per_track
-  inc dl
-  and dl, 0x3f
-  mov [s], dl
-  xor edx, edx
-  xor ecx, ecx
-  mov cl, [number_of_heads]
-  div dword ecx
-  ; eax = eax / number of heads
-  ; edx = eax % number of heads
-  mov [h], dl
-  mov [c], al
-  and ax, 0x300
-  shr ax, 2
-  or al, byte [s]
-  mov [s], al
 
-  ; phew! now let's calculate the number of sectors to load
-  mov edx, [lba]
-  call puthex
-  call putnl
-  xor edx, edx
-  mov dl, [c]
-  call puthex
-  call putnl
-  mov dl, [h]
-  call puthex
-  call putnl
-  mov dl, [s]
-  call puthex
-  call putnl
+  ; calculate the number of sectors to load (we're going to be loading the
+  ; inodes, a sector at once)
+  xor eax, eax
+  mov  ax, word [inodesz]
+  mov ebx, [fs_ipg]
+  mul dword ebx
+  ; edx:eax = inode size * fs_ipg
+  mov [sectors_to_load], eax
+  xor ecx, ecx   ; this be our counter (0->sectors_to_load)
+
+  fetch_one_sector:
+    ; save the register
+    push ecx
+
+    mov eax, [lba]
+    xor edx, edx
+    xor ecx, ecx
+    mov cl, [sectors_per_track]
+    div dword ecx
+    ; eax = LBA / sectors_per_track
+    ; edx = LBA % sectors_per_track
+    inc dl
+    and dl, 0x3f
+    mov [s], dl
+    xor edx, edx
+    xor ecx, ecx
+    mov cl, [number_of_heads]
+    div dword ecx
+    ; eax = eax / number of heads
+    ; edx = eax % number of heads
+    mov [h], dl
+    mov [c], al
+    and ax, 0x300
+    shr ax, 2
+    or al, byte [s]
+    mov [s], al
+
+    ; debug print only the last few lines
+pop ecx
+    mov eax, ecx
+push ecx
+    ;xor edx, edx
+    ;mov ecx, 512
+    ;div ecx
+    ;cmp edx, dword 0
+    ;ja skip_printing
+    cmp eax, dword 0x2
+    jbe do_the_printing
+    cmp eax, dword 0xfb7ffc
+    jb skip_printing
+    do_the_printing:
+
+    mov edx, [memloc]
+    call puthex
+mov ah, 0xe
+mov al, ' '
+int 10h
+    mov edx, [lba]
+    call puthex
+mov ah, 0xe
+mov al, ' '
+    int 10h
+pop ecx
+    mov edx, ecx
+push ecx
+    call puthex
+mov ah, 0xe
+mov al, ' '
+int 10h
+    xor edx, edx
+    mov dl, [c]
+    call puthex
+mov ah, 0xe
+mov al, ' '
+int 10h
+    ;call putnl
+    mov dl, [h]
+    call puthex
+mov ah, 0xe
+mov al, ' '
+int 10h
+    ;call putnl
+    mov dl, [s]
+    call puthex
+    call putnl
+    skip_printing:
+
+    ; restore the counter
+    pop ecx
+    ; counter++
+    inc ecx
+    ; increase the memory location by a one sector
+    mov eax, [memloc]
+    add eax, 0x200
+    mov [memloc], eax
+    ; increase the current LBA to be loaded
+    mov eax, [lba]
+    inc eax
+    mov [lba], eax
+    ; see if the counter is less than the number of sectors to load
+    cmp ecx, dword [sectors_to_load]
+    ; if it is less then go back to the beginnig of the loop
+    jb fetch_one_sector
 
   ; restore the counter
   pop ecx
