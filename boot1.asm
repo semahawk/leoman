@@ -1,9 +1,10 @@
 BITS 16
 ORG 0x7c00
 
-jmp boot1
+jmp near boot1
 
 %include "print.asm"
+%include "utils.asm"
 
 boot1:
   ; update the segment register
@@ -48,6 +49,53 @@ call puthex
 mov ah, 0eh
 mov al, ' '
 int 10h
+
+  ; see if the a20 line is enabled, and enable it if it isn't
+  call check_a20
+  test ax, ax
+  je enable_a20
+  jmp get_drive_params
+
+enable_a20:
+  mov si, enable_a20_msg
+  call putstr
+
+  .1:
+    ; try the BIOS
+    mov ax, 0x2401
+    int 0x15
+    ; see if it worked
+    call check_a20
+    test ax, ax
+    jne .end
+    ; it didn't, carry on
+  .2:
+    ; try using the keyboard controller
+    call enable_a20_via_kbd
+    ; see if it worked
+    call check_a20
+    test ax, ax
+    jne .end
+    ; it didn't, carry on
+  .3:
+    ; try the Fast A20 Gate
+    in al, 0x92
+    test al, 2
+    jne .end
+    or al, 2
+    and al, 0xFE
+    out 0x92, al
+    ; check if it worked
+    call check_a20
+    test ax, ax
+    jne .end
+
+    ; here, it seems it didn't work, which is a shame
+    mov si, enable_a20_fail_msg
+    call putstr
+    jmp halt
+
+  .end:
 
 get_drive_params:
   ; fetch the drive geometry
@@ -448,10 +496,11 @@ int 10h
   ; if it is then go back to the beginning of the loop
   jb loop_through_cgs
 
-halt:
+nice_halt:
   mov si, goodbye_msg
   call putstr
 
+halt:
   cli
   hlt
 
@@ -533,6 +582,8 @@ bootdrv: db 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 cg_msg: db 'CG #', 0
+enable_a20_msg: db 'Enabling the a20 line', 0xd, 0xa, 0
+enable_a20_fail_msg: db 'Failed to enable the a20 line!', 0xd, 0xa, 0
 welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0xd, 0xa, 0
 goodbye_msg: db 0xd, 0xa, 'Sit vis vobiscum', 0xd, 0xa, 0
 
