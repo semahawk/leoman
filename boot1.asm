@@ -45,10 +45,13 @@ go_unreal:
 
   ; save the drive number from which we've booted
   mov [bootdrv], dl
-call puthex
-mov ah, 0eh
-mov al, ' '
-int 10h
+
+%ifdef DEBUG
+  call puthex
+  mov ah, 0eh
+  mov al, ' '
+  int 10h
+%endif
 
   ; see if the a20 line is enabled, and enable it if it isn't
   call check_a20
@@ -107,8 +110,10 @@ get_drive_params:
   jb .floppy
 
   ; here, it's a harddrive
+%ifdef DEBUG
   mov si, hd_msg    ;
   call putstr       ; deleteme
+%endif
 
   xor dx, dx
   xor cx, cx  ; zero out dx and cx
@@ -126,8 +131,10 @@ get_drive_params:
 
 .floppy:
   ; here, it's a floppy
+%ifdef DEBUG
   mov si, floppy_msg
   call putstr
+%endif
 
   mov byte [number_of_heads], 16
   mov byte [sectors_per_track], 63
@@ -167,6 +174,8 @@ calculate_chs:
   mov [head], ah      ; head = ah = temp % number of heads
   mov [cylinder], al  ; cylinder = al = temp / number of heads
 
+%ifdef DEBUG
+; {{{
   call putnl
   xor dx, dx
   mov dl, [number_of_heads]
@@ -192,6 +201,8 @@ calculate_chs:
   call puthex
   call putnl
   call putnl
+; }}}
+%endif
 
 read_sblk:
   ; all right, calculations are done, now let's roll!
@@ -336,6 +347,8 @@ loop_through_cgs:
   mul dword [d_bsize]     ; edx:eax = eax * d_bsize
   mov [phcgdmin], eax     ; THE RESULT = eax
 
+%ifdef DEBUG
+; {{{
   mov si, cg_msg
   call putstr
   pop ecx
@@ -360,6 +373,8 @@ loop_through_cgs:
   mov edx, [phcgdmin]
   call puthex
   call putnl
+; }}}
+%endif
 
   ; calculate the size of a single inode
   xor edx, edx
@@ -418,7 +433,8 @@ loop_through_cgs:
     or al, byte [s]
     mov [s], al
 
-; DEBUG
+%ifdef DEBUG
+; {{{
 pop ecx
     mov eax, ecx
 push ecx
@@ -474,7 +490,8 @@ call putstr
     call putnl
 ; }}}
     skip_printing:
-; !DEBUG
+; }}}
+%endif
 
     ; TODO: traverse the 127 loaded sectors and see for our inode
 
