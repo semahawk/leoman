@@ -293,15 +293,9 @@ loop_through_cgs:
   h: db 0
   s: db 0
   sectors_to_load: dd 0
-  memloc: dd 0x01000000
   varsend:
   ; save the counter
   push ecx
-  ; initialize memloc back to it's original state
-  ; as we want to override the previous CG's data
-  ; because if we're traversing another CG, it means the previous didn't have
-  ; what we were looking for
-  mov dword [memloc], 0x01000000
 
   ; calculate the physical address of the current CG
   ;
@@ -384,19 +378,23 @@ loop_through_cgs:
   ; edx = phcgimin % 512
 
   ; calculate the number of sectors to load (we're going to be loading the
-  ; inodes, a sector at once)
+  ; inodes, 127 sectors at a time)
   xor eax, eax
   mov  ax, word [inodesz]
   mov ebx, [fs_ipg]
   mul dword ebx
   ; edx:eax = inode size * fs_ipg
+  xor edx, edx
+  mov ecx, 0x7f
+  div dword ecx
   mov [sectors_to_load], eax
   xor ecx, ecx   ; this be our counter (0->sectors_to_load)
 
-  fetch_one_sector:
+  fetch_sectors:
     ; save the register
     push ecx
 
+    ; calculate the CHS values for the current LBA
     mov eax, [lba]
     xor edx, edx
     xor ecx, ecx
@@ -420,79 +418,86 @@ loop_through_cgs:
     or al, byte [s]
     mov [s], al
 
-    ; debug print only the last few lines
+; DEBUG
 pop ecx
     mov eax, ecx
 push ecx
     ;xor edx, edx
-    ;mov ecx, 512
+    ;mov ecx, 0x75
     ;div ecx
     ;cmp edx, dword 0
     ;ja skip_printing
     cmp eax, dword 0x2
     jbe do_the_printing
-    cmp eax, dword 0xfb7ffc
+    cmp eax, dword 0x1fa00
     jb skip_printing
     do_the_printing:
-
-    mov edx, [memloc]
-    call puthex
-mov ah, 0xe
-mov al, ' '
-int 10h
+; {{{
+    mov ah, 0xe
+    mov al, ' '
+    int 10h
+    mov si, lba_msg
+    call putstr
     mov edx, [lba]
     call puthex
-mov ah, 0xe
-mov al, ' '
+    mov ah, 0xe
+    mov al, ' '
     int 10h
-pop ecx
+    pop ecx
     mov edx, ecx
-push ecx
+    push ecx
+mov si, ecx_msg
+call putstr
     call puthex
-mov ah, 0xe
-mov al, ' '
-int 10h
+    mov ah, 0xe
+    mov al, ' '
+    int 10h
     xor edx, edx
+mov si, c_msg
+call putstr
     mov dl, [c]
     call puthex
-mov ah, 0xe
-mov al, ' '
-int 10h
-    ;call putnl
+    mov ah, 0xe
+    mov al, ' '
+    int 10h
+mov si, h_msg
+call putstr
     mov dl, [h]
     call puthex
-mov ah, 0xe
-mov al, ' '
-int 10h
-    ;call putnl
+    mov ah, 0xe
+    mov al, ' '
+    int 10h
+mov si, s_msg
+call putstr
     mov dl, [s]
     call puthex
     call putnl
+; }}}
     skip_printing:
+; !DEBUG
+
+    ; TODO: traverse the 127 loaded sectors and see for our inode
 
     ; restore the counter
     pop ecx
     ; counter++
     inc ecx
-    ; increase the memory location by a one sector
-    mov eax, [memloc]
-    add eax, 0x200
-    mov [memloc], eax
-    ; increase the current LBA to be loaded
+    ; increase the current LBA to be loaded by 127
     mov eax, [lba]
-    inc eax
+    add eax, 0x7f
     mov [lba], eax
     ; see if the counter is less than the number of sectors to load
     cmp ecx, dword [sectors_to_load]
     ; if it is less then go back to the beginnig of the loop
-    jb fetch_one_sector
+    jb fetch_sectors
 
   ; restore the counter
   pop ecx
   ; counter++
   inc ecx
   ; see if the counter is less than fs_ncg
-  cmp ecx, [fs_ncg]
+  ;cmp ecx, [fs_ncg]
+  cmp ecx, 1
   ; if it is then go back to the beginning of the loop
   jb loop_through_cgs
 
@@ -582,6 +587,11 @@ bootdrv: db 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 cg_msg: db 'CG #', 0
+lba_msg: db 'lba:', 0
+ecx_msg: db 'ecx:', 0
+c_msg: db 'c:', 0
+h_msg: db 'h:', 0
+s_msg: db 's:', 0
 enable_a20_msg: db 'Enabling the a20 line', 0xd, 0xa, 0
 enable_a20_fail_msg: db 'Failed to enable the a20 line!', 0xd, 0xa, 0
 welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0xd, 0xa, 0
