@@ -174,14 +174,28 @@ read_sblk:
   ; error, let's try again
   jc read_sblk
 
-welcome:
-  mov si, welcome_msg
-  call putstr
-
   ; set up the segments
   mov ax, 0x0
   mov ds, ax
   mov si, 0x5c00
+  push si
+
+  ; make sure we actually have the superblock loaded, and that it's UFS2
+  cmp dword [si + 1372], 0x19540119
+  je welcome
+
+  ; it didn't work out :c
+  mov si, magic_not_found_msg
+  call putstr
+  jmp halt
+
+welcome:
+  mov si, welcome_msg
+  call putstr
+
+fetch_fs_variables:
+  ; restore SI
+  pop si
 
   ; fetch the superblock essentials
   ; ...with a handy macro!
@@ -333,6 +347,7 @@ h_msg: db 'h:', 0
 s_msg: db 's:', 0
 enable_a20_msg: db 'Enabling the a20 line', 0xd, 0xa, 0
 enable_a20_fail_msg: db 'Failed to enable the a20 line!', 0xd, 0xa, 0
+magic_not_found_msg: db 'fatal: UFS2 magic not found!', 0xd, 0xa, 0
 welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0xd, 0xa, 0
 goodbye_msg: db 'Sit vis vobiscum', 0xd, 0xa, 0
 
