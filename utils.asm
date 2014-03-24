@@ -186,5 +186,37 @@ cgdataloc:
   ret
 ; }}}
 
+; calculate the physical address from a given inode's number
+;
+; param:  ECX - the inode's number
+; return: EDX:EAX - the address
+inoloc:
+  ; address = cginoloc(inode / fs_ipg) + (inode % fs_ipg) * inode size
+  push ecx
+
+  xor edx, edx
+  mov eax, ecx
+  div dword [fs_ipg]
+  ; eax = inode / fs_ipg
+  ; edx = inode % fs_ipg
+  push edx
+  mov ecx, eax
+  call cginoloc
+  pop edx
+  ; eax = cginoloc
+  ; edx = inode % fs_ipg
+  push eax
+  mov eax, edx
+  xor edx, edx
+  mov ecx, dword INODE_SIZE
+  mul dword ecx
+  ; edx:eax = (inode % fs_ipg) * inode size
+  pop ecx
+  ; ecx = cginoloc
+  add eax, ecx
+
+  pop ecx
+  ret
+
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

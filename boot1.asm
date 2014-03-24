@@ -3,6 +3,8 @@ ORG 0x7c00
 
 jmp near boot1
 
+%define INODE_SIZE 0x100
+
 %include "print.asm"
 %include "utils.asm"
 
@@ -258,7 +260,9 @@ welcome:
   ; d_bsize is not fetched, but calculated
   xor edx, edx
   mov eax, [fs_fsize]
-  fsbtodb ebx, 1
+  mov ebx, 1
+  mov ecx, [fs_fsbtodb]
+  shl ebx, cl
   div dword ebx
   ; d_bsize = eax = fs_fsize / fsbtodb(1)
   mov [d_bsize], eax
@@ -267,6 +271,24 @@ welcome:
   mov bx, 0x0f01
   mov eax, 0x0b8000
   mov word [ds:eax], bx
+
+  ; see what the location of ROOTINO (and two other inodes) is
+  mov ecx, 0x2
+  call inoloc
+  mov edx, eax
+  call puthex
+  call putnl
+  mov ecx, 0xfb80
+  call inoloc
+  mov edx, eax
+  call puthex
+  call putnl
+  mov ecx, 0xfb81
+  call inoloc
+  mov edx, eax
+  call puthex
+  call putnl
+  call putnl
 
 ; traverse the cylinder groups in search for the kernel
 ; initialize the counter (0->fs_ncg)
@@ -282,7 +304,6 @@ loop_through_cgs:
   phcgimin: dd 0
   phcgdmin: dd 0
   tell: dd 0
-  inodesz: dw 0
   lba: dd 0
   c: db 0
   h: db 0
@@ -333,13 +354,6 @@ loop_through_cgs:
 ; }}}
 %endif
 
-  ; calculate the size of a single inode
-  xor edx, edx
-  mov eax, [phcgdmin]
-  sub eax, [phcgimin]
-  div dword [fs_ipg]
-  mov [inodesz], ax
-
   ; calculate the LBA of the physical inodes address
   xor edx, edx
   mov eax, [phcgimin]
@@ -352,7 +366,7 @@ loop_through_cgs:
   ; calculate the number of sectors to load (we're going to be loading the
   ; inodes, 127 sectors at a time)
   xor eax, eax
-  mov  ax, word [inodesz]
+  mov  ax, word INODE_SIZE
   mov ebx, [fs_ipg]
   mul dword ebx
   ; edx:eax = inode size * fs_ipg
