@@ -9,7 +9,7 @@ all: nihilum
 nihilum: $(OBJS)
 	cat boot0.bin boot1.bin > nihilum
 
-.asm.bin: print.asm
+.asm.bin: print.asm utils.asm
 	nasm -dDEBUG -f bin $< -o $@
 
 img: nihilum.img

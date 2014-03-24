@@ -255,22 +255,6 @@ welcome:
 ; fetch is no more
 %undef fetch
 
-; fsbtodb(reg, val):
-;   reg = val << fs_fsbtodb
-;
-; !! reg must be different than ECX!
-;
-%macro fsbtodb 2
-  ; save
-  push ecx
-  ; shift you!
-  mov %1, %2
-  mov ecx, dword [fs_fsbtodb]
-  shl %1, cl
-  ; restore
-  pop ecx
-%endmacro
-
   ; d_bsize is not fetched, but calculated
   xor edx, edx
   mov eax, [fs_fsize]
@@ -308,44 +292,17 @@ loop_through_cgs:
   ; save the counter
   push ecx
 
-  ; calculate the physical address of the current CG
-  ;
-  ; cgbase(N) = fs_fpg * N
-  ; cgtod(N) = cgbase(N) + fs_cblkno
-  ; tell = fsbtodb(cgtod(CURRENT)) * d_bsize
-  mov eax, [fs_fpg]       ; eax = fs_fpg
-  mul ecx                 ; edx:eax = eax * ecx
-  mov ecx, eax            ; ecx = eax
-  mov [cgbase], ecx       ; cgbase = ecx
-  add ecx, [fs_cblkno]    ; ecx += fs_cblkno
-  mov [cgtod], ecx        ; cgtod = ecx
-  fsbtodb eax, ecx        ; eax = fsbtodb(ecx)
-  mul dword [d_bsize]     ; edx:eax = eax * d_bsize
-  mov [tell], eax         ; THE RESULT = eax
+  ; get the physical address of the current CG
+  call cgloc
+  mov [tell], eax
 
-  ; calculate the physical address of the inodes
-  ;
-  ; cgbase(N) = fs_fpg * N
-  ; cgimin(N) = cgbase(N) + fs_iblkno
-  ; phcgimin = fsbtodb(cgimin(CURRENT)) * d_bsize
-  mov ecx, [cgbase]       ; ecx = cgbase(N)
-  add ecx, [fs_iblkno]    ; ecx = cgbase(N) + fs_iblkno
-  mov [cgimin], ecx       ; cgimin = ecx
-  fsbtodb eax, ecx        ; eax = fsbtodb(ecx)
-  mul dword [d_bsize]     ; edx:eax = eax * d_bsize
-  mov [phcgimin], eax     ; THE RESULT = eax
+  ; get the physical address of the current CG's inode table
+  call cginoloc
+  mov [phcgimin], eax
 
-  ; calculate the physical address of the data blocks
-  ;
-  ; cgbase(N) = fs_fpg * N
-  ; cgdmin(N) = cgbase(N) + fs_dblkno
-  ; phcgdmin = fsbtodb(cgdmin(CURRENT)) * d_bsize
-  mov ecx, [cgbase]       ; ecx = cgbase(N)
-  add ecx, [fs_dblkno]    ; ecx = cgbase(N) + fs_dblkno
-  mov [cgdmin], ecx       ; cgdmin = ecx
-  fsbtodb eax, ecx        ; eax = fsbtodb(ecx)
-  mul dword [d_bsize]     ; edx:eax = eax * d_bsize
-  mov [phcgdmin], eax     ; THE RESULT = eax
+  ; get the physical address of the current CG's data blocks start
+  call cgdataloc
+  mov [phcgdmin], eax
 
 %ifdef DEBUG
 ; {{{
@@ -433,6 +390,7 @@ loop_through_cgs:
     or al, byte [s]
     mov [s], al
 
+%if 0
 %ifdef DEBUG
 ; {{{
 pop ecx
@@ -492,6 +450,7 @@ call putstr
     skip_printing:
 ; }}}
 %endif
+%endif
 
     ; TODO: traverse the 127 loaded sectors and see for our inode
 
@@ -513,8 +472,8 @@ call putstr
   ; counter++
   inc ecx
   ; see if the counter is less than fs_ncg
-  ;cmp ecx, [fs_ncg]
-  cmp ecx, 1
+  cmp ecx, [fs_ncg]
+  ;cmp ecx, 1
   ; if it is then go back to the beginning of the loop
   jb loop_through_cgs
 

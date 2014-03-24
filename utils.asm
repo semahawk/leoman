@@ -55,7 +55,7 @@ check_a20:
 
 ; credit: http://wiki.osdev.org/A20_Line
 ;
-; description: _attempts_ to enable the a20 line using the keyboard controller
+; _attempts_ to enable the a20 line using the keyboard controller
 enable_a20_via_kbd:
 ; {{{
   cli
@@ -100,6 +100,90 @@ enable_a20_via_kbd:
     test al,1
     jz .wait2
     ret
+; }}}
+
+; calculate the physical address of a cylinder group
+;
+; param:  ECX - # of the cylinder group
+; return: EDX:EAX - the address
+cgloc:
+; {{{
+  ; cgbase(N) = fs_fpg * N
+  ; cgtod(N) = cgbase(N) + fs_cblkno
+  ; tell = fsbtodb(cgtod(ECX)) * d_bsize
+  push ecx
+  push ebx
+
+  xor edx, edx
+  mov eax, [fs_fpg]
+  mul ecx
+
+  add eax, [fs_cblkno]
+
+  mov ecx, [fs_fsbtodb]
+  shl eax, cl
+
+  mul dword [d_bsize]
+
+  pop ebx
+  pop ecx
+  ret
+; }}}
+
+; calculate the physical address of a CG's inode table
+;
+; param:  ECX - # of the cylinder group
+; return: EDX:EAX - the address
+cginoloc:
+; {{{
+  ; cgbase(N) = fs_fpg * N
+  ; cgimin(N) = cgbase(N) + fs_iblkno
+  ; phcgimin = fsbtodb(cgimin(ECX)) * d_bsize
+  push ecx
+  push ebx
+
+  xor edx, edx
+  mov eax, [fs_fpg]
+  mul ecx
+
+  add eax, [fs_iblkno]
+
+  mov ecx, [fs_fsbtodb]
+  shl eax, cl
+
+  mul dword [d_bsize]
+
+  pop ebx
+  pop ecx
+  ret
+; }}}
+
+; calculate the physical address of a CG's data blocks start
+;
+; param:  ECX - # of the cylinder group
+; return: EDX:EAX - the address
+cgdataloc:
+; {{{
+  ; cgbase(N) = fs_fpg * N
+  ; cgdmin(N) = cgbase(N) + fs_dblkno
+  ; phcgdmin = fsbtodb(cgdmin(ECX)) * d_bsize
+  push ecx
+  push ebx
+
+  xor edx, edx
+  mov eax, [fs_fpg]
+  mul ecx
+
+  add eax, [fs_dblkno]
+
+  mov ecx, [fs_fsbtodb]
+  shl eax, cl
+
+  mul dword [d_bsize]
+
+  pop ebx
+  pop ecx
+  ret
 ; }}}
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
