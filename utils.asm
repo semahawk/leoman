@@ -1,3 +1,48 @@
+; converts a given LBA address into the CHS equivalent
+;
+; param: ECX - the LBA
+; return: CH - cylinder
+;         DH - head
+;         CL - sector
+;         DL - the drive we've booted from
+lba_to_chs:
+; {{{
+  jmp $ + 3    ; skip over the variables
+    c: db 0
+    h: db 0
+    s: db 0
+
+  mov eax, ecx
+  xor edx, edx
+  xor ecx, ecx
+  mov cl, [sectors_per_track]
+  div dword ecx
+  ; eax = LBA / sectors_per_track
+  ; edx = LBA % sectors_per_track
+  inc dl
+  and dl, 0x3f
+  mov [s], dl
+  xor edx, edx
+  xor ecx, ecx
+  mov cl, [number_of_heads]
+  div dword ecx
+  ; eax = eax / number of heads
+  ; edx = eax % number of heads
+  mov [h], dl
+  mov [c], al
+  and ax, 0x300
+  shr ax, 2
+  or al, byte [s]
+  mov [s], al
+
+  mov ch, [c]
+  mov dh, [h]
+  mov cl, [s]
+  mov dl, [bootdrv]
+
+  ret
+; }}}
+
 ; credit: http://wiki.osdev.org/A20_Line
 ;
 ; return: 0 in AX if the a20 line is disabled (memory wraps around)
@@ -106,7 +151,7 @@ enable_a20_via_kbd:
 ;
 ; param:  ECX - # of the cylinder group
 ; return: EDX:EAX - the address
-cgloc:
+cg_addr:
 ; {{{
   ; cgbase(N) = fs_fpg * N
   ; cgtod(N) = cgbase(N) + fs_cblkno
@@ -134,7 +179,7 @@ cgloc:
 ;
 ; param:  ECX - # of the cylinder group
 ; return: EDX:EAX - the address
-cginoloc:
+cg_inodes_addr:
 ; {{{
   ; cgbase(N) = fs_fpg * N
   ; cgimin(N) = cgbase(N) + fs_iblkno
@@ -162,7 +207,7 @@ cginoloc:
 ;
 ; param:  ECX - # of the cylinder group
 ; return: EDX:EAX - the address
-cgdataloc:
+cg_data_addr:
 ; {{{
   ; cgbase(N) = fs_fpg * N
   ; cgdmin(N) = cgbase(N) + fs_dblkno
@@ -190,7 +235,8 @@ cgdataloc:
 ;
 ; param:  ECX - the inode's number
 ; return: EDX:EAX - the address
-inoloc:
+inode_addr:
+; {{{
   ; address = cginoloc(inode / fs_ipg) + (inode % fs_ipg) * inode size
   push ecx
 
@@ -201,7 +247,7 @@ inoloc:
   ; edx = inode % fs_ipg
   push edx
   mov ecx, eax
-  call cginoloc
+  call cg_inodes_addr
   pop edx
   ; eax = cginoloc
   ; edx = inode % fs_ipg
@@ -217,6 +263,7 @@ inoloc:
 
   pop ecx
   ret
+; }}}
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

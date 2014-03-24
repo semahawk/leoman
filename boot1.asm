@@ -142,6 +142,7 @@ get_drive_params:
   mov byte [sectors_per_track], 63
 
 .end:
+  call putnl
 ;
 ; Load the superblock
 ;
@@ -153,61 +154,14 @@ reset_sblk:
   ; error, let's try again
   jc reset_sblk
 
-calculate_chs:
+read_sblk:
   ; the primary superblock is 8KiB (16 sectors) wide, and is at
   ; offset 0x10000 (128 sectors), which makes it an LBA 128
-  ; so yup, let's translate it into CHS
 
-  ; temp     = LBA / sectors per track
-  ; sector   = LBA % sectors per track + 1
-  ; head     = temp % number of heads
-  ; cylinder = temp / number of heads
+  ; fetch the CHS values
+  mov ecx, 128
+  call lba_to_chs
 
-  mov ax, 128         ; LBA / sectors per track
-  div byte [sectors_per_track]
-  xor dx, dx          ; dx will be the temp 'variable'
-  mov dl, al          ; al = dl = LBA / sectors per track
-                      ; ah = LBA % sectors per track
-  inc ah              ; ah++
-  mov [sector], ah    ; sector = ah
-
-  mov ax, dx          ; temp / number of heads
-  div byte [number_of_heads]
-  mov [head], ah      ; head = ah = temp % number of heads
-  mov [cylinder], al  ; cylinder = al = temp / number of heads
-
-%ifdef DEBUG
-; {{{
-  call putnl
-  xor dx, dx
-  mov dl, [number_of_heads]
-  call puthex
-  call putnl
-
-  mov dl, [sectors_per_track]
-  call puthex
-  call putnl
-  call putnl
-
-  ; print the CHS values
-  xor dx, dx
-  mov dl, [cylinder]
-  call puthex
-  call putnl
-
-  mov dl, [head]
-  call puthex
-  call putnl
-
-  mov dl, [sector]
-  call puthex
-  call putnl
-  call putnl
-; }}}
-%endif
-
-read_sblk:
-  ; all right, calculations are done, now let's roll!
   ; load the super block into just above the bootloader
   mov ax, 0x05c0
   mov es, ax
@@ -215,10 +169,6 @@ read_sblk:
 
   mov ah, 02h         ; the instruction
   mov al, 10h         ; load 16 sectors
-  mov ch, [cylinder]  ; the calculated cylinder
-  mov dh, [head]      ; the calculated head
-  mov cl, [sector]    ; the calculated sector
-  mov dl, [bootdrv]   ; the drive we've booted from
   int 13h             ; load!
 
   ; error, let's try again
@@ -274,17 +224,17 @@ welcome:
 
   ; see what the location of ROOTINO (and two other inodes) is
   mov ecx, 0x2
-  call inoloc
+  call inode_addr
   mov edx, eax
   call puthex
   call putnl
   mov ecx, 0xfb80
-  call inoloc
+  call inode_addr
   mov edx, eax
   call puthex
   call putnl
   mov ecx, 0xfb81
-  call inoloc
+  call inode_addr
   mov edx, eax
   call puthex
   call putnl
