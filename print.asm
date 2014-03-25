@@ -46,6 +46,19 @@ putdigit:
     ret
 ; }}}
 
+; print the value in AL which is assumed to be an ascii character (ie. no
+; adding/interpreting is done)
+putascii:
+; {{{
+  push eax
+
+  mov ah, 0x0e
+  int 10h
+
+  pop eax
+  ret
+; }}}
+
 ; print the value in EDX as a hexadecimal dword
 puthex:
 ; {{{

@@ -4,9 +4,9 @@ ORG 0x7c00
 jmp near boot1
 
 ; the kernel's path
-kernel_name db '/boot/kernel', 0
-s1 db 'boot', 0
-s2 db 'boot', 0
+kernel_name: db '/boot/kernel', 0
+
+%define MAX_FNAME_SIZE 255
 
 %define INODE_SIZE 0x100
 %define NXADDR     2     ; # of external blocks in inode
@@ -270,72 +270,80 @@ fetch_fs_variables:
   mov ecx, 0x2
   call load_inode
 
-  ; save these two
-  push ds
+  mov esi, kernel_name
+
+  ; while (*esi != '\0')
+  cmp byte [esi], 0x0
+  inc esi
+  je path_segments_end
+
+  jmp path_segments
+  ; the name buffer where each path's segment will be kept
+  name_buffer: times MAX_FNAME_SIZE + 1 db 0
+
+path_segments:
+  ; {{{
+  push ecx
+
+  ; zero-out the name_buffer
+  ; {{{
+  push ecx
+  push edi
+  mov ecx, MAX_FNAME_SIZE
+  .buffzero:
+    ; edi = name_buffer
+    mov edi, name_buffer
+    ; *edi++ = 0x0
+    mov byte [edi], 0x0
+    inc edi
+
+    dec ecx
+    cmp ecx, dword 0
+    ja .buffzero
+  pop edi
+  pop ecx
+  ; }}}
+
+  ; zero out ecx (it is used as a index when writing to the name_buffer)
+  xor ecx, ecx
+
+  fetch_one_path_segment:
+    ; {{{
+    push eax
+    push edx
+
+    ; *esi != '\0' && *esi != '/'
+    cmp byte [esi], 0x0
+    je fetch_one_path_segment_end
+    cmp byte [esi], '/'
+    je fetch_one_path_segment_end
+
+    ; *(name_buffer + ecx++) = *esi
+    mov al, byte [esi]
+    mov [name_buffer + ecx], al
+    inc ecx
+
+    ; }}}
+    pop edx
+    pop eax
+    inc esi
+    jmp fetch_one_path_segment
+    fetch_one_path_segment_end:
+
   push esi
-  ; loop through it's direct blocks
-  xor ecx, ecx      ; going 0->NDADDR
-  mov esi, 0x70     ; direct blocks start at offset 0x70 in the inode
-  mov ax, es        ;
-  mov ds, ax        ; ds = es
-
-  loop_dirblks:
-    ; save the registers
-    push ecx
-    push ds
-    push es
-    push esi
-
-    ; print block's address
-    mov ecx, [esi]
-    call blk_addr
-    mov edx, ecx
-    call puthex
-    call putnl
-
-    ; load the block into just above the inode
-    mov ax, 0x1fc0
-    mov es, ax
-    xor bx, bx        ; es:bx = 0x1fc0:0x0000 (= 0x1fc00)
-
-    mov ecx, [esi]
-    call load_blk
-
-    ; traverse the file names in the block
-
-    ; restore the registers
-    pop esi
-    pop es
-    pop ds
-    pop ecx
-    add ecx, 1
-    ; increase the SI by the size of one direct block's number, ie. 64 bits
-    add esi, 8
-    ; check if ecx is less than the number of direct blocks
-    cmp ecx, dword NDADDR
-    ; if it is, here you go again
-    jb loop_dirblks
-
+  mov esi, name_buffer
+  call putstr
   call putnl
-
-  ; restore DS and ESI
   pop esi
-  pop ds
 
-  ; test the `strcmp'
-  mov esi, s1
-  mov edi, s2
-  call streq
-  jc notok
-
-  mov edx, 0xffffffff
-  call puthex
-  call putnl
-  jmp nice_halt
-
-notok:
-  mov edx, 0x0
-  call puthex
+  ; }}}
+  pop ecx
+  ; *esi++ != '\0'
+  cmp byte [esi], 0x0
+  je path_segments_end
+  inc esi
+  jmp path_segments
+  path_segments_end:
   call putnl
 
 nice_halt:
