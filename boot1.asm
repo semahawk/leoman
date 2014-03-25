@@ -277,6 +277,9 @@ fetch_fs_variables:
   loop_dirblks:
     ; save the registers
     push ecx
+    push ds
+    push es
+    push esi
 
     ; print block's address
     mov ecx, [esi]
@@ -285,7 +288,18 @@ fetch_fs_variables:
     call puthex
     call putnl
 
+    ; load the block into just above the inode
+    mov ax, 0x1fc0
+    mov es, ax
+    xor bx, bx        ; es:bx = 0x1fc0:0x0000 (= 0x1fc00)
+
+    mov ecx, [esi]
+    call load_blk
+
     ; restore the registers
+    pop esi
+    pop es
+    pop ds
     pop ecx
     add ecx, 1
     ; increase the SI by the size of one direct block's number, ie. 64 bits

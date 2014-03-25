@@ -7,6 +7,12 @@
 ;         DL - the drive we've booted from
 lba_to_chs:
 ; {{{
+  push ds
+
+  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  xor ax, ax
+  mov ds, ax
+
   jmp $ + 3    ; skip over the variables
     c: db 0
     h: db 0
@@ -40,6 +46,7 @@ lba_to_chs:
   mov cl, [s]
   mov dl, [bootdrv]
 
+  pop ds
   ret
 ; }}}
 
@@ -258,6 +265,43 @@ blk_addr:
   pop ds
   pop edx
   pop eax
+  ret
+; }}}
+
+; loads a block into the memory
+;
+; param:  ECX - block's #
+; return: 1 in CF if the loading failed
+;         0 in CF if the loading succeeded
+load_blk:
+; {{{
+  push ecx
+  call blk_addr
+  xor edx, edx
+  mov eax, ecx
+  ; edx:eax - the block's address
+  mov ecx, 512
+  div dword ecx
+  ; eax = block addr / 512 (LBA)
+  ; edx = block addr % 512
+  mov ecx, eax
+  call lba_to_chs
+  ; now ch, dh, cl and dl contain the right values
+  ; es and bx also should be upright, but that's up to the caller
+
+  .load:
+    mov ah, 0x02
+    mov al, 0x08
+    ; load 8 sectors (4096 bytes)
+    ; I don't know if this 4KiB is a constant.. but still
+    int 13h
+    jc .load
+
+  ; it wouldn't have worked if we didn't get here
+  clc
+
+  pop ecx
+
   ret
 ; }}}
 
