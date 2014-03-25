@@ -231,6 +231,36 @@ cg_data_addr:
   ret
 ; }}}
 
+; calculates a block's number into it's physical address on the disk
+;
+; param:  ECX - block's #
+; return: ECX - the physical address
+blk_addr:
+; {{{
+  push eax
+  push edx
+  push ds
+
+  ; make sure we can access the 'variables'
+  ; ORG is already set to the correct value
+  xor eax, eax
+  mov ds, eax
+
+  ; calculate!
+  mov eax, ecx
+  mov ecx, [fs_fsbtodb]
+  shl eax, cl
+
+  xor edx, edx
+  mul dword [d_bsize]
+  mov ecx, eax
+
+  pop ds
+  pop edx
+  pop eax
+  ret
+; }}}
+
 ; calculate the physical address from a given inode's number
 ;
 ; param:  ECX - the inode's number

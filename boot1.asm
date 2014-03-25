@@ -4,6 +4,9 @@ ORG 0x7c00
 jmp near boot1
 
 %define INODE_SIZE 0x100
+%define NXADDR     2     ; # of external blocks in inode
+%define NDADDR     12    ; # of direct blocks in inode
+%define NIADDR     3     ; # of indirect blocks in inode
 
 %include "print.asm"
 %include "utils.asm"
@@ -162,7 +165,7 @@ read_sblk:
   mov ecx, 128
   call lba_to_chs
 
-  ; load the super block into just above the bootloader
+  ; load the super block into just below the bootloader
   mov ax, 0x05c0
   mov es, ax
   xor bx, bx          ; es:bx = 0x05c0:0x0000 (= 0x5c00)
@@ -204,19 +207,19 @@ fetch_fs_variables:
   mov [fs_%1], eax
 %endmacro
 
-  fetch sblkno,    8
-  fetch cblkno,    12
-  fetch iblkno,    16
-  fetch dblkno,    20
-  fetch ncg,       44
-  fetch bsize,     48
-  fetch fsize,     52
-  fetch frag,      56
-  fetch fsbtodb,   100
-  fetch cgsize,    160
-  fetch ipg,       184
-  fetch fpg,       188
-  fetch size,      1080
+  fetch sblkno,  8
+  fetch cblkno,  12
+  fetch iblkno,  16
+  fetch dblkno,  20
+  fetch ncg,     44
+  fetch bsize,   48
+  fetch fsize,   52
+  fetch frag,    56
+  fetch fsbtodb, 100
+  fetch cgsize,  160
+  fetch ipg,     184
+  fetch fpg,     188
+  fetch size,    1080
 
 ; fetch is no more
 %undef fetch
@@ -261,6 +264,42 @@ fetch_fs_variables:
   ; the inode number
   mov ecx, 0x2
   call load_inode
+
+  ; save these two
+  push ds
+  push esi
+  ; loop through it's direct blocks
+  xor ecx, ecx      ; going 0->NDADDR
+  mov esi, 0x70     ; direct blocks start at offset 0x70 in the inode
+  mov ax, es        ;
+  mov ds, ax        ; ds = es
+
+  loop_dirblks:
+    ; save the registers
+    push ecx
+
+    ; print block's address
+    mov ecx, [esi]
+    call blk_addr
+    mov edx, ecx
+    call puthex
+    call putnl
+
+    ; restore the registers
+    pop ecx
+    add ecx, 1
+    ; increase the SI by the size of one direct block's number, ie. 64 bits
+    add esi, 8
+    ; check if ecx is less than the number of direct blocks
+    cmp ecx, dword NDADDR
+    ; if it is, here you go again
+    jb loop_dirblks
+
+  call putnl
+
+  ; restore DS and ESI
+  pop esi
+  pop ds
 
 nice_halt:
   mov si, goodbye_msg
