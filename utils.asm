@@ -165,6 +165,11 @@ cg_addr:
   ; tell = fsbtodb(cgtod(ECX)) * d_bsize
   push ecx
   push ebx
+  push ds
+
+  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  xor ax, ax
+  mov ds, ax
 
   xor edx, edx
   mov eax, [fs_fpg]
@@ -177,6 +182,7 @@ cg_addr:
 
   mul dword [d_bsize]
 
+  pop ds
   pop ebx
   pop ecx
   ret
@@ -193,6 +199,11 @@ cg_inodes_addr:
   ; phcgimin = fsbtodb(cgimin(ECX)) * d_bsize
   push ecx
   push ebx
+  push ds
+
+  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  xor ax, ax
+  mov ds, ax
 
   xor edx, edx
   mov eax, [fs_fpg]
@@ -205,6 +216,7 @@ cg_inodes_addr:
 
   mul dword [d_bsize]
 
+  pop ds
   pop ebx
   pop ecx
   ret
@@ -221,6 +233,11 @@ cg_data_addr:
   ; phcgdmin = fsbtodb(cgdmin(ECX)) * d_bsize
   push ecx
   push ebx
+  push ds
+
+  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  xor ax, ax
+  mov ds, ax
 
   xor edx, edx
   mov eax, [fs_fpg]
@@ -233,6 +250,7 @@ cg_data_addr:
 
   mul dword [d_bsize]
 
+  pop ds
   pop ebx
   pop ecx
   ret
@@ -313,6 +331,11 @@ inode_addr:
 ; {{{
   ; address = cginoloc(inode / fs_ipg) + (inode % fs_ipg) * inode size
   push ecx
+  push ds
+
+  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  xor ax, ax
+  mov ds, ax
 
   xor edx, edx
   mov eax, ecx
@@ -335,6 +358,7 @@ inode_addr:
   ; ecx = cginoloc
   add eax, ecx
 
+  pop ds
   pop ecx
   ret
 ; }}}
