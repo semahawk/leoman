@@ -254,6 +254,14 @@ fetch_fs_variables:
   call putnl
   call putnl
 
+  ; load the / inode just into above boot1
+  mov ax, 0x1fa0
+  mov es, ax
+  xor bx, bx        ; es:bx = 0x1fa0:0x0000 (= 0x1fa00)
+  ; the inode number
+  mov ecx, 0x2
+  call load_inode
+
 nice_halt:
   mov si, goodbye_msg
   call putstr

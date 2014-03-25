@@ -265,5 +265,37 @@ inode_addr:
   ret
 ; }}}
 
+; param:  ECX - the inode's number
+;         ES:BX - where to load the data
+; return: 1 in CF if the loading failed
+;         0 in CF if the loading succeeded
+load_inode:
+; {{{
+  push ecx
+  call inode_addr
+  ; edx:eax - the inode's address
+  mov ecx, 512
+  div dword ecx
+  ; eax = inode addr / 512
+  ; edx = inode addr % 512
+  mov ecx, eax
+  call lba_to_chs
+  ; now ch, dh, cl and dl contain the right values
+  ; es and bx also should be upright, but that's up to the caller
+
+  .load:
+    mov ah, 0x02
+    mov al, 0x01    ; we actually need only half a sector
+    int 13h
+    jc .load
+
+  ; it wouldn't have worked if we didn't get here
+  clc
+
+  pop ecx
+
+  ret
+; }}}
+
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 
