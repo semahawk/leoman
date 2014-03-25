@@ -331,6 +331,7 @@ blk_addr:
 ; loads a block into the memory
 ;
 ; param:  ECX - block's #
+;         ES:BX - where to load the block
 ; return: 1 in CF if the loading failed
 ;         0 in CF if the loading succeeded
 load_blk:

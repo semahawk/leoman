@@ -330,11 +330,101 @@ path_segments:
     jmp fetch_one_path_segment
     fetch_one_path_segment_end:
 
+%ifdef DEBUG
+; {{{
   push esi
+  mov esi, searching_for_msg
+  call putstr
   mov esi, name_buffer
   call putstr
   call putnl
   pop esi
+; }}}
+%endif
+
+  ; load the first direct block of the inode currently in memory, into the
+  ; memory (load it into just above the inode)
+  ; {{{
+  push esi
+  push es
+  push bx
+
+  mov bx, 0x1fc0
+  mov es, bx
+  xor bx, bx       ; es:bx = 0x1fc0:0x0000 (= 0x1fc00)
+  ; fetch the block's number
+  mov esi, 0x1fa70 ; (0x1fa00 + 0x70)
+  mov ecx, [esi]
+  ; load it
+  call load_blk
+
+  pop bx
+  pop es
+  pop esi
+  ; }}}
+
+  ; the counter (I have no idea what this should be)
+  mov ecx, 16
+  push edi
+  mov edi, 0x1fc00
+  ; this! we're gonna be traversing the block which contains names of
+  ; files/directories/etc. which are contained in the directory which's
+  ; inode is currently loaded at 0x1fa00
+  traverse_block:
+    ; {{{
+    push esi
+    push eax
+    push ebx
+    push ecx
+    push edx
+
+    push edi
+    push ds
+    push eax
+    ; TODO: see if name_buffer and edi + 8 are equal
+    ; {{{
+    mov ax, 0x1000   ; (0x1fc00 - 0xfc00) / 0x10
+    mov ds, ax
+
+%ifdef DEBUG
+    add edi, 8
+    mov esi, edi
+    call putstr
+    call putnl
+%endif
+    ; }}}
+    pop eax
+    pop ds
+    pop edi
+
+    ; calculate the number of bytes by which edi should be increased
+    xor edx, edx
+    xor eax, eax
+    mov al, byte [edi + 7]  ; this many bytes is the length of the name
+    push eax
+    ; BUT, the names are padded to a 4 byte boundary with null bytes
+    ; so we have to figure out those 'missing' bits (nah, bytes)
+    mov bl, 4
+    div byte bl   ; al (name length) / 4
+    ; al = name length / 4
+    ; ah = name length % 4
+    mov bl, 4
+    sub bl, ah    ; bl = 4 - (name length % 4)
+    ; increase the edi
+    pop eax
+    add edi, eax
+    add edi, ebx         ; the missing 'bits'
+    add edi, 8           ; that many bytes before the name
+
+    ; }}}
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    pop esi
+    loop traverse_block
+    ; restore esi
+    pop edi
 
   ; }}}
   pop ecx
@@ -429,6 +519,7 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
+searching_for_msg: db 'searching for directory/file: ', 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 cg_msg: db 'CG #', 0
