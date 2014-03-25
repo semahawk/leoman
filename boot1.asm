@@ -363,8 +363,6 @@ path_segments:
   pop esi
   ; }}}
 
-  ; the counter (I have no idea what this should be)
-  mov ecx, 16
   push edi
   mov edi, 0x1fc00
   ; this! we're gonna be traversing the block which contains names of
@@ -385,13 +383,6 @@ path_segments:
     ; {{{
     mov ax, 0x1000   ; (0x1fc00 - 0xfc00) / 0x10
     mov ds, ax
-
-%ifdef DEBUG
-    add edi, 8
-    mov esi, edi
-    call putstr
-    call putnl
-%endif
     ; }}}
     pop eax
     pop ds
@@ -422,7 +413,14 @@ path_segments:
     pop ebx
     pop eax
     pop esi
-    loop traverse_block
+    ; loop again if EDI - 0x1fc00 < d_bsize
+    ; this is probably not perfect, but it would have to do
+    push eax
+    mov eax, edi
+    sub eax, dword 0x1fc00
+    cmp eax, dword [d_bsize]
+    pop eax
+    jb traverse_block
     ; restore esi
     pop edi
 
