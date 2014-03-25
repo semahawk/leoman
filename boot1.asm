@@ -3,6 +3,11 @@ ORG 0x7c00
 
 jmp near boot1
 
+; the kernel's path
+kernel_name db '/boot/kernel', 0
+s1 db 'boot', 0
+s2 db 'boot', 0
+
 %define INODE_SIZE 0x100
 %define NXADDR     2     ; # of external blocks in inode
 %define NDADDR     12    ; # of direct blocks in inode
@@ -296,6 +301,8 @@ fetch_fs_variables:
     mov ecx, [esi]
     call load_blk
 
+    ; traverse the file names in the block
+
     ; restore the registers
     pop esi
     pop es
@@ -314,6 +321,22 @@ fetch_fs_variables:
   ; restore DS and ESI
   pop esi
   pop ds
+
+  ; test the `strcmp'
+  mov esi, s1
+  mov edi, s2
+  call streq
+  jc notok
+
+  mov edx, 0xffffffff
+  call puthex
+  call putnl
+  jmp nice_halt
+
+notok:
+  mov edx, 0x0
+  call puthex
+  call putnl
 
 nice_halt:
   mov si, goodbye_msg

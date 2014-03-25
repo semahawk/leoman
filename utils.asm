@@ -1,3 +1,45 @@
+; compares a string in ESI with the one in EDI
+;
+; param:  ESI - first string
+;         EDI - second string
+; return: 0 in CF if they are equal
+;         1 in CF if they are not
+streq:
+; {{{
+  push ax
+  push ds
+  push esi
+  push edi
+
+  ; make sure DS is set properly, so zero it out, ORG has got it covered
+  xor ax, ax
+  mov ds, ax
+
+  .while:
+    mov ah, byte [esi]
+    mov al, byte [edi]
+    inc edi
+    inc esi
+    cmp ah, al
+    jne .fail
+    cmp al, 0
+    je .ok
+    jmp .while
+
+  .fail:
+    stc
+    jmp .end
+  .ok:
+    clc
+
+  .end:
+  pop edi
+  pop esi
+  pop ds
+  pop ax
+  ret
+; }}}
+
 ; converts a given LBA address into the CHS equivalent
 ;
 ; param: ECX - the LBA
@@ -9,7 +51,7 @@ lba_to_chs:
 ; {{{
   push ds
 
-  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  ; make sure DS is set properly, so zero it out, ORG has got it covered
   xor ax, ax
   mov ds, ax
 
@@ -167,7 +209,7 @@ cg_addr:
   push ebx
   push ds
 
-  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  ; make sure DS is set properly, so zero it out, ORG has got it covered
   xor ax, ax
   mov ds, ax
 
@@ -201,7 +243,7 @@ cg_inodes_addr:
   push ebx
   push ds
 
-  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  ; make sure DS is set properly, so zero it out, ORG has got it covered
   xor ax, ax
   mov ds, ax
 
@@ -235,7 +277,7 @@ cg_data_addr:
   push ebx
   push ds
 
-  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  ; make sure DS is set properly, so zero it out, ORG has got it covered
   xor ax, ax
   mov ds, ax
 
@@ -333,7 +375,7 @@ inode_addr:
   push ecx
   push ds
 
-  ; make sure DS is set properly, so zero it out DS, ORG has got it covered
+  ; make sure DS is set properly, so zero it out, ORG has got it covered
   xor ax, ax
   mov ds, ax
 
