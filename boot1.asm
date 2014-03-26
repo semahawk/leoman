@@ -5,6 +5,7 @@ jmp near boot1
 
 ; the kernel's path
 kernel_name: db '/boot/kernel', 0
+kernel_name_ptr: dd 0
 
 %define MAX_FNAME_SIZE 255
 
@@ -271,6 +272,7 @@ fetch_fs_variables:
   call load_inode
 
   mov esi, kernel_name
+  mov dword [kernel_name_ptr], esi
 
   ; while (*esi != '\0')
   cmp byte [esi], 0x0
@@ -382,15 +384,13 @@ path_segments:
   ; inode is currently loaded at 0x17a00
   traverse_block:
     ; {{{
-    push esi
     push eax
     push ebx
     push ecx
     push edx
 
+    push esi
     push edi
-    push ds
-    push eax
     ; TODO: see if name_buffer and edi + 8 are equal
     ; {{{
     ; save edi
@@ -420,7 +420,6 @@ path_segments:
       call putstr
       mov esi, name_buffer
       call putstr
-      call putnl
       ; fetch the inode's number
       mov edi, ecx
       mov ecx, dword [edi]
@@ -434,11 +433,23 @@ path_segments:
       .directory:
         mov esi, isadir_msg
         call putstr
+        ; load the inode
+        mov ax, 0x17a0
+        mov es, ax
+        xor bx, bx        ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+        ; ecx already contains the right inode number
+        call load_inode
         jmp .end
       .file:
         mov esi, isafile_msg
         call putstr
-        jmp .end
+        ; load the inode
+        mov ax, 0x17a0
+        mov es, ax
+        xor bx, bx        ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+        ; ecx already contains the right inode number
+        call load_inode
+        jmp kernel_found
       .unknown:
         mov esi, isunknown_msg
         call putstr
@@ -446,9 +457,8 @@ path_segments:
     .end:
 
     ; }}}
-    pop eax
-    pop ds
     pop edi
+    pop esi
 
     ; calculate the number of bytes by which edi should be increased
     xor edx, edx
@@ -474,7 +484,6 @@ path_segments:
     pop ecx
     pop ebx
     pop eax
-    pop esi
     ; loop again if EDI - 0x17c00 < d_bsize
     ; this is probably not perfect, but it would have to do
     push eax
@@ -497,6 +506,19 @@ path_segments:
   path_segments_end:
   call putnl
 
+  ; if we got here (ie. the loop ended) it most likely means that the kernel was
+  ; not found
+  mov esi, error_loading_kernel_msg
+  call putstr
+  jmp halt
+
+kernel_found:
+  mov esi, kernel_found_msg
+  call putstr
+  mov esi, kernel_name
+  call putstr
+  call putnl
+
 nice_halt:
   mov si, goodbye_msg
   call putstr
@@ -509,6 +531,7 @@ halt:
 ; The Global Descriptor Table
 ;
 gdt_data:
+; {{{
 ; the null selector
   dq 0x0           ; nothing!
 
@@ -532,9 +555,11 @@ gdt_end:
 gdt:
   dw gdt_end - gdt_data - 1 ; sizeof gdt
   dd gdt_data
+; }}}
 
 ; Superblock variables
 ;
+; {{{
 ; offset of superblock in filesystem
 fs_sblkno: dd 0
 ; offset of cylinder block
@@ -565,6 +590,7 @@ fs_size: dq 0
 fs_dsize: dq 0
 ; device bsize
 d_bsize: dd 0
+; }}}
 
 ; number of heads
 number_of_heads: db 0
@@ -580,6 +606,8 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
+kernel_found_msg: db 'kernel found: ', 0
+error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
 searching_for_msg: db 'searching for directory/file: ', 0
 found_inode_msg: db 'found inode: ', 0
 isafile_msg: db '.. which is a file', 0xd, 0xa, 0
