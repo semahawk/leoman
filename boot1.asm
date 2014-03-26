@@ -442,20 +442,41 @@ next_path_segment:
           ; code for a file
           mov esi, isafile_msg
           call putstr
-          jmp next_path_segment_next
+          ; see if it was the last segment
+          cmp byte [last_segment], 0
+          je .1
+            ; load it's inode in place of the previous one
+            mov ecx, dword [edi]
+            mov ax, 0x17a0
+            mov es, ax
+            xor bx, bx     ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+            call load_inode
+            jc halt
+            jmp kernel_found
+          .1:
+            ; 'crash' if it wasn't
+            mov esi, error_loading_kernel_msg
+            jmp halt
         .directory:
           ; code for a directory
           mov esi, isadir_msg
           call putstr
-          ; load the inode in the place of the actual one
-          mov ecx, dword [edi]
-          mov ax, 0x17a0
-          mov es, ax
-          xor bx, bx     ; es:bx = 0x17a0:0x0000 (= 0x17a00)
-          call load_inode
-          jc halt
-          mov esi, dword [kernel_name_ptr]
-          jmp next_path_segment_next
+          ; see if it was the last segment
+          cmp byte [last_segment], 1
+          je .2
+            ; load the inode in the place of the actual one
+            mov ecx, dword [edi]
+            mov ax, 0x17a0
+            mov es, ax
+            xor bx, bx     ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+            call load_inode
+            jc halt
+            mov esi, dword [kernel_name_ptr]
+            jmp next_path_segment_next
+          .2:
+            ; 'crash' if it was
+            mov esi, error_loading_kernel_msg
+            jmp halt
 
         .end:
 
@@ -528,6 +549,7 @@ next_path_segment:
   jmp halt
 
 kernel_found:
+  ; now, to load the kernel
   mov esi, kernel_found_msg
   call putstr
   mov esi, kernel_name
