@@ -15,6 +15,7 @@ putnl:
 putstr:
 ; {{{
   pusha
+  push ds
 
   xor ax, ax
   mov ds, ax    ; zero ds out
@@ -27,6 +28,7 @@ putstr:
     int 10h
     jmp .putchar
   .done:
+    pop ds
     popa
     ret
 ; }}}
@@ -70,7 +72,10 @@ puthex:
 %define MASK ebx
 %define VALUE edx
 
-  pusha
+  push eax
+  push ebx
+  push ecx
+  push edx
   ; some initialization
   mov MASK, 0xf0000000
   mov COUNTER, 8
@@ -111,7 +116,10 @@ puthex:
   loop .nibbliwibbli
 
   ; restore the registers
-  popa
+  pop edx
+  pop ecx
+  pop ebx
+  pop eax
   ret
 
 %undef COUNTER

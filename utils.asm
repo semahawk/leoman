@@ -372,9 +372,9 @@ load_blk:
 
   .load:
     mov ah, 0x02
-    mov al, 0x08
-    ; load 8 sectors (4096 bytes)
-    ; I don't know if this 4KiB is a constant.. but still
+    mov al, 0x01
+    ; load 1 sectors (512 bytes)
+    ; I don't know if this is a constant.. but still
     int 13h
     jc .load
 

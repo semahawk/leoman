@@ -350,22 +350,126 @@ next_path_segment:
   xor ecx, ecx
   ; EBX will hold current block's address
   mov ebx, 0x17a70
-  traverse_blocks:
+  traverse_direct_blocks:
     push ecx
+    push ebx
     push edx
+    push esi
     ; {{{
+
+    ; don't bother even trying to traverse a block which's address is zero
+    cmp dword [ebx], 0
+    je traverse_direct_blocks_next
+
+%ifdef DEBUG
+    mov esi, traversing_block_msg
+    call putstr
     mov edx, [ebx]
     call puthex
     call putnl
+%endif
+
+    ; load the current block into the memory into just above the inode
+    load_the_current_block:
+      ; {{{
+      push ecx
+      push ebx
+
+      mov ecx, [ebx]
+      mov bx, 0x17c0
+      mov es, bx
+      xor bx, bx     ; es:bx = 0x17c0:0x0000 (= 0x17c00)
+
+      call load_blk
+
+      pop ebx
+      pop ecx
+      ; }}}
+
+    mov edi, 0x17c00
+    traverse_one_block:
+      push esi
+      push eax
+      push ebx
+      push ecx
+      push edx
+      ; {{{
+      push edi
+      add edi, 8
+      mov esi, name_buffer
+
+      ; compare ESI and EDI
+      .found?:
+        mov ah, byte [esi]
+        mov al, byte [edi]
+        inc edi
+        inc esi
+        cmp ah, al
+        jne .nope
+        cmp al, 0
+        je .yup
+        jmp .found?
+
+      .nope:
+        jmp .next
+      .yup:
+        mov esi, found_inode_msg
+        call putstr
+        mov esi, name_buffer
+        call putstr
+        call putnl
+
+      .next:
+      pop edi
+      ; calculate the number of bytes EDI has to be increased by
+      xor edx, edx
+      xor ebx, ebx
+      xor eax, eax    ; eax will keep the file name's length
+      mov al, [byte edi + 7]
+      push eax        ; save it for a bit later
+      ; names are padded to a 4 byte boundary with null bytes
+      ; so we have to figure out those 'missing' bits (nah, bytes)
+      mov bl, 4
+      div byte bl     ; al (name length) / 4
+      ; al = name length / 4
+      ; ah = name length % 4
+      mov bl, 4
+      sub bl, ah      ; bl = 4 - (name length % 4)
+
+      ; actually increase EDI
+      pop eax
+      add edi, eax    ; file name length
+      add edi, ebx    ; the 'missing bits'
+      add edi, 8      ; that many bytes before the name
+      ; }}}
+    traverse_one_block_next:
+      pop edx
+      pop ecx
+      pop ebx
+      pop eax
+      pop esi
+      ; loop again if EDI - 0x17c00 < d_bsize
+      ; this is probably not perfect, but it would have to do
+      push eax
+      mov eax, edi
+      sub eax, dword 0x17c00
+      cmp eax, dword [d_bsize]
+      pop eax
+      jb traverse_one_block
+
     ; }}}
+  traverse_direct_blocks_next:
+    pop esi
     pop edx
+    pop ebx
     pop ecx
+
     cmp ecx, NDADDR
-    jae .end
+    jae traverse_direct_blocks_end
     inc ecx    ; ecx++
-    add edx, 8 ; move onto the next block
-    jmp traverse_blocks
-  .end:
+    add ebx, 8 ; move onto the next block
+    jmp traverse_direct_blocks
+  traverse_direct_blocks_end:
 
   ; }}}
   pop ecx
@@ -476,6 +580,7 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
+traversing_block_msg: db 'traversing block ', 0
 kernel_found_msg: db 'kernel found: ', 0
 error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
 searching_for_msg: db 'searching for directory/file: ', 0
