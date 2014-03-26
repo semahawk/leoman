@@ -278,6 +278,7 @@ fetch_fs_variables:
   ; while (*esi != '\0')
   cmp byte [esi], 0x0
   inc esi
+  inc dword [kernel_name_ptr]
   je next_path_segment_end
 
   jmp next_path_segment
@@ -319,6 +320,7 @@ next_path_segment:
     pop edx
     pop eax
     inc esi
+    inc dword [kernel_name_ptr]
     jmp fetch_the_segment
   .end:
 
@@ -362,11 +364,17 @@ next_path_segment:
     je traverse_direct_blocks_next
 
 %ifdef DEBUG
+; {{{
+    push esi
     mov esi, traversing_block_msg
     call putstr
+    pop esi
+    push edx
     mov edx, [ebx]
     call puthex
     call putnl
+    pop edx
+; }}}
 %endif
 
     ; load the current block into the memory into just above the inode
@@ -388,11 +396,11 @@ next_path_segment:
 
     mov edi, 0x17c00
     traverse_one_block:
-      push esi
-      push eax
-      push ebx
-      push ecx
       push edx
+      push ecx
+      push ebx
+      push eax
+      push esi
       ; {{{
       push edi
       add edi, 8
@@ -411,7 +419,7 @@ next_path_segment:
         jmp .found?
 
       .nope:
-        jmp .next
+        jmp .end
       .yup:
         mov esi, found_inode_msg
         call putstr
@@ -419,7 +427,38 @@ next_path_segment:
         call putstr
         call putnl
 
-      .next:
+        ; see what kind of a thing that was what we found
+        pop edi
+        cmp byte [edi + 6], 0x8
+        je .file
+        cmp byte [edi + 6], 0x4
+        je .directory
+        ; none of the above, strange
+        mov esi, isunknown_msg
+        call putstr
+        jmp halt
+
+        .file:
+          ; code for a file
+          mov esi, isafile_msg
+          call putstr
+          jmp next_path_segment_next
+        .directory:
+          ; code for a directory
+          mov esi, isadir_msg
+          call putstr
+          ; load the inode in the place of the actual one
+          mov ecx, dword [edi]
+          mov ax, 0x17a0
+          mov es, ax
+          xor bx, bx     ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+          call load_inode
+          jc halt
+          mov esi, dword [kernel_name_ptr]
+          jmp next_path_segment_next
+
+        .end:
+
       pop edi
       ; calculate the number of bytes EDI has to be increased by
       xor edx, edx
@@ -443,11 +482,11 @@ next_path_segment:
       add edi, 8      ; that many bytes before the name
       ; }}}
     traverse_one_block_next:
-      pop edx
-      pop ecx
-      pop ebx
-      pop eax
       pop esi
+      pop eax
+      pop ebx
+      pop ecx
+      pop edx
       ; loop again if EDI - 0x17c00 < d_bsize
       ; this is probably not perfect, but it would have to do
       push eax
@@ -472,11 +511,13 @@ next_path_segment:
   traverse_direct_blocks_end:
 
   ; }}}
+  next_path_segment_next:
   pop ecx
   ; *esi++ != '\0'
   cmp byte [esi], 0x0
   je next_path_segment_end
   inc esi
+  inc dword [kernel_name_ptr]
   jmp next_path_segment
   next_path_segment_end:
 
