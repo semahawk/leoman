@@ -71,6 +71,7 @@ go_unreal:
   jmp get_drive_params
 
 enable_a20:
+; {{{
   mov si, enable_a20_msg
   call putstr
 
@@ -108,8 +109,8 @@ enable_a20:
     mov si, enable_a20_fail_msg
     call putstr
     jmp halt
-
-  .end:
+; }}}
+.end:
 
 get_drive_params:
   ; fetch the drive geometry
@@ -277,72 +278,57 @@ fetch_fs_variables:
   ; while (*esi != '\0')
   cmp byte [esi], 0x0
   inc esi
-  je path_segments_end
+  je next_path_segment_end
 
-  jmp path_segments
+  jmp next_path_segment
   ; the name buffer where each path's segment will be kept
   name_buffer: times MAX_FNAME_SIZE + 1 db 0
-  ; whether the current segment is the last in the path
+  ; whether the current segment is last in the path
   last_segment: db 0
 
-path_segments:
-  ; {{{
+next_path_segment:
   push ecx
+  ; {{{
 
   ; zero-out the name_buffer
-  ; {{{
-  push ecx
-  push edi
+  mov eax, name_buffer
+  mov ebx, 0x0
   mov ecx, MAX_FNAME_SIZE
-  .buffzero:
-    ; edi = name_buffer
-    mov edi, name_buffer
-    ; *edi++ = 0x0
-    mov byte [edi], 0x0
-    inc edi
+  call memset
 
-    dec ecx
-    cmp ecx, dword 0
-    ja .buffzero
-  pop edi
-  pop ecx
-  ; }}}
-
-  ; zero out ecx (it is used as a index when writing to the name_buffer)
+  ; reset last_segment
+  mov byte [last_segment], 0x0
+  ; zero out ecx (it is used as an index when writing to the name_buffer)
   xor ecx, ecx
 
-  fetch_one_path_segment:
-    ; {{{
+  fetch_the_segment:
     push eax
     push edx
-
+    ; {{{
     ; *esi != '\0' && *esi != '/'
     cmp byte [esi], 0x0
-    je fetch_one_path_segment_end
+    je .end
     cmp byte [esi], '/'
-    je fetch_one_path_segment_end
+    je .end
 
     ; *(name_buffer + ecx++) = *esi
     mov al, byte [esi]
     mov [name_buffer + ecx], al
     inc ecx
-
     ; }}}
     pop edx
     pop eax
     inc esi
-    jmp fetch_one_path_segment
-    fetch_one_path_segment_end:
+    jmp fetch_the_segment
+  .end:
 
   ; see if the segment is the last in the path (ie. if it is not followed by a
   ; slash)
   see_if_last_segment:
     cmp byte [esi], 0x0
-    jne .1
-    ; there is probobly no need to reset [last_segment] every loop, because it
-    ; seems to only be needed only once
+    jne .end
     mov byte [last_segment], 1
-    .1:
+  .end:
 
 %ifdef DEBUG
 ; {{{
@@ -356,158 +342,42 @@ path_segments:
 ; }}}
 %endif
 
-  ; load the first direct block of the inode currently in memory, into the
-  ; memory (load it into just above the inode)
-  ; {{{
-  push esi
-  push es
-  push bx
-
-  mov bx, 0x17c0
-  mov es, bx
-  xor bx, bx       ; es:bx = 0x17c0:0x0000 (= 0x17c00)
-  ; fetch the block's number
-  mov esi, 0x17a70 ; (0x17a00 + 0x70)
-  mov ecx, [esi]
-  ; load it
-  call load_blk
-
-  pop bx
-  pop es
-  pop esi
-  ; }}}
-
-  push edi
-  mov edi, 0x17c00
   ; this! we're gonna be traversing the block which contains names of
   ; files/directories/etc. which are contained in the directory which's
   ; inode is currently loaded at 0x17a00
-  traverse_block:
-    ; {{{
-    push eax
-    push ebx
+  ;
+  ; ECX will hold the counter (which goes from 0 to NDADDR)
+  xor ecx, ecx
+  ; EBX will hold current block's address
+  mov ebx, 0x17a70
+  traverse_blocks:
     push ecx
     push edx
-
-    push esi
-    push edi
-    ; TODO: see if name_buffer and edi + 8 are equal
     ; {{{
-    ; save edi
-    mov ecx, edi
-
-    add edi, 8
-    mov esi, name_buffer
-
-    ; can't really use the `streq' function from utils.asm as dealing with DS
-    ; gets quite messy
-    .streq:
-      mov ah, byte [esi]
-      mov al, byte [edi]
-      inc edi
-      inc esi
-      cmp ah, al
-      jne .fail
-      cmp al, 0
-      je .ok
-      jmp .streq
-
-    .fail:
-      jmp .end
-    .ok:
-      ; we found it!
-      mov esi, found_inode_msg
-      call putstr
-      mov esi, name_buffer
-      call putstr
-      ; fetch the inode's number
-      mov edi, ecx
-      mov ecx, dword [edi]
-      ; see if it's a file or a directory
-      cmp byte [edi + 6], 0x4
-      je .directory
-      cmp byte [edi + 6], 0x8
-      je .file
-      jmp .unknown
-
-      .directory:
-        mov esi, isadir_msg
-        call putstr
-        ; load the inode
-        mov ax, 0x17a0
-        mov es, ax
-        xor bx, bx        ; es:bx = 0x17a0:0x0000 (= 0x17a00)
-        ; ecx already contains the right inode number
-        call load_inode
-        jmp .end
-      .file:
-        mov esi, isafile_msg
-        call putstr
-        ; load the inode
-        mov ax, 0x17a0
-        mov es, ax
-        xor bx, bx        ; es:bx = 0x17a0:0x0000 (= 0x17a00)
-        ; ecx already contains the right inode number
-        call load_inode
-        jmp kernel_found
-      .unknown:
-        mov esi, isunknown_msg
-        call putstr
-
-    .end:
-
-    ; }}}
-    pop edi
-    pop esi
-
-    ; calculate the number of bytes by which edi should be increased
-    xor edx, edx
-    xor eax, eax
-    mov al, byte [edi + 7]  ; this many bytes is the length of the name
-    push eax
-    ; BUT, the names are padded to a 4 byte boundary with null bytes
-    ; so we have to figure out those 'missing' bits (nah, bytes)
-    mov bl, 4
-    div byte bl   ; al (name length) / 4
-    ; al = name length / 4
-    ; ah = name length % 4
-    mov bl, 4
-    sub bl, ah    ; bl = 4 - (name length % 4)
-    ; increase the edi
-    pop eax
-    add edi, eax
-    add edi, ebx         ; the missing 'bits'
-    add edi, 8           ; that many bytes before the name
-
+    mov edx, [ebx]
+    call puthex
+    call putnl
     ; }}}
     pop edx
     pop ecx
-    pop ebx
-    pop eax
-    ; loop again if EDI - 0x17c00 < d_bsize
-    ; this is probably not perfect, but it would have to do
-    push eax
-    mov eax, edi
-    sub eax, dword 0x17c00
-    ;cmp eax, dword [d_bsize]
-    cmp eax, dword 128
-    pop eax
-    jb traverse_block
-    ; restore esi
-    pop edi
+    cmp ecx, NDADDR
+    jae .end
+    inc ecx    ; ecx++
+    add edx, 8 ; move onto the next block
+    jmp traverse_blocks
+  .end:
 
   ; }}}
   pop ecx
   ; *esi++ != '\0'
   cmp byte [esi], 0x0
-  je path_segments_end
+  je next_path_segment_end
   inc esi
-  jmp path_segments
-  path_segments_end:
-  call putnl
+  jmp next_path_segment
+  next_path_segment_end:
 
-  ; if we got here (ie. the loop ended) it most likely means that the kernel was
-  ; not found
+  ; if we got here (ie. the loop ended) it means that the kernel was not found
+  call putnl
   mov esi, error_loading_kernel_msg
   call putstr
   jmp halt

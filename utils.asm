@@ -1,3 +1,23 @@
+; sets a memory to a given 'state'
+;
+; param:  EAX - place in the memory
+;          BL - what to overwrite with
+;         ECX - how many bytes to overwrite
+memset:
+; {{{
+  push ecx
+  push eax
+
+  .1:
+    mov byte [eax],  bl
+    inc dword eax
+  loop .1
+
+  pop eax
+  pop ecx
+  ret
+; }}}
+
 ; compares a string in ESI with the one in EDI
 ;
 ; param:  ESI - first string
