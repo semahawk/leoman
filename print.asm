@@ -15,6 +15,10 @@ putnl:
 putstr:
 ; {{{
   pusha
+
+  xor ax, ax
+  mov ds, ax    ; zero ds out
+
   mov ah, 0xe
   .putchar:
     lodsb

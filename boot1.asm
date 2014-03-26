@@ -263,9 +263,9 @@ fetch_fs_variables:
   call putnl
 
   ; load the / inode just into above boot1
-  mov ax, 0x1fa0
+  mov ax, 0x17a0
   mov es, ax
-  xor bx, bx        ; es:bx = 0x1fa0:0x0000 (= 0x1fa00)
+  xor bx, bx        ; es:bx = 0x17a0:0x0000 (= 0x17a00)
   ; the inode number
   mov ecx, 0x2
   call load_inode
@@ -280,6 +280,8 @@ fetch_fs_variables:
   jmp path_segments
   ; the name buffer where each path's segment will be kept
   name_buffer: times MAX_FNAME_SIZE + 1 db 0
+  ; whether the current segment is the last in the path
+  last_segment: db 0
 
 path_segments:
   ; {{{
@@ -330,6 +332,16 @@ path_segments:
     jmp fetch_one_path_segment
     fetch_one_path_segment_end:
 
+  ; see if the segment is the last in the path (ie. if it is not followed by a
+  ; slash)
+  see_if_last_segment:
+    cmp byte [esi], 0x0
+    jne .1
+    ; there is probobly no need to reset [last_segment] every loop, because it
+    ; seems to only be needed only once
+    mov byte [last_segment], 1
+    .1:
+
 %ifdef DEBUG
 ; {{{
   push esi
@@ -349,11 +361,11 @@ path_segments:
   push es
   push bx
 
-  mov bx, 0x1fc0
+  mov bx, 0x17c0
   mov es, bx
-  xor bx, bx       ; es:bx = 0x1fc0:0x0000 (= 0x1fc00)
+  xor bx, bx       ; es:bx = 0x17c0:0x0000 (= 0x17c00)
   ; fetch the block's number
-  mov esi, 0x1fa70 ; (0x1fa00 + 0x70)
+  mov esi, 0x17a70 ; (0x17a00 + 0x70)
   mov ecx, [esi]
   ; load it
   call load_blk
@@ -364,10 +376,10 @@ path_segments:
   ; }}}
 
   push edi
-  mov edi, 0x1fc00
+  mov edi, 0x17c00
   ; this! we're gonna be traversing the block which contains names of
   ; files/directories/etc. which are contained in the directory which's
-  ; inode is currently loaded at 0x1fa00
+  ; inode is currently loaded at 0x17a00
   traverse_block:
     ; {{{
     push esi
@@ -381,8 +393,58 @@ path_segments:
     push eax
     ; TODO: see if name_buffer and edi + 8 are equal
     ; {{{
-    mov ax, 0x1000   ; (0x1fc00 - 0xfc00) / 0x10
-    mov ds, ax
+    ; save edi
+    mov ecx, edi
+
+    add edi, 8
+    mov esi, name_buffer
+
+    ; can't really use the `streq' function from utils.asm as dealing with DS
+    ; gets quite messy
+    .streq:
+      mov ah, byte [esi]
+      mov al, byte [edi]
+      inc edi
+      inc esi
+      cmp ah, al
+      jne .fail
+      cmp al, 0
+      je .ok
+      jmp .streq
+
+    .fail:
+      jmp .end
+    .ok:
+      ; we found it!
+      mov esi, found_inode_msg
+      call putstr
+      mov esi, name_buffer
+      call putstr
+      call putnl
+      ; fetch the inode's number
+      mov edi, ecx
+      mov ecx, dword [edi]
+      ; see if it's a file or a directory
+      cmp byte [edi + 6], 0x4
+      je .directory
+      cmp byte [edi + 6], 0x8
+      je .file
+      jmp .unknown
+
+      .directory:
+        mov esi, isadir_msg
+        call putstr
+        jmp .end
+      .file:
+        mov esi, isafile_msg
+        call putstr
+        jmp .end
+      .unknown:
+        mov esi, isunknown_msg
+        call putstr
+
+    .end:
+
     ; }}}
     pop eax
     pop ds
@@ -413,12 +475,13 @@ path_segments:
     pop ebx
     pop eax
     pop esi
-    ; loop again if EDI - 0x1fc00 < d_bsize
+    ; loop again if EDI - 0x17c00 < d_bsize
     ; this is probably not perfect, but it would have to do
     push eax
     mov eax, edi
-    sub eax, dword 0x1fc00
-    cmp eax, dword [d_bsize]
+    sub eax, dword 0x17c00
+    ;cmp eax, dword [d_bsize]
+    cmp eax, dword 128
     pop eax
     jb traverse_block
     ; restore esi
@@ -518,6 +581,10 @@ bootdrv: db 0
 
 ; the messages
 searching_for_msg: db 'searching for directory/file: ', 0
+found_inode_msg: db 'found inode: ', 0
+isafile_msg: db '.. which is a file', 0xd, 0xa, 0
+isadir_msg: db '.. which is a directory', 0xd, 0xa, 0
+isunknown_msg: db '.. which is unknown..', 0xd, 0xa, 0
 floppy_msg: db 'Floppy.', 0xd, 0xa, 0
 hd_msg: db 'Hard drive.', 0xd, 0xa, 0
 cg_msg: db 'CG #', 0
