@@ -357,6 +357,18 @@ blk_addr:
 load_blk:
 ; {{{
   push ecx
+  push esi
+
+%ifdef DEBUG
+; {{{
+  mov esi, load_blk_msg
+  call putstr
+  mov edx, ecx
+  call puthex
+  call putnl
+; }}}
+%endif
+
   call blk_addr
   xor edx, edx
   mov eax, ecx
@@ -382,6 +394,7 @@ load_blk:
   clc
 
   pop ecx
+  pop esi
 
   ret
 ; }}}
@@ -432,14 +445,22 @@ inode_addr:
 ;         0 in CF if the loading succeeded
 load_inode:
 ; {{{
+  push edi
+  push esi
   push ecx
+  push edx
   call inode_addr
   ; edx:eax - the inode's address
+  mov edi, es
+  shl edi, 4
+  add di, bx
+  mov esi, edi
   mov ecx, 512
   div dword ecx
   ; eax = inode addr / 512
   ; edx = inode addr % 512
   mov ecx, eax
+  add esi, edx
   call lba_to_chs
   ; now ch, dh, cl and dl contain the right values
   ; es and bx also should be upright, but that's up to the caller
@@ -450,10 +471,24 @@ load_inode:
     int 13h
     jc .load
 
+  ; because we only need half a sector, sometimes the actual inode is going to
+  ; be in the upper half of the sector, so we have to move it the requested
+  ; location
+  mov ecx, 0x40 ; 256 bytes, 0x40 dwords
+  .move:
+    mov edx, [esi]
+    mov [edi], edx
+    add esi, 4
+    add edi, 4
+    loop .move
+
   ; it wouldn't have worked if we didn't get here
   clc
 
+  pop edx
   pop ecx
+  pop esi
+  pop edi
 
   ret
 ; }}}

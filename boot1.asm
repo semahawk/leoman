@@ -247,6 +247,8 @@ fetch_fs_variables:
   mov word [ds:eax], bx
 
   ; see what the location of ROOTINO (and two other inodes) is
+%ifdef DEBUG
+; {{{
   mov ecx, 0x2
   call inode_addr
   mov edx, eax
@@ -263,6 +265,8 @@ fetch_fs_variables:
   call puthex
   call putnl
   call putnl
+; }}}
+%endif
 
   ; load the / inode just into above boot1
   mov ax, 0x17a0
@@ -334,6 +338,7 @@ next_path_segment:
 
 %ifdef DEBUG
 ; {{{
+  call putnl
   push esi
   mov esi, searching_for_msg
   call putstr
@@ -363,20 +368,6 @@ next_path_segment:
     cmp dword [ebx], 0
     je traverse_direct_blocks_next
 
-%ifdef DEBUG
-; {{{
-    push esi
-    mov esi, traversing_block_msg
-    call putstr
-    pop esi
-    push edx
-    mov edx, [ebx]
-    call puthex
-    call putnl
-    pop edx
-; }}}
-%endif
-
     ; load the current block into the memory into just above the inode
     load_the_current_block:
       ; {{{
@@ -393,6 +384,20 @@ next_path_segment:
       pop ebx
       pop ecx
       ; }}}
+
+%ifdef DEBUG
+; {{{
+    push esi
+    mov esi, traversing_block_msg
+    call putstr
+    pop esi
+    push edx
+    mov edx, [ebx]
+    call puthex
+    call putnl
+    pop edx
+; }}}
+%endif
 
     mov edi, 0x17c00
     traverse_one_block:
@@ -421,11 +426,15 @@ next_path_segment:
       .nope:
         jmp .end
       .yup:
+%ifdef DEBUG
+; {{{
         mov esi, found_inode_msg
         call putstr
         mov esi, name_buffer
         call putstr
         call putnl
+; }}}
+%endif
 
         ; see what kind of a thing that was what we found
         pop edi
@@ -440,8 +449,12 @@ next_path_segment:
 
         .file:
           ; code for a file
+%ifdef DEBUG
+; {{{
           mov esi, isafile_msg
           call putstr
+; }}}
+%endif
           ; see if it was the last segment
           cmp byte [last_segment], 0
           je .1
@@ -450,6 +463,16 @@ next_path_segment:
             mov ax, 0x17a0
             mov es, ax
             xor bx, bx     ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+%ifdef DEBUG
+; {{{
+            mov esi, loading_inode_msg1
+            call putstr
+            mov edx, ecx
+            call puthex
+            mov esi, loading_inode_msg2
+            call putstr
+; }}}
+%endif
             call load_inode
             jc halt
             jmp kernel_found
@@ -459,8 +482,12 @@ next_path_segment:
             jmp halt
         .directory:
           ; code for a directory
+%ifdef DEBUG
+; {{{
           mov esi, isadir_msg
           call putstr
+; }}}
+%endif
           ; see if it was the last segment
           cmp byte [last_segment], 1
           je .2
@@ -469,6 +496,16 @@ next_path_segment:
             mov ax, 0x17a0
             mov es, ax
             xor bx, bx     ; es:bx = 0x17a0:0x0000 (= 0x17a00)
+%ifdef DEBUG
+; {{{
+            mov esi, loading_inode_msg1
+            call putstr
+            mov edx, ecx
+            call puthex
+            mov esi, loading_inode_msg2
+            call putstr
+; }}}
+%endif
             call load_inode
             jc halt
             mov esi, dword [kernel_name_ptr]
@@ -531,6 +568,16 @@ next_path_segment:
     jmp traverse_direct_blocks
   traverse_direct_blocks_end:
 
+  ; TODO: traverse also indirect blocks
+
+  ; if we got here (ie. the loop ended) it means that the kernel was not found
+  call putnl
+  mov esi, kernel_not_found_msg
+  call putstr
+  mov esi, kernel_name
+  call putstr
+  jmp halt
+
   ; }}}
   next_path_segment_next:
   pop ecx
@@ -544,17 +591,77 @@ next_path_segment:
 
   ; if we got here (ie. the loop ended) it means that the kernel was not found
   call putnl
-  mov esi, error_loading_kernel_msg
+  mov esi, kernel_not_found_msg
+  call putstr
+  mov esi, kernel_name
   call putstr
   jmp halt
 
 kernel_found:
-  ; now, to load the kernel
   mov esi, kernel_found_msg
   call putstr
   mov esi, kernel_name
   call putstr
   call putnl
+  call putnl
+
+  ; now, to load the kernel
+  ; temporary location to where to load a block (just above the inode)
+  mov dx, 0x17c0
+  mov es, dx
+  xor bx, bx       ; es:bx = 0x17c0:0x0000 (= 0x17c00)
+  ; where to move the block from the temporary location
+  mov edi, 0x100000
+  ; first, direct blocks
+  mov edx, 0x17a70
+  ; loop NDADDR times
+  mov ecx, NDADDR
+
+  .load_direct_blocks:
+    ; don't even try loading blocks which's addresses are nul
+    cmp dword [edx], 0x0
+    je .load_direct_blocks_next
+
+    push ecx
+    push edx
+    push esi
+    push es
+    push ebx
+
+    ; load the block
+    mov ecx, [edx]
+    call load_blk
+    ; move it to above 1MiB
+    mov esi, 0x17c00
+    ;   edi is already set
+    xor edx, edx
+    mov eax, [fs_fsize]
+    mov ecx, 4
+    div ecx
+
+    mov ecx, eax
+
+    .move:
+      mov edx, [esi]
+      mov [edi], edx
+
+      add esi, 4
+      add edi, 4
+      loop .move
+
+    pop ebx
+    pop es
+    pop esi
+    pop edx
+    pop ecx
+    ; increase the current block address by 64 bits
+    add edx, 8
+    ; increase the move location
+    add edi, [fs_fsize]
+  .load_direct_blocks_next:
+  loop .load_direct_blocks
+
+  ; TODO: load also indirect blocks
 
 nice_halt:
   mov si, goodbye_msg
@@ -633,7 +740,7 @@ d_bsize: dd 0
 number_of_heads: db 0
 ; sectors per track
 sectors_per_track: db 0
-; when loading the kernel, this is the head value
+; when loading the superblock, this is the head value
 head: db 0
 ; this is the cylinder number
 cylinder: db 0
@@ -643,7 +750,11 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
+load_blk_msg: db 'called load_blk with arg: ', 0
+loading_inode_msg1: db 'loading inode ', 0
+loading_inode_msg2: db ' into memory', 0xd, 0xa, 0
 traversing_block_msg: db 'traversing block ', 0
+kernel_not_found_msg: db "couldn't find ", 0
 kernel_found_msg: db 'kernel found: ', 0
 error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
 searching_for_msg: db 'searching for directory/file: ', 0
