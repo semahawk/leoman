@@ -667,13 +667,16 @@ check_kernel_elfness:
   mov esi, 0x100000
   mov edx, [esi]
   cmp dword [esi], ELF_MAGIC
-  je blastoff
+  je enter_pmode
   ; it's not ELF :c
   mov esi, kernel_name
   call putstr
   mov esi, kernel_no_elf_msg
   call putstr
   jmp halt
+
+enter_pmode:
+  ; TODO
 
 ; say hello to the kernel ;)
 blastoff:
@@ -686,8 +689,12 @@ blastoff:
   mov eax, 0x08
   mov ds, eax
 
+  add edx, 0x100000
+  call putnl
+  call puthex
+  call putnl
   ; farewell!
-  jmp far edx
+  jmp 0x08:0x07c00
 
 nice_halt:
   mov si, goodbye_msg
