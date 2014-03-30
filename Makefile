@@ -1,38 +1,36 @@
-.PHONY: all img run floppy_disk iso clean
+.PHONY: all run disk_image clean
 .SUFFIXES: .asm .bin
 
-OBJS = boot0.bin \
-			 boot1.bin
+DISK_IMAGE = nihilum.fs
+DISK_IMAGE_SIZE = 64m
 
-all: nihilum
+BOOT_OBJS = boot0.bin boot1.bin
 
-nihilum: $(OBJS)
-	cat boot0.bin boot1.bin > nihilum
+all: boot $(DISK_IMAGE)
+
+boot: $(BOOT_OBJS)
+	cat $(BOOT_OBJS) > $@
 
 .asm.bin: print.asm utils.asm
-	nasm -f bin $< -o $@
+	nasm -dDEBUG -f bin $< -o $@
 
-img: nihilum.img
-nihilum.img: nihilum
-	dd conv=notrunc if=nihilum of=nihilum.img
+run: $(DISK_IMAGE)
+	qemu -hda $(DISK_IMAGE) -monitor stdio
 
-run: floppy_disk
-	qemu -hda disk -monitor stdio
-
-floppy_disk: nihilum disk
-	dd conv=notrunc if=nihilum of=disk bs=512 count=128
-
-disk: disk.backup
-	cp disk.backup disk
-
-iso: nihilum.img
-	mkisofs -no-emul-boot -boot-load-size 4 -quiet -V 'Nihilum' -input-charset iso8859-1 -o nihilum.iso -b nihilum.img .
+$(DISK_IMAGE): boot
+	# the original makefs has a little bug, which creates the bootblock of
+	# size 8KiB, instead of a 64KiB
+	#
+	# I should probably upload a patch..
+	/usr/src/usr.sbin/makefs/makefs -tffs -oversion=2 -M$(DISK_IMAGE_SIZE) $(DISK_IMAGE) image/
+	dd conv=notrunc if=boot of=$(DISK_IMAGE) bs=512 count=128
 
 clean:
 	rm -f *.bin
 	rm -f *.img
-	rm -f *.iso
+	rm -f *.fs
 
 distclean: clean
-	rm -f nihilum
+	rm -f boot
+	rm -f $(DISK_IMAGE)
 
