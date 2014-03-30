@@ -75,10 +75,11 @@ lba_to_chs:
   xor ax, ax
   mov ds, ax
 
-  jmp $ + 3    ; skip over the variables
+  jmp varsend
     c: db 0
     h: db 0
     s: db 0
+  varsend:
 
   mov eax, ecx
   xor edx, edx
@@ -445,10 +446,7 @@ inode_addr:
 ;         0 in CF if the loading succeeded
 load_inode:
 ; {{{
-  push edi
-  push esi
-  push ecx
-  push edx
+  pushad
   call inode_addr
   ; edx:eax - the inode's address
   mov edi, es
@@ -461,10 +459,10 @@ load_inode:
   ; edx = inode addr % 512
   mov ecx, eax
   add esi, edx
+
   call lba_to_chs
   ; now ch, dh, cl and dl contain the right values
   ; es and bx also should be upright, but that's up to the caller
-
   .load:
     mov ah, 0x02
     mov al, 0x01    ; we actually need only half a sector
@@ -485,11 +483,7 @@ load_inode:
   ; it wouldn't have worked if we didn't get here
   clc
 
-  pop edx
-  pop ecx
-  pop esi
-  pop edi
-
+  popad
   ret
 ; }}}
 

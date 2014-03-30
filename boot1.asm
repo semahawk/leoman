@@ -253,17 +253,12 @@ fetch_fs_variables:
   call inode_addr
   mov edx, eax
   call puthex
-  call putnl
-  mov ecx, 0xfb80
-  call inode_addr
-  mov edx, eax
-  call puthex
-  call putnl
-  mov ecx, 0xfb81
-  call inode_addr
-  mov edx, eax
-  call puthex
-  call putnl
+call putnl
+mov ecx, 0x3
+call inode_addr
+mov edx, eax
+call puthex
+call putnl
   call putnl
 ; }}}
 %endif
