@@ -675,8 +675,19 @@ check_kernel_elfness:
   call putstr
   jmp halt
 
-; say hello to the kernel... just in a bit
+; say hello to the kernel ;)
 blastoff:
+  ; fetch the entry point
+  mov esi, 0x100018
+  mov edx, [esi]
+  call puthex
+  call putnl
+  ; select the selector
+  mov eax, 0x08
+  mov ds, eax
+
+  ; farewell!
+  jmp far edx
 
 nice_halt:
   mov si, goodbye_msg
