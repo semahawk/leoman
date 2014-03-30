@@ -1,6 +1,5 @@
-nihilum
-
 *.img
 *.iso
 *.bin
 *.core
+*.fs
