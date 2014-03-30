@@ -14,6 +14,10 @@ kernel_name_ptr: dd 0
 %define NDADDR     12    ; # of direct blocks in inode
 %define NIADDR     3     ; # of indirect blocks in inode
 
+; watch out! little endian
+%define UFS2_MAGIC 0x19540119
+%define ELF_MAGIC  0x464c457f
+
 %include "print.asm"
 %include "utils.asm"
 
@@ -191,7 +195,7 @@ read_sblk:
   push si
 
   ; make sure we actually have the superblock loaded, and that it's UFS2
-  cmp dword [si + 1372], 0x19540119
+  cmp dword [si + 1372], UFS2_MAGIC
   je welcome
 
   ; it didn't work out :c
@@ -658,6 +662,22 @@ kernel_found:
 
   ; TODO: load also indirect blocks
 
+check_kernel_elfness:
+  ; make sure we have the kernel loaded and that it's 'executable'
+  mov esi, 0x100000
+  mov edx, [esi]
+  cmp dword [esi], ELF_MAGIC
+  je blastoff
+  ; it's not ELF :c
+  mov esi, kernel_name
+  call putstr
+  mov esi, kernel_no_elf_msg
+  call putstr
+  jmp halt
+
+; say hello to the kernel... just in a bit
+blastoff:
+
 nice_halt:
   mov si, goodbye_msg
   call putstr
@@ -745,6 +765,7 @@ sector: db 0
 bootdrv: db 0
 
 ; the messages
+kernel_no_elf_msg: db ': the ELF magic was not found!', 0xd, 0xa, 0
 load_blk_msg: db 'called load_blk with arg: ', 0
 loading_inode_msg1: db 'loading inode ', 0
 loading_inode_msg2: db ' into memory', 0xd, 0xa, 0
