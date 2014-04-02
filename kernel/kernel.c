@@ -24,13 +24,14 @@
 #error "the only supported architecture is i386"
 #endif
 
-static const size_t VGA_WIDTH  = 80;
-static const size_t VGA_HEIGHT = 24;
+static const size_t VGA_WIDTH    = 80;
+static const size_t VGA_HEIGHT   = 24;
 
-size_t term_row;
-size_t term_col;
+#define VGA_BUFF 0xb8000
+
+size_t  term_row;
+size_t  term_col;
 uint8_t term_color;
-uint16_t *term_buff;
 
 enum vga_color {
   COLOR_BLACK = 0,
@@ -66,29 +67,25 @@ uint8_t make_color(enum vga_color fg, enum vga_color bg)
   return fg | bg << 4;
 }
 
-uint16_t make_vga_entry(char ch, uint8_t color)
+uint16_t make_char(char ch, uint8_t color)
 {
-  uint16_t ch16 = ch;
-  uint16_t color16 = color;
+  uint8_t newc = ch;
+  uint8_t newcol = color;
 
-  return ch16 | color16 << 8;
-}
-
-void term_setcolor(uint8_t color)
-{
-  term_color = color;
+  return newc | newcol << 8;
 }
 
 void term_putchat(char ch, uint8_t color, size_t x, size_t y)
 {
   const size_t idx = y * VGA_WIDTH + x;
 
-  term_buff[idx] = make_vga_entry(ch, color);
+  *((uint16_t *)VGA_BUFF + idx) = make_char(ch, color);
 }
 
 void term_putch(char ch)
 {
-  term_putchat(ch, term_color, term_col, term_row);
+  /*term_putchat(ch, term_color, term_col, term_row);*/
+  term_putchat(ch, term_color, 0, 0);
 
   if (++term_col == VGA_WIDTH){
     term_col = 0;
@@ -104,12 +101,13 @@ void term_init(void)
   size_t x, y;
 
   term_row = term_col = 0;
-  term_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
-  term_buff = (uint16_t *)0xb8000;
+  term_color = make_color(COLOR_WHITE, COLOR_BLACK);
 
-  for (y = 0; y < VGA_HEIGHT; y++)
-    for (x = 0; x < VGA_WIDTH; x++)
+  for (y = 0; y < VGA_HEIGHT; y++){
+    for (x = 0; x < VGA_WIDTH; x++){
       term_putchat(' ', term_color, x, y);
+    }
+  }
 }
 
 void term_puts(const char *s)
@@ -127,13 +125,14 @@ extern "C"
 
 int kmain(void)
 {
-#if SHITE_IS_NOT_WORKING
   term_init();
+  term_putchat('N', COLOR_WHITE, 3, 1);
+  term_putchat('m', COLOR_LIGHT_GREY, 4, 1);
+
+#if SHITE_IS_NOT_WORKING
+  term_putch('N');
   term_puts("kernel says hello\n");
 #endif
-
-  *((unsigned char *)0xb8000) = 0x01;
-  *((unsigned char *)0xb8001) = 0x0f;
 
   return 0;
 }
