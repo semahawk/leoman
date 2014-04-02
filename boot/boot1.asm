@@ -245,11 +245,6 @@ fetch_fs_variables:
   ; d_bsize = eax = fs_fsize / fsbtodb(1)
   mov [d_bsize], eax
 
-  ; print a smiley face
-  mov bx, 0x0f01
-  mov eax, 0x0b8000
-  mov word [ds:eax], bx
-
   ; see what the location of ROOTINO (and two other inodes) is
 %ifdef DEBUG
 ; {{{
@@ -632,12 +627,12 @@ kernel_found:
     call load_blk
     ; move it to above 1MiB
     mov esi, 0x17c00
+
     ;   edi is already set
     xor edx, edx
-    mov eax, [fs_fsize]
+    mov eax, [fs_bsize]
     mov ecx, 4
     div ecx
-
     mov ecx, eax
 
     .move:
@@ -656,7 +651,7 @@ kernel_found:
     ; increase the current block address by 64 bits
     add edx, 8
     ; increase the move location
-    add edi, [fs_fsize]
+    add edi, [fs_bsize]
   .load_direct_blocks_next:
   loop .load_direct_blocks
 
@@ -676,29 +671,33 @@ check_kernel_elfness:
   jmp halt
 
 enter_pmode:
-  ; TODO
+  cli
+  lgdt [gdt]
+  mov eax, cr0
+  or al, 1
+  mov cr0, eax
+  jmp 0x08:pmode
 
-; say hello to the kernel ;)
-blastoff:
-  ; fetch the entry point
-  mov esi, 0x100018
-  mov edx, [esi]
-  call puthex
-  call putnl
-  ; select the selector
-  mov eax, 0x08
+BITS 32
+pmode:
+  mov eax, 0x10
   mov ds, eax
+  mov es, eax
+  mov fs, eax
+  mov gs, eax
+  mov ss, eax
+  mov esp, 0x5c00
 
-  add edx, 0x100000
-  call putnl
-  call puthex
-  call putnl
+  ; fetch the entry point
+  mov eax, 0x100018
+  mov eax, [eax]        ; eax = e_entry
+  add eax, 0x1000       ; offset of .text in the kernel
+  ; I'm not planning on adding new segments/sections so it will probably remain
+  ; right for a long time
+  ; also, any changes in kernel/linker.ld should probably be reflected here
+
   ; farewell!
-  jmp 0x08:0x07c00
-
-nice_halt:
-  mov si, goodbye_msg
-  call putstr
+  call eax
 
 halt:
   cli
@@ -785,6 +784,7 @@ bootdrv: db 0
 ; the messages
 kernel_no_elf_msg: db ': the ELF magic was not found!', 0xd, 0xa, 0
 load_blk_msg: db 'called load_blk with arg: ', 0
+blks_addr_msg: db 'blocks address is: ', 0
 loading_inode_msg1: db 'loading inode ', 0
 loading_inode_msg2: db ' into memory', 0xd, 0xa, 0
 traversing_block_msg: db 'traversing block ', 0

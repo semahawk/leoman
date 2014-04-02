@@ -25,7 +25,6 @@ global _start
 _start:
   ; to set up a stack, we simply set the ESP register to point to the top of our
   ; stack (as it grows downwards)
-jmp $
   mov esp, stack_top
 
   ; we are now ready to actually execute C code

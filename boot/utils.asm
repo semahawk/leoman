@@ -371,6 +371,16 @@ load_blk:
 %endif
 
   call blk_addr
+
+%ifdef DEBUG
+; {{{
+  mov esi, blks_addr_msg
+  call putstr
+  mov edx, ecx
+  call puthex
+  call putnl
+; }}}
+%endif
   xor edx, edx
   mov eax, ecx
   ; edx:eax - the block's address
@@ -383,9 +393,18 @@ load_blk:
   ; now ch, dh, cl and dl contain the right values
   ; es and bx also should be upright, but that's up to the caller
 
+  ; calculate number of sectors to load (fs_bsize / 512)
+  push edx
+  push ecx
+  xor edx, edx
+  mov eax, [fs_bsize]
+  mov ecx, 512
+  div dword ecx
+  pop ecx
+  pop edx
+
   .load:
     mov ah, 0x02
-    mov al, 0x01
     ; load 1 sectors (512 bytes)
     ; I don't know if this is a constant.. but still
     int 13h

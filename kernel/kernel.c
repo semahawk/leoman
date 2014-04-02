@@ -127,8 +127,13 @@ extern "C"
 
 int kmain(void)
 {
+#if SHITE_IS_NOT_WORKING
   term_init();
   term_puts("kernel says hello\n");
+#endif
+
+  *((unsigned char *)0xb8000) = 0x01;
+  *((unsigned char *)0xb8001) = 0x0f;
 
   return 0;
 }
