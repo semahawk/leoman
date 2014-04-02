@@ -1,9 +1,0 @@
-00100010 <_start>:
-  100010:       bc 10 60 10 00          mov    $0x106010,%esp
-  100015:       e8 c6 02 00 00          call   1002e0 <kmain>
-  10001a:       fa                      cli
-
-0010001b <_start.halt>:
-  10001b:       f4                      hlt
-  10001c:       eb fd                   jmp    10001b <_start.halt>
-
