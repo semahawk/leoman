@@ -393,11 +393,13 @@ load_blk:
   ; now ch, dh, cl and dl contain the right values
   ; es and bx also should be upright, but that's up to the caller
 
-  ; calculate number of sectors to load (fs_bsize / 512)
+  ; calculate the number of sectors to load (fs_fsize * fs_frag / 512)
   push edx
   push ecx
   xor edx, edx
-  mov eax, [fs_bsize]
+  mov eax, [fs_fsize]
+  mov ecx, [fs_frag]
+  mul ecx
   mov ecx, 512
   div dword ecx
   pop ecx
@@ -405,8 +407,6 @@ load_blk:
 
   .load:
     mov ah, 0x02
-    ; load 1 sectors (512 bytes)
-    ; I don't know if this is a constant.. but still
     int 13h
     jc .load
 

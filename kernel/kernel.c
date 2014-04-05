@@ -24,13 +24,12 @@
 #error "the only supported architecture is i386"
 #endif
 
+#define VGA_BUFF 0xb8000
+
 static const size_t VGA_WIDTH    = 80;
 static const size_t VGA_HEIGHT   = 24;
 
-#define VGA_BUFF 0xb8000
-
-size_t  term_row;
-size_t  term_col;
+size_t term_col, term_row;
 uint8_t term_color;
 
 enum vga_color {
@@ -84,8 +83,7 @@ void term_putchat(char ch, uint8_t color, size_t x, size_t y)
 
 void term_putch(char ch)
 {
-  /*term_putchat(ch, term_color, term_col, term_row);*/
-  term_putchat(ch, term_color, 0, 0);
+  term_putchat(ch, term_color, term_col, term_row);
 
   if (++term_col == VGA_WIDTH){
     term_col = 0;
@@ -127,14 +125,13 @@ int kmain(void)
 {
   term_init();
   term_putchat('N', COLOR_WHITE, 3, 1);
-  term_putchat('m', COLOR_LIGHT_GREY, 4, 1);
+  term_putchat('m', COLOR_DARK_GREY, 4, 1);
 
-#if SHITE_IS_NOT_WORKING
-  term_putch('N');
+#if SHITE_NOT_WORKING
   term_puts("kernel says hello\n");
 #endif
 
-  return 0;
+  for (;;);
 }
 
 /*

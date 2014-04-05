@@ -1,3 +1,4 @@
+OUTPUT_FORMAT("elf32-i386")
 ENTRY(_start)
 
 SECTIONS
@@ -12,7 +13,7 @@ SECTIONS
 
   .rodata BLOCK(4K) : ALIGN(4K)
   {
-    *(.rodata)
+    *(.rodata*)
   }
 
   .data BLOCK(4K) : ALIGN(4K)

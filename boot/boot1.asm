@@ -627,10 +627,11 @@ kernel_found:
     call load_blk
     ; move it to above 1MiB
     mov esi, 0x17c00
-
     ;   edi is already set
     xor edx, edx
-    mov eax, [fs_bsize]
+    mov eax, [fs_fsize]
+    mov ecx, [fs_frag]
+    mul ecx
     mov ecx, 4
     div ecx
     mov ecx, eax
@@ -648,6 +649,7 @@ kernel_found:
     pop esi
     pop edx
     pop ecx
+
     ; increase the current block address by 64 bits
     add edx, 8
     ; increase the move location
