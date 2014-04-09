@@ -10,28 +10,35 @@
  *
  */
 
+#include <stdint.h>
+
+#include "common.h"
+
 struct idt_entry {
   uint16_t base_low;
   uint16_t segm;
   uint8_t  zero;
   uint8_t  flags;
   uint16_t base_high;
-} __attribute__((packed));
+} __PACKED;
 
 struct idt_ptr {
-  uint16_t length;
+  uint16_t limit;
   uint32_t base;
-} __attribute((packed));
+} __PACKED;
 
-static inline void lidt(void *base, uint16_t length)
-{
-  struct idt_ptr idtr;
+struct regs {
+  /* data segment selector */
+  uint32_t ds;
+  /* pushed by `pusha' */
+  uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+  /* interrupt number and error code */
+  uint32_t num, err;
+  /* pushed by the processor automatically */
+  uint32_t eip, cs, eflags, useresp, ss;
+};
 
-  idtr.length = length;
-  idtr.base = (uint32_t)base;
-
-  asm("lidt (%0)" : : "p"(&idtr));
-}
+void idt_install(void);
 
 /*
  * vi: ft=c:ts=2:sw=2:expandtab

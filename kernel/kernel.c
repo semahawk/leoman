@@ -10,9 +10,6 @@
  *
  */
 
-#ifndef __cplusplus
-# include <stdbool.h>
-#endif
 #include <stddef.h>
 #include <stdint.h>
 
@@ -26,10 +23,9 @@
 #error "the only supported architecture is i386"
 #endif
 
-#define VGA_BUFF 0xb8000
-
-static const size_t VGA_WIDTH    = 80;
-static const size_t VGA_HEIGHT   = 24;
+static const size_t VGA_WIDTH  = 80;
+static const size_t VGA_HEIGHT = 24;
+static uint16_t *const VGA_MEM = (uint16_t *)0xb8000;
 
 size_t term_col, term_row;
 uint8_t term_color;
@@ -80,7 +76,7 @@ void term_putchat(char ch, uint8_t color, size_t x, size_t y)
 {
   const size_t idx = y * VGA_WIDTH + x;
 
-  *((uint16_t *)VGA_BUFF + idx) = make_char(ch, color);
+  *(VGA_MEM + idx) = make_char(ch, color);
 }
 
 void term_putch(char ch)
@@ -114,8 +110,15 @@ void term_puts(const char *s)
 {
   char *p = s;
 
-  for (; *p != '\0';){
-    term_putch(*p++);
+  for (; *p != '\0'; p++){
+    switch (*p){
+      case 0xa: /* newline */
+        term_row++;
+        term_col = 0;
+        break;
+      default:
+        term_putch(*p);
+    }
   }
 }
 
@@ -160,7 +163,18 @@ int kmain(void)
   term_putchat('m', COLOR_DARK_GREY, 4, 1);
 
   term_row += 3;
-  term_puts(" Quidquid Latine dictum, sit altum videtur");
+  term_puts(" Quidquid Latine dictum, sit altum videtur\n");
+  term_row += 2;
+
+  /* install the IDT */
+  idt_install();
+
+  /* let's test it ;) */
+  asm("int $0");
+  asm("int $1");
+  asm("int $2");
+  asm("int $3");
+  asm("int $4");
 
   for (;;);
 }
