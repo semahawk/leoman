@@ -16,6 +16,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "idt.h"
+
 #ifdef __linux__
 #error "you are not using a cross-compiler!"
 #endif
@@ -112,9 +114,39 @@ void term_puts(const char *s)
 {
   char *p = s;
 
-  for (; *p++ != '\0';){
-    term_putch(*p);
+  for (; *p != '\0';){
+    term_putch(*p++);
   }
+}
+
+void *memset(void *dst, int ch, size_t len)
+{
+  while (len-- != 0)
+    *(uint8_t *)dst++ = (unsigned char)ch;
+
+  return dst;
+}
+
+void *memcpy(void *dst, void *src, size_t len)
+{
+  void *ret = dst;
+
+  while (len-- != 0)
+    *(uint8_t *)dst++ = *(uint8_t *)src++;
+
+  return ret;
+}
+
+static inline uint8_t inb(uint16_t port)
+{
+  uint8_t ret;
+  asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
+  return ret;
+}
+
+static inline void outb(uint16_t port, uint8_t data)
+{
+  asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
 }
 
 #ifdef __cplusplus
@@ -127,9 +159,8 @@ int kmain(void)
   term_putchat('N', COLOR_WHITE, 3, 1);
   term_putchat('m', COLOR_DARK_GREY, 4, 1);
 
-#if SHITE_NOT_WORKING
-  term_puts("kernel says hello\n");
-#endif
+  term_row += 3;
+  term_puts(" Quidquid Latine dictum, sit altum videtur");
 
   for (;;);
 }

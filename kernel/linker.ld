@@ -1,30 +1,38 @@
-OUTPUT_FORMAT("elf32-i386")
+OUTPUT_FORMAT("binary")
 ENTRY(_start)
+phys = 0x100000;
 
 SECTIONS
 {
-  . = 1M;
-
-  .text BLOCK(4K) : ALIGN(4K)
+  .text phys : AT(phys)
   {
+    text = .;
     *(.multiboot)
     *(.text)
+    . = ALIGN(4K);
   }
 
-  .rodata BLOCK(4K) : ALIGN(4K)
+  .rodata : AT(phys + (rodata - text))
   {
+    rodata = .;
     *(.rodata*)
+    . = ALIGN(4K);
   }
 
-  .data BLOCK(4K) : ALIGN(4K)
+  .data : AT(phys + (data - text))
   {
+    data = .;
     *(.data)
+    . = ALIGN(4K);
   }
 
-  .bss BLOCK(4K) : ALIGN(4K)
+  .bss : AT(phys + (bss - text))
   {
+    bss = .;
     *(COMMON)
     *(.bss)
-    *(.bootstrap_stack)
+    *(.stack)
+    . = ALIGN(4K);
   }
 }
+

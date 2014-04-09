@@ -14,10 +14,10 @@ align 4
   dd CHECKSUM
 
 ; the stack is 16KiB
-section .bootstrap_stack
+section .stack
 align 4
 stack_bottom:
-  times 16384 db 0
+  resb 16384
 stack_top:
 
 section .text

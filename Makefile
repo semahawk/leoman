@@ -1,7 +1,7 @@
 .PHONY: all bootloader kernel run disk_image clean
 
 DISK_IMAGE = nihilum.fs
-DISK_IMAGE_SIZE = 64m
+DISK_IMAGE_SIZE = 32m
 
 SUBDIRS = boot kernel
 

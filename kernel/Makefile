@@ -1,6 +1,7 @@
 AS = nasm
 CC = clang
-CFLAGS := -target i386-pc-none -ffreestanding -fno-builtin -nostdlib -masm=intel
+CFLAGS := -save-temps -target i386-pc-none -ffreestanding \
+	-fno-builtin -nostdlib
 
 OBJS = entry.o kernel.o
 

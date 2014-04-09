@@ -659,19 +659,6 @@ kernel_found:
 
   ; TODO: load also indirect blocks
 
-check_kernel_elfness:
-  ; make sure we have the kernel loaded and that it's 'executable'
-  mov esi, 0x100000
-  mov edx, [esi]
-  cmp dword [esi], ELF_MAGIC
-  je enter_pmode
-  ; it's not ELF :c
-  mov esi, kernel_name
-  call putstr
-  mov esi, kernel_no_elf_msg
-  call putstr
-  jmp halt
-
 enter_pmode:
   cli
   lgdt [gdt]
@@ -688,18 +675,11 @@ pmode:
   mov fs, eax
   mov gs, eax
   mov ss, eax
+  ; is that necessary?
   mov esp, 0x5c00
 
-  ; fetch the entry point
-  mov eax, 0x100018
-  mov eax, [eax]        ; eax = e_entry
-  add eax, 0x1000       ; offset of .text in the kernel
-  ; I'm not planning on adding new segments/sections so it will probably remain
-  ; right for a long time
-  ; also, any changes in kernel/linker.ld should probably be reflected here
-
-  ; farewell!
-  call eax
+  ; farewell! (0x10) is the code offset
+  call 0x100010
 
 halt:
   cli
