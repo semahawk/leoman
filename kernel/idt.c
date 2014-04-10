@@ -16,6 +16,7 @@
 #include "common.h"
 #include "isr.h"
 #include "idt.h"
+#include "vga.h"
 
 /* THE mighty IDT */
 static struct idt_entry idt[256];
@@ -72,15 +73,15 @@ void isr_handler(struct regs regs)
   /* paint the screen bloood */
   int x, y;
   /* change the colors */
-  term_color = make_color(COLOR_WHITE, COLOR_RED);
+  vga_color = vga_make_color(COLOR_WHITE, COLOR_RED);
 
   for (y = 0; y < VGA_HEIGHT; y++)
     for (x = 0; x < VGA_WIDTH; x++)
-      term_putch(' ');
+      vga_putch(' ');
 
-  term_row = 1;
-  term_col = 2;
-  term_puts(messages[regs.num]);
+  vga_row = 1;
+  vga_col = 2;
+  vga_puts(messages[regs.num]);
 
   /* TODO: dump the registers */
 
