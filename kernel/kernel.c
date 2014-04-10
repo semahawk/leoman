@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "common.h"
 #include "idt.h"
 
 #ifdef __linux__
@@ -23,31 +24,12 @@
 #error "the only supported architecture is i386"
 #endif
 
-static const size_t VGA_WIDTH  = 80;
-static const size_t VGA_HEIGHT = 24;
+const size_t VGA_WIDTH  = 80;
+const size_t VGA_HEIGHT = 24;
 static uint16_t *const VGA_MEM = (uint16_t *)0xb8000;
 
 size_t term_col, term_row;
 uint8_t term_color;
-
-enum vga_color {
-  COLOR_BLACK = 0,
-  COLOR_BLUE,
-  COLOR_GREEN,
-  COLOR_CYAN,
-  COLOR_RED,
-  COLOR_MAGENTA,
-  COLOR_BROWN,
-  COLOR_LIGHT_GREY,
-  COLOR_DARK_GREY,
-  COLOR_LIGHT_BLUE,
-  COLOR_LIGHT_GREEN,
-  COLOR_LIGHT_CYAN,
-  COLOR_LIGHT_RED,
-  COLOR_LIGHT_MAGENTA,
-  COLOR_LIGHT_BROWN,
-  COLOR_WHITE
-};
 
 size_t strlen(const char *s)
 {
@@ -81,7 +63,15 @@ void term_putchat(char ch, uint8_t color, size_t x, size_t y)
 
 void term_putch(char ch)
 {
-  term_putchat(ch, term_color, term_col, term_row);
+  switch (ch){
+    case 0xa: /* newline */
+      term_row++;
+      term_col = 0;
+      break;
+    default:
+      term_putchat(ch, term_color, term_col, term_row);
+      break;
+  }
 
   if (++term_col == VGA_WIDTH){
     term_col = 0;
@@ -110,16 +100,8 @@ void term_puts(const char *s)
 {
   char *p = s;
 
-  for (; *p != '\0'; p++){
-    switch (*p){
-      case 0xa: /* newline */
-        term_row++;
-        term_col = 0;
-        break;
-      default:
-        term_putch(*p);
-    }
-  }
+  while (*p != '\0')
+    term_putch(*p++);
 }
 
 void *memset(void *dst, int ch, size_t len)
@@ -171,10 +153,6 @@ int kmain(void)
 
   /* let's test it ;) */
   asm("int $0");
-  asm("int $1");
-  asm("int $2");
-  asm("int $3");
-  asm("int $4");
 
   for (;;);
 }

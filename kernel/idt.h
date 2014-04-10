@@ -27,6 +27,8 @@ struct idt_ptr {
   uint32_t base;
 } __PACKED;
 
+/* preserved processor's state
+ * passed from `isr_common_stub' to `isr_handler' */
 struct regs {
   /* data segment selector */
   uint32_t ds;

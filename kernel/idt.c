@@ -20,14 +20,73 @@
 /* THE mighty IDT */
 static struct idt_entry idt[256];
 
-static const char *int_messages[] =
+static const char *const messages[] =
 {
-  "Division by Zero"
+  /* {{{ exception messages */
+  "Division by Zero",
+  "Debug exception",
+  "Non maskable interrupt",
+  "Breakpoint exception",
+  "Into detected overflow",
+  "Out of bounds",
+  "Invalid opcode",
+  "No coprocessor",
+  "Double fault",
+  "Coprocessor segment overrun",
+  "Bad TSS",
+  "Segment not present",
+  "Stack fault",
+  "General protection fault",
+  "Page fault",
+  "Unknown interrupt",
+  "Coprocessor fault",
+  "Alignment check exception",
+  "Machine check exception",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved",
+  "Reserved"
+  /* }}} */
 };
 
 void isr_handler(struct regs regs)
 {
-  term_puts("recieved an interrupt!\n");
+  /* paint the screen bloood */
+  int x, y;
+  /* change the colors */
+  term_color = make_color(COLOR_WHITE, COLOR_RED);
+
+  for (y = 0; y < VGA_HEIGHT; y++)
+    for (x = 0; x < VGA_WIDTH; x++)
+      term_putch(' ');
+
+  term_row = 1;
+  term_col = 2;
+  term_puts(messages[regs.num]);
+
+  /* TODO: dump the registers */
+
+  /* hm.. let's hang */
+  /* I don't see a better option really */
+  for (;;);
 }
 
 static void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
