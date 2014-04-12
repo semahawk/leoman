@@ -43,6 +43,11 @@ void vga_init(void);
 void vga_putch(char ch);
 void vga_putchat(char ch, uint8_t color, size_t x, size_t y);
 void vga_puts(const char *s);
+void vga_putd(int v);
+void vga_puthd(uint32_t v);
+void vga_puthw(uint16_t v);
+void vga_puthb(uint8_t v);
+void vga_putnl(void);
 uint8_t vga_make_color(enum vga_color fg, enum vga_color bg);
 
 #endif /* TERM_H */

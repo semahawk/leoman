@@ -15,6 +15,8 @@ kernel:
 
 run: $(DISK_IMAGE)
 	qemu -hda $(DISK_IMAGE) -monitor stdio
+runk: kernel
+	qemu -kernel kernel/kernel -monitor stdio
 
 $(DISK_IMAGE): bootloader kernel
 	mkdir -p image/boot

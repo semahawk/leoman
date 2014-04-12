@@ -78,12 +78,30 @@ int kmain(void)
   vga_row += 3;
   vga_puts(" Quidquid Latine dictum, sit altum videtur\n");
   vga_row += 2;
+  vga_col = 0;
 
   /* install the IDT */
   idt_install();
 
-  /* let's test it ;) */
-  asm("int $0");
+  vga_puthb(255);
+  vga_putnl();
+  vga_puthw(255);
+  vga_putnl();
+  vga_puthd(255);
+  vga_putnl();
+  vga_putd(1);
+  vga_putnl();
+  vga_putd(1234);
+  vga_putnl();
+  vga_putd(256);
+  vga_putnl();
+  vga_putd(17291729);
+  vga_putnl();
+  vga_putd(4005678143);
+  vga_putnl();
+  vga_putd(-2);
+  vga_putnl();
+  vga_putd(-2000000);
 
   for (;;);
 }

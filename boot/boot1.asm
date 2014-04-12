@@ -605,7 +605,7 @@ kernel_found:
   mov es, dx
   xor bx, bx       ; es:bx = 0x17c0:0x0000 (= 0x17c00)
   ; where to move the block from the temporary location
-  mov edi, 0x100000
+  mov edi, 0xff000  ; 0x100000 - 0x1000
   ; first, direct blocks
   mov edx, 0x17a70
   ; loop NDADDR times
