@@ -82,8 +82,50 @@ void isr_handler(struct regs regs)
   vga_row = 1;
   vga_col = 2;
   vga_puts(messages[regs.num]);
-
-  /* TODO: dump the registers */
+  vga_putch('!');
+  vga_row = 3;
+  vga_col = 2;
+  vga_puts("eax: ");
+  vga_puthd(regs.eax);
+  vga_puts("   ");
+  vga_puts("eip: ");
+  vga_puthd(regs.eip);
+  vga_putnl();
+  vga_col = 2;
+  vga_puts("ebx: ");
+  vga_puthd(regs.ebx);
+  vga_puts("   ");
+  vga_puts(" ds: ");
+  vga_puthd(regs.ds);
+  vga_putnl();
+  vga_col = 2;
+  vga_puts("ecx: ");
+  vga_puthd(regs.ecx);
+  vga_puts("   ");
+  vga_puts(" cs: ");
+  vga_puthd(regs.cs);
+  vga_putnl();
+  vga_col = 2;
+  vga_puts("edx: ");
+  vga_puthd(regs.edx);
+  vga_puts("   ");
+  vga_puts("flg: ");
+  vga_puthd(regs.eflags);
+  vga_putnl();
+  vga_col = 2;
+  vga_puts("esi: ");
+  vga_puthd(regs.esi);
+  vga_puts("   ");
+  vga_puts(" ss: ");
+  vga_puthd(regs.ss);
+  vga_putnl();
+  vga_col = 2;
+  vga_puts("edi: ");
+  vga_puthd(regs.edi);
+  vga_puts("   ");
+  vga_puts("err: ");
+  vga_puthd(regs.err);
+  vga_putnl();
 
   /* hm.. let's hang */
   /* I don't see a better option really */
@@ -114,6 +156,7 @@ void idt_install(void)
   /* zero out the IDT entries (is it actually necessary?) */
   memset(idt, 0x0, sizeof(idt));
   /* set the IDT gates */
+  /* ISRs */
   idt_set_gate(0,  isr0,  0x8, 0x8e);
   idt_set_gate(1,  isr1,  0x8, 0x8e);
   idt_set_gate(2,  isr2,  0x8, 0x8e);
