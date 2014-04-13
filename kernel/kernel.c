@@ -53,24 +53,15 @@ void *memcpy(void *dst, void *src, size_t len)
   return ret;
 }
 
-static inline uint8_t inb(uint16_t port)
-{
-  uint8_t ret;
-  asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
-  return ret;
-}
-
-static inline void outb(uint16_t port, uint8_t data)
-{
-  asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
-}
-
 #ifdef __cplusplus
 extern "C"
 #endif
 
 int kmain(void)
 {
+  /* install the IDT (ISRs and IRQs) */
+  idt_install();
+
   vga_init();
   vga_putchat('N', COLOR_WHITE, 3, 1);
   vga_putchat('m', COLOR_DARK_GREY, 4, 1);
@@ -79,12 +70,6 @@ int kmain(void)
   vga_puts(" Quidquid Latine dictum, sit altum videtur\n");
   vga_row += 2;
   vga_col = 0;
-
-  /* install the IDT */
-  idt_install();
-
-  asm("mov $0xdeadbeef, %eax");
-  asm("int $0");
 
   for (;;);
 }

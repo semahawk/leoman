@@ -14,12 +14,15 @@
 #include <stdint.h>
 
 #include "common.h"
-#include "isr.h"
 #include "idt.h"
 #include "vga.h"
 
 /* THE mighty IDT */
 static struct idt_entry idt[256];
+
+/* IRQ subroutine table */
+/* it's actually an array of function pointers */
+static void *irq_routines[16] = { 0 };
 
 static const char *const messages[] =
 {
@@ -70,10 +73,15 @@ static const char *const messages[] =
 
 void isr_handler(struct regs regs)
 {
+  /* {{{ */
   /* paint the screen bloood */
   int x, y;
   /* change the colors */
   vga_color = vga_make_color(COLOR_WHITE, COLOR_RED);
+
+  /* make sure it's an ISR, not an IRQ */
+  if (regs.num > 31)
+    return;
 
   for (y = 0; y < VGA_HEIGHT; y++)
     for (x = 0; x < VGA_WIDTH; x++)
@@ -130,6 +138,58 @@ void isr_handler(struct regs regs)
   /* hm.. let's hang */
   /* I don't see a better option really */
   for (;;);
+  /* }}} */
+}
+
+void irq_handler(struct regs *regs)
+{
+  void (*handler)(struct regs *regs) = irq_routines[regs->num - 32];
+
+  /* launch the handler if there is any associated with the IRQ being fired */
+  if (handler)
+    handler(regs);
+
+  /* if the IDT entry that was invoked was greater than 40 (meaning IRQ8-15)
+   * then we need to send an End of Interrupt to the slave controller */
+  if (regs->num >= 40)
+    outb(0xa0, 0x20);
+
+  /* in either case, we need to send an EOI to the master interrupt controller
+   * too */
+  outb(0x20, 0x20);
+}
+
+/*
+ * Sets a handler for an IRQ of a given <num>
+ */
+void irq_install_handler(int num, void (*handler)(struct regs *))
+{
+  irq_routines[num] = handler;
+}
+
+/*
+ * Unsets the handler for an IRQ of a given <num>
+ */
+void irq_uninstall_handler(int num)
+{
+  irq_routines[num] = 0;
+}
+
+/*
+ * Maps IRQs 0-15 to ISRs 32-47, as it normally is mapped to ISRs 8-15
+ */
+static inline void irq_remap(void)
+{
+  outb(0x20, 0x11);
+  outb(0xA0, 0x11);
+  outb(0x21, 0x20);
+  outb(0xA1, 0x28);
+  outb(0x21, 0x04);
+  outb(0xA1, 0x02);
+  outb(0x21, 0x01);
+  outb(0xA1, 0x01);
+  outb(0x21, 0x00);
+  outb(0xA1, 0x00);
 }
 
 static void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
@@ -189,9 +249,29 @@ void idt_install(void)
   idt_set_gate(29, isr29, 0x8, 0x8e);
   idt_set_gate(30, isr30, 0x8, 0x8e);
   idt_set_gate(31, isr31, 0x8, 0x8e);
+  /* IRQs */
+  irq_remap();
+  idt_set_gate(32, irq0,  0x8, 0x8e);
+  idt_set_gate(33, irq1,  0x8, 0x8e);
+  idt_set_gate(34, irq2,  0x8, 0x8e);
+  idt_set_gate(35, irq3,  0x8, 0x8e);
+  idt_set_gate(36, irq4,  0x8, 0x8e);
+  idt_set_gate(37, irq5,  0x8, 0x8e);
+  idt_set_gate(38, irq6,  0x8, 0x8e);
+  idt_set_gate(39, irq7,  0x8, 0x8e);
+  idt_set_gate(40, irq8,  0x8, 0x8e);
+  idt_set_gate(41, irq9,  0x8, 0x8e);
+  idt_set_gate(42, irq10, 0x8, 0x8e);
+  idt_set_gate(43, irq11, 0x8, 0x8e);
+  idt_set_gate(44, irq12, 0x8, 0x8e);
+  idt_set_gate(45, irq13, 0x8, 0x8e);
+  idt_set_gate(46, irq14, 0x8, 0x8e);
+  idt_set_gate(47, irq15, 0x8, 0x8e);
 
   /* load the IDT into the processor */
   idt_load(idt, sizeof(idt));
+
+  asm volatile("sti");
 }
 
 /*
