@@ -143,7 +143,7 @@ void isr_handler(struct regs regs)
 
 void irq_handler(struct regs *regs)
 {
-  void (*handler)(struct regs *regs) = irq_routines[regs->num - 32];
+  irq_handler_t handler = irq_routines[regs->num - 32];
 
   /* launch the handler if there is any associated with the IRQ being fired */
   if (handler)
@@ -162,7 +162,7 @@ void irq_handler(struct regs *regs)
 /*
  * Sets a handler for an IRQ of a given <num>
  */
-void irq_install_handler(int num, void (*handler)(struct regs *))
+void irq_install_handler(int num, irq_handler_t handler)
 {
   irq_routines[num] = handler;
 }
@@ -176,20 +176,20 @@ void irq_uninstall_handler(int num)
 }
 
 /*
- * Maps IRQs 0-15 to ISRs 32-47, as it normally is mapped to ISRs 8-15
+ * Maps IRQs 0-15 to ISRs 32-47, as they normally are mapped to ISRs 8-15
  */
 static inline void irq_remap(void)
 {
   outb(0x20, 0x11);
-  outb(0xA0, 0x11);
+  outb(0xa0, 0x11);
   outb(0x21, 0x20);
-  outb(0xA1, 0x28);
+  outb(0xa1, 0x28);
   outb(0x21, 0x04);
-  outb(0xA1, 0x02);
+  outb(0xa1, 0x02);
   outb(0x21, 0x01);
-  outb(0xA1, 0x01);
+  outb(0xa1, 0x01);
   outb(0x21, 0x00);
-  outb(0xA1, 0x00);
+  outb(0xa1, 0x00);
 }
 
 static void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
@@ -270,8 +270,6 @@ void idt_install(void)
 
   /* load the IDT into the processor */
   idt_load(idt, sizeof(idt));
-
-  asm volatile("sti");
 }
 
 /*

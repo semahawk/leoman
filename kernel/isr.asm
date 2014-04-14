@@ -28,10 +28,8 @@ isr_common_stub:
 
 irq_common_stub:
   pusha
-  push ds
-  push es
-  push fs
-  push gs
+  mov ax, ds ; save the data segment
+  push eax
 
   mov ax, 0x10 ; load the kernel data segment
   mov ds, ax
@@ -39,16 +37,17 @@ irq_common_stub:
   mov fs, ax
   mov gs, ax
 
-  mov eax, esp
-  push eax
-  mov eax, irq_handler
-  call eax
+  mov ecx, esp
+  push ecx
+  mov ecx, irq_handler
+  call ecx
 
-  pop eax
-  pop gs
-  pop fs
-  pop es
-  pop ds
+  pop ecx
+  pop eax ; restore the data segment
+  mov ds, ax
+  mov es, ax
+  mov fs, ax
+  mov gs, ax
   popa
 
   add esp, 8
@@ -75,7 +74,7 @@ irq_common_stub:
 %endmacro
 
 ; argument #1: the IRQ number
-; argument #2: the IDT gate it maps to
+; argument #2: the IDT gate it is mapped to
 %macro irq 2
   global irq%1
   irq%1:

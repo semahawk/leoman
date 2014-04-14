@@ -15,11 +15,8 @@
 
 #include "common.h"
 #include "idt.h"
+#include "kbd.h"
 #include "vga.h"
-
-#ifdef __linux__
-#error "you are not using a cross-compiler!"
-#endif
 
 #ifndef __i386__
 #error "the only supported architecture is i386"
@@ -59,17 +56,20 @@ extern "C"
 
 int kmain(void)
 {
+  /* set up the printing utilities */
+  vga_init();
   /* install the IDT (ISRs and IRQs) */
   idt_install();
+  /* install the keyboard */
+  kbd_install();
 
-  vga_init();
+  asm volatile("sti");
+
   vga_putchat('N', COLOR_WHITE, 3, 1);
   vga_putchat('m', COLOR_DARK_GREY, 4, 1);
 
   vga_row += 3;
   vga_puts(" Quidquid Latine dictum, sit altum videtur\n");
-  vga_row += 2;
-  vga_col = 0;
 
   for (;;);
 }

@@ -28,7 +28,8 @@ struct idt_ptr {
 } __PACKED;
 
 /* preserved processor's state
- * passed from `isr_common_stub' to `isr_handler' */
+ * passed from `isr_common_stub' to `isr_handler'
+ * and    from `irq_common_stub' to `irq_handler' */
 struct regs {
   /* data segment selector */
   uint32_t ds;
@@ -40,7 +41,11 @@ struct regs {
   uint32_t eip, cs, eflags, useresp, ss;
 };
 
+typedef void (*irq_handler_t)(struct regs *);
+
 void idt_install(void);
+void irq_install_handler(int, irq_handler_t);
+void irq_uninstall_handler(int);
 
 /* {{{ IRS declarations, defined in isr.asm */
 extern void isr0 (void);
