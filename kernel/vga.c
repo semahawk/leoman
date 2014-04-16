@@ -12,6 +12,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <stdarg.h>
 
 #include "common.h"
 #include "vga.h"
@@ -162,6 +163,45 @@ void vga_puthb(uint8_t v)
   vga_puts("0x");
   for (; mask > 0; mask >>= 4, i--)
     vga_put_digit((mask & v) >> (i * 4 - 4));
+}
+
+/*
+ * printf-eque function to print to VGA screen
+ */
+void vga_printf(const char *fmt, ...)
+{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wincompatible-pointer-types-discards-qualifiers"
+  /* meh, this is quite ugly */
+  char *p = fmt;
+#pragma clang diagnostic pop
+  va_list vl;
+
+  va_start(vl, fmt);
+
+  for (; *p != '\0'; p++){
+    if (*p == '%'){
+      p++;
+      switch (*p){
+        case '%':
+          vga_putch('%');
+          break;
+        case 'd':
+          vga_putd(va_arg(vl, int));
+          break;
+        case 'x':
+          vga_puthd(va_arg(vl, uint32_t));
+          break;
+        case 's':
+          vga_puts(va_arg(vl, const char *));
+          break;
+      }
+    } else {
+      vga_putch(*p);
+    }
+  }
+
+  va_end(vl);
 }
 
 /*

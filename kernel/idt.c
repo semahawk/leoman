@@ -87,53 +87,14 @@ void isr_handler(struct regs regs)
     for (x = 0; x < VGA_WIDTH; x++)
       vga_putch(' ');
 
-  vga_row = 1;
-  vga_col = 2;
-  vga_puts(messages[regs.num]);
-  vga_putch('!');
-  vga_row = 3;
-  vga_col = 2;
-  vga_puts("eax: ");
-  vga_puthd(regs.eax);
-  vga_puts("   ");
-  vga_puts("eip: ");
-  vga_puthd(regs.eip);
-  vga_putnl();
-  vga_col = 2;
-  vga_puts("ebx: ");
-  vga_puthd(regs.ebx);
-  vga_puts("   ");
-  vga_puts(" ds: ");
-  vga_puthd(regs.ds);
-  vga_putnl();
-  vga_col = 2;
-  vga_puts("ecx: ");
-  vga_puthd(regs.ecx);
-  vga_puts("   ");
-  vga_puts(" cs: ");
-  vga_puthd(regs.cs);
-  vga_putnl();
-  vga_col = 2;
-  vga_puts("edx: ");
-  vga_puthd(regs.edx);
-  vga_puts("   ");
-  vga_puts("flg: ");
-  vga_puthd(regs.eflags);
-  vga_putnl();
-  vga_col = 2;
-  vga_puts("esi: ");
-  vga_puthd(regs.esi);
-  vga_puts("   ");
-  vga_puts(" ss: ");
-  vga_puthd(regs.ss);
-  vga_putnl();
-  vga_col = 2;
-  vga_puts("edi: ");
-  vga_puthd(regs.edi);
-  vga_puts("   ");
-  vga_puts("err: ");
-  vga_puthd(regs.err);
-  vga_putnl();
+  vga_row = 1; vga_col = 2;
+  vga_printf("%s!\n\n", messages[regs.num]);
+  vga_printf("eax: %x  eip: %x\n", regs.eax, regs.eip);
+  vga_printf("ebx: %x   ds: %x\n", regs.ebx, regs.ds);
+  vga_printf("ecx: %x   cs: %x\n", regs.ecx, regs.cs);
+  vga_printf("edx: %x  flg: %x\n", regs.edx, regs.eflags);
+  vga_printf("esi: %x   ss: %x\n", regs.esi, regs.ss);
+  vga_printf("edi: %x  err: %x\n", regs.edi, regs.err);
 
   /* hm.. let's hang */
   /* I don't see a better option really */

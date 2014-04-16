@@ -69,7 +69,9 @@ int kmain(void)
   vga_putchat('m', COLOR_DARK_GREY, 4, 1);
 
   vga_row += 3;
-  vga_puts(" Quidquid Latine dictum, sit altum videtur\n");
+  vga_puts(" Quidquid Latine dictum, sit altum videtur\n\n");
+
+  vga_printf("printf says: hello, world %% 42, decimal %d, %s %x\n\n", 1234, "hex", 0xfeedbeef);
 
   for (;;);
 }
