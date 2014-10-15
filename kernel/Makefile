@@ -4,7 +4,7 @@ AS = nasm
 CC = clang
 CFLAGS := -target i386-pc-none -ffreestanding -fno-builtin -nostdlib
 
-C_SRC = kernel.c idt.c kbd.c vga.c
+C_SRC = kernel.c mm.c idt.c kbd.c vga.c
 S_SRC = entry.asm isr.asm
 OBJS  = ${S_SRC:.asm=.o} ${C_SRC:.c=.o}
 
