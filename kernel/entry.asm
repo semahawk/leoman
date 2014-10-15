@@ -13,6 +13,10 @@ align 4
   dd FLAGS
   dd CHECKSUM
 
+section .rodata
+  ; the linker fills this in
+  kernels_end: dd 0 ; 32 bits (ought to do it)
+
 ; the stack is 16KiB
 section .stack
 align 4
@@ -29,6 +33,7 @@ _start:
 
   ; we are now ready to actually execute C code
   extern kmain
+  push kernels_end
   call kmain
 
   ; in case the function returns

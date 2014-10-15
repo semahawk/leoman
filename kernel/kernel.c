@@ -54,7 +54,7 @@ void *memcpy(void *dst, void *src, size_t len)
 extern "C"
 #endif
 
-int kmain(void)
+void kmain(uint32_t kernels_end)
 {
   /* set up the printing utilities */
   vga_init();
@@ -72,6 +72,8 @@ int kmain(void)
   vga_puts(" Quidquid Latine dictum, sit altum videtur\n\n");
 
   vga_printf("printf says: hello, world %% 42, decimal %d, %s %x\n\n", 1234, "hex", 0xfeedbeef);
+
+  vga_printf("kernels end: %x\n", kernels_end);
 
   for (;;);
 }

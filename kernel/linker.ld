@@ -34,5 +34,7 @@ SECTIONS
     *(.stack)
     . = ALIGN(4K);
   }
+
+  kernels_end = .;
 }
 
