@@ -80,21 +80,42 @@ void kmain(uint32_t kernels_end)
   void *two = kmalloc(2);
   void *three = kmalloc(3);
 
-  vga_printf("kmalloc(1) says: %x\n", one);
-  vga_printf("kmalloc(2) says: %x\n", two);
-  vga_printf("kmalloc(3) says: %x\n", three);
+  vga_printf("kmalloc(#1, 7): %x\n", one);
+  vga_printf("kmalloc(#2, 2): %x\n", two);
+  vga_printf("kmalloc(#3, 3): %x\n", three);
 
   kfree(two);
+  vga_printf("kfree #2\n");
 
   void *four = kmalloc(2);
 
-  vga_printf("kmalloc(4) says: %x\n", four);
+  vga_printf("kmalloc(#4, 2): %x\n", four);
 
   if (four == two){
     /* see if the `four' was placed in the `two's spot, since `two' was freed
      * and it occupied the exact amount of memory `four' needs */
-    vga_printf("nice :)\n");
+    vga_printf("&4 == &2  nice :)\n");
     /* I'm not sure if this is exactly nice, but, still.. */
+  }
+
+  void *five = kmalloc(4);
+  void *six = kmalloc(5);
+
+  vga_printf("kmalloc(#5, 4): %x\n", five);
+  vga_printf("kmalloc(#6, 5): %x\n", six);
+
+  kfree(five);
+  kfree(six);
+
+  vga_printf("kfree #5\n");
+  vga_printf("kfree #6\n");
+
+  void *seven = kmalloc(9);
+
+  vga_printf("kmalloc(#7, 9): %x\n", seven);
+
+  if (seven == five){
+    vga_printf("&7 == &5  nice :)\n");
   }
 
   for (;;);

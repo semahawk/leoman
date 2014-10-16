@@ -43,15 +43,20 @@ void *kmalloc(size_t size)
       /* let's see if it's big enough */
       if (block->size >= size){
         /* yay */
-        struct memblock *new = (struct memblock *)((size_t)block + (sizeof(struct memblock) + size));
 
-        new->size = block->size - sizeof(struct memblock) - size;
-        new->used = MM_UNUSED;
-        new->next = block->next;
-        new->prev = block;
-        block->next = new;
-        /* shrink the block */
-        block->size = size;
+        /* let's see if there is a space for a new block header */
+        if (block->size - size > sizeof(struct memblock)){
+          /* create a new block, if there is a space for it */
+          struct memblock *new = (struct memblock *)((size_t)block + (sizeof(struct memblock) + size));
+
+          new->prev = block;
+          new->next = block->next;
+          new->size = block->size - sizeof(struct memblock) - size;
+          new->used = MM_UNUSED;
+          block->next = new;
+          block->size = size;
+        }
+
         block->used = MM_USED;
 
         /* return the data right next to the 'found' block header */
