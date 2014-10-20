@@ -71,11 +71,22 @@ void *kmalloc(size_t size)
 
 void kfree(void *ptr)
 {
+  struct memblock *p;
   struct memblock *block = (struct memblock *)((size_t)ptr - sizeof(struct memblock));
 
   block->used = MM_UNUSED;
 
-  /* TODO merge free blocks surrounding the one being free'd */
+  /* merge free blocks to the right of the one being freed */
+  for (p = block->next; p != NULL && !p->used; p = p->next){
+    p->prev->next = p->next;
+    p->prev->size += p->size + sizeof(struct memblock);
+  }
+
+  /* merge free blocks to the left of the one being freed */
+  for (p = block->prev; p != NULL && !p->used; p = p->prev){
+    p->next = p->next->next;
+    p->size += p->size + sizeof(struct memblock);
+  }
 }
 
 /*

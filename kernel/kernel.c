@@ -104,8 +104,8 @@ void kmain(uint32_t kernels_end)
   vga_printf("kmalloc(#5, 4): %x\n", five);
   vga_printf("kmalloc(#6, 5): %x\n", six);
 
-  kfree(five);
   kfree(six);
+  kfree(five);
 
   vga_printf("kfree #5\n");
   vga_printf("kfree #6\n");
