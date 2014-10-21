@@ -74,7 +74,7 @@ void kmain(uint32_t kernels_end)
   vga_row += 3;
   vga_puts(" Quidquid Latine dictum, sit altum videtur\n\n");
 
-  vga_printf("printf says: hello, world %% 42, decimal %d, %s %x\n\n", 1234, "hex", 0xfeedbeef);
+  vga_printf("printf says: hello, world %% 42, decimal %d, %s %x\n\n", 9001, "hex", 0xfeedbeef);
 
   void *one = kmalloc(7);
   void *two = kmalloc(2);

@@ -111,19 +111,27 @@ static inline void vga_put_digit(uint8_t ch)
  */
 void vga_putd(int v)
 {
-  int mask /* meh, naming things... */ = 1000000000;
+  int out[10 /* ceil(log10(2^32)) */] = { 0 };
+  int i = 0;
+
+  if (v == 0){
+    vga_putch('0');
+
+    return;
+  }
 
   if (v < 0){
     v = -v;
     vga_putch('-');
   }
 
-  for (; mask > 0; mask /= 10){
-    if (v > mask - 1){
-      vga_put_digit(v / mask);
-      v %= mask;
-    }
-  }
+  for (; v > 0; v /= 10)
+    out[i++] = v % 10;
+
+  i--;
+
+  while (i >= 0)
+    vga_put_digit(out[i--]);
 }
 
 /*
