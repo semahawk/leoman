@@ -6,6 +6,10 @@ jmp near boot1
 ; the kernel's path
 kernel_name: db '/boot/kernel', 0
 kernel_name_ptr: dd 0
+; the kernel's file size
+kernel_fsize: dd 0
+; where the kernel is located before ELF relocation (meh) to 1MiB
+kernel_preloc: dd 0
 
 %define MAX_FNAME_SIZE 255
 
@@ -469,6 +473,13 @@ next_path_segment:
 %endif
             call load_inode
             jc halt
+
+            ; save the file's size
+            ; 0x10 is the offset of the inode's `size' field
+            mov ebx, 0x17a10 ; 0x17a00 + 0x10
+            mov eax, [ebx]
+            mov [kernel_fsize], eax
+
             jmp kernel_found
           .1:
             ; 'crash' if it wasn't
@@ -605,11 +616,41 @@ kernel_found:
   mov es, dx
   xor bx, bx       ; es:bx = 0x17c0:0x0000 (= 0x17c00)
   ; where to move the block from the temporary location
+  ; but actually, this is not the actual location
+  ; for now we're loading the kernel to:
+  ; 0x100000 + kernel_fsize + (fs_bsize - kernel_fsize % fs_bsize)
+  ; ..or in another words to:
+  ; kernel_fsize bytes, aligned to fs_bsize boundary, past the 0x100000 mark
+  ;
+  ; this is to make sure when we're relocating all the ELF stuff to 0x100000
+  ; that there is enough space
   mov edi, 0x100000
-  ; first, direct blocks
+  ; align the load location to a `fs_bsize' boundary
+  xor edx, edx
+  mov eax, [kernel_fsize]
+  mov ebx, [fs_bsize]
+  div byte ebx     ; edx:eax (kernel's file size) / block size
+  ; eax = file size / block size
+  ; edx = file size % block size
+  mov ebx, [fs_bsize]
+  sub ebx, edx      ; bl = 4 - (name length % 4)
+  add ebx, [kernel_fsize]
+  add edi, ebx
+  mov [kernel_preloc], edi
+  ; first, direct blocks (0x70 is the offset of the direct blocks array)
   mov edx, 0x17a70
   ; loop NDADDR times
   mov ecx, NDADDR
+
+%ifdef DEBUG
+  ; {{{
+  mov esi, kernel_loading_to_msg
+  call putstr
+  mov edx, edi
+  call puthex
+  call putnl
+  ; }}}
+%endif
 
   .load_direct_blocks:
     ; don't even try loading blocks which's addresses are nul
@@ -678,8 +719,8 @@ pmode:
   ; is that necessary?
   mov esp, 0x5c00
 
-  ; farewell! (0x10) is the code offset
-  jmp 0x101010
+  ; that's upsetting..
+  jmp $
 
 halt:
   cli
@@ -773,6 +814,7 @@ loading_inode_msg2: db ' into memory', 0xd, 0xa, 0
 traversing_block_msg: db 'traversing block ', 0
 kernel_not_found_msg: db "couldn't find ", 0
 kernel_found_msg: db 'kernel found: ', 0
+kernel_loading_to_msg: db 'loading the kernel to location ', 0
 error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
 searching_for_msg: db 'searching for directory/file: ', 0
 found_inode_msg: db 'found inode: ', 0
