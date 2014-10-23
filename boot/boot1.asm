@@ -626,6 +626,9 @@ kernel_found:
   ; that there is enough space
   mov edi, 0x100000
   ; align the load location to a `fs_bsize' boundary
+  push edx
+  push ebx
+
   xor edx, edx
   mov eax, [kernel_fsize]
   mov ebx, [fs_bsize]
@@ -636,7 +639,12 @@ kernel_found:
   sub ebx, edx      ; ebx = block size - (file size % block size)
   add ebx, [kernel_fsize]
   add edi, ebx
+
+  pop ebx
+  pop edx
+
   mov [kernel_preloc], edi
+
   ; first, direct blocks (0x70 is the offset of the direct blocks array)
   mov edx, 0x17a70
   ; loop NDADDR times
