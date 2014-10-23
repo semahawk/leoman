@@ -381,6 +381,7 @@ load_blk:
   call putnl
 ; }}}
 %endif
+
   xor edx, edx
   mov eax, ecx
   ; edx:eax - the block's address

@@ -18,6 +18,9 @@ kernel_preloc: dd 0
 %define NDADDR     12    ; # of direct blocks in inode
 %define NIADDR     3     ; # of indirect blocks in inode
 
+; ELF related
+%define PT_LOAD    1
+
 ; watch out! little endian
 %define UFS2_MAGIC 0x19540119
 %define ELF_MAGIC  0x464c457f
@@ -717,11 +720,89 @@ kernel_found:
 
 ; load the ELF sections to where they belong
 relocate:
-  mov ecx, [kernel_preloc]
-  add ecx, 0x1c
-  mov edx, [ecx]
-  call puthex
-  call putnl
+  mov esi, [kernel_preloc]
+
+  ; fetch the ELF header variables
+%macro fetch_dd 2
+  mov eax, dword [esi + %2]
+  mov [e_%1], eax
+%endmacro
+
+%macro fetch_dw 2
+  xor eax, eax
+  mov ax, word [esi + %2]
+  mov [e_%1], ax
+%endmacro
+
+  fetch_dd phoff,     0x1c
+  fetch_dw phnum,     0x2c
+  fetch_dw phentsize, 0x2a
+
+%undef fetch_dd
+%undef fetch_dw
+
+  ; update esi to point to the offset of the program headers / sections
+  add esi, [e_phoff]
+  ; loop `e_phnum' times
+  xor ecx, ecx
+  mov cx, [e_phnum]
+
+  .loop_phdrs:
+    push esi
+    push ecx
+
+    ; edx contains `p_type'
+    mov edx, dword [esi]
+    ; test if the section's loadable
+    and edx, PT_LOAD
+
+    cmp edx, 0
+    je .loop_phdrs_next
+
+    .is_loadable:
+      mov eax, [kernel_preloc]
+      ; 0x4 is the offset of `p_offset'
+      add eax, [esi + 0x04]
+      ; 0x10 is the offset of `p_filesz' (ie. number of bytes to copy)
+      mov ecx, [esi + 0x10]
+      ; edi now points to the section's `p_vaddr'
+      mov edi, [esi + 0x08]
+      ; esi now points to the section's actual contents in memory
+      mov esi, eax
+
+      ; don't load sections that want to go nowhere
+      cmp edi, 0x0
+      je .loop_phdrs_next
+
+%ifdef DEBUG
+; {{{
+      push esi
+      mov edx, esi
+      mov esi, relocating_section_from_msg
+      call putstr
+      call puthex
+      mov esi, relocating_section_to_msg
+      call putstr
+      mov edx, edi
+      call puthex
+      call putnl
+      pop esi
+; }}}
+%endif
+
+      .move:
+        mov ebx, [esi]
+        mov [edi], ebx
+
+        add esi, 1
+        add edi, 1
+      loop .move
+
+    .loop_phdrs_next:
+      pop ecx
+      pop esi
+      add si, [e_phentsize]
+  loop .loop_phdrs
 
 enter_pmode:
   cli
@@ -815,6 +896,17 @@ fs_dsize: dq 0
 d_bsize: dd 0
 ; }}}
 
+; kernel's ELF header variables
+;
+; {{{
+; offset of the program headers
+e_phoff: dd 0
+; number of the program headers
+e_phnum: dw 0
+; program header's size in the program section header table
+e_phentsize: dw 0
+; }}}
+
 ; number of heads
 number_of_heads: db 0
 ; sectors per track
@@ -839,6 +931,8 @@ kernel_not_found_msg: db "couldn't find ", 0
 kernel_found_msg: db 'kernel found: ', 0
 kernel_loading_to_msg: db 'loading the kernel to location ', 0
 error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
+relocating_section_from_msg: db 'relocating section from ', 0
+relocating_section_to_msg: db ' to ', 0
 searching_for_msg: db 'searching for directory/file: ', 0
 found_inode_msg: db 'found inode: ', 0
 isafile_msg: db '.. which is a file', 0xd, 0xa, 0
