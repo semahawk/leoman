@@ -633,7 +633,7 @@ kernel_found:
   ; eax = file size / block size
   ; edx = file size % block size
   mov ebx, [fs_bsize]
-  sub ebx, edx      ; bl = 4 - (name length % 4)
+  sub ebx, edx      ; ebx = block size - (file size % block size)
   add ebx, [kernel_fsize]
   add edi, ebx
   mov [kernel_preloc], edi
@@ -644,11 +644,18 @@ kernel_found:
 
 %ifdef DEBUG
   ; {{{
+  push esi
+  push edi
+  push edx
   mov esi, kernel_loading_to_msg
   call putstr
   mov edx, edi
   call puthex
   call putnl
+  call putnl
+  pop edx
+  pop edi
+  pop esi
   ; }}}
 %endif
 
@@ -699,6 +706,14 @@ kernel_found:
   loop .load_direct_blocks
 
   ; TODO: load also indirect blocks
+
+; load the ELF sections to where they belong
+relocate:
+  mov ecx, [kernel_preloc]
+  add ecx, 0x1c
+  mov edx, [ecx]
+  call puthex
+  call putnl
 
 enter_pmode:
   cli
