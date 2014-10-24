@@ -507,5 +507,24 @@ load_inode:
   ret
 ; }}}
 
+; param:  EAX - x
+;         EBX - y
+; return: EAX - the result (((x + (y - 1)) / y) * y)
+roundup:
+  push edx
+
+  dec ebx
+  add eax, ebx
+  inc ebx
+  xor edx, edx
+  div ebx
+  ; edx = x + (y - 1) % y
+  ; eax = x + (y - 1) / y
+  mul ebx
+  ; edx = high part of the result
+  ; eax = low  part of the result
+  pop edx
+  ret
+
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

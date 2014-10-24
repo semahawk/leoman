@@ -26,6 +26,7 @@ kernel_preloc: dd 0
 %define ELF_MAGIC  0x464c457f
 
 %include "print.asm"
+%include "ufs.asm"
 %include "utils.asm"
 
 boot1:
