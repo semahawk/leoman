@@ -10,6 +10,8 @@ kernel_name_ptr: dd 0
 kernel_fsize: dd 0
 ; where the kernel is located before ELF relocation (meh) to 1MiB
 kernel_preloc: dd 0
+; kernel file's block size
+kernel_blksz: dd 0
 
 %define MAX_FNAME_SIZE 255
 
@@ -376,6 +378,8 @@ next_path_segment:
       push ecx
       push ebx
 
+      ; XXX i'm not sure that this block size is right
+      mov eax, [fs_bsize]
       mov ecx, [ebx]
       mov bx, 0x17c0
       mov es, bx
@@ -428,6 +432,7 @@ next_path_segment:
       .nope:
         jmp .end
       .yup:
+
 %ifdef DEBUG
 ; {{{
         mov esi, found_inode_msg
@@ -483,6 +488,18 @@ next_path_segment:
             mov ebx, 0x17a10 ; 0x17a00 + 0x10
             mov eax, [ebx]
             mov [kernel_fsize], eax
+
+            ; calculate the LBN (logical blocks number)
+            ;call lblkno
+
+            ;mov ebx, eax
+            ;mov ecx, [kernel_fsize]
+            ;call blksize
+
+            ; (for now) assume the kernel's block size is the default (could it
+            ; be different? what's the deal with fragments?)
+            mov eax, [fs_bsize]
+            mov [kernel_blksz], eax
 
             jmp kernel_found
           .1:
@@ -622,25 +639,25 @@ kernel_found:
   ; where to move the block from the temporary location
   ; but actually, this is not the actual location
   ; for now we're loading the kernel to:
-  ; 0x100000 + kernel_fsize + (fs_bsize - kernel_fsize % fs_bsize)
+  ; 0x100000 + kernel_fsize + (kernel_blksz - kernel_fsize % kernel_blksz)
   ; ..or in another words to:
-  ; kernel_fsize bytes, aligned to fs_bsize boundary, past the 0x100000 mark
+  ; kernel_fsize bytes, aligned to kernel_blksz boundary, past the 0x100000 mark
   ;
   ; this is to make sure when we're relocating all the ELF stuff to 0x100000
   ; that there is enough space
   mov edi, 0x100000
-  ; align the load location to a `fs_bsize' boundary
+  ; align the load location to a `kernel_blksz' boundary
   push edx
   push ebx
 
   xor edx, edx
   mov eax, [kernel_fsize]
-  mov ebx, [fs_bsize]
-  div byte ebx     ; edx:eax (kernel's file size) / block size
-  ; eax = file size / block size
-  ; edx = file size % block size
-  mov ebx, [fs_bsize]
-  sub ebx, edx      ; ebx = block size - (file size % block size)
+  mov ebx, [kernel_blksz]
+  div ebx           ; edx:eax (kernel's file size) / kernel_blksz
+  ; eax = file size / kernel_blksz
+  ; edx = file size % kernel_blksz
+  mov ebx, [kernel_blksz]
+  sub ebx, edx      ; ebx = kernel_blksz - (file size % kernel_blksz)
   add ebx, [kernel_fsize]
   add edi, ebx
 
@@ -682,18 +699,20 @@ kernel_found:
     push es
     push ebx
 
-    ; load the block
+    ; load the block to a temporary location (0x17c00)
     mov ecx, [edx]
+    mov eax, [kernel_blksz]
     call load_blk
+
     ; move it to above 1MiB
     mov esi, 0x17c00
     ;   edi is already set
+
+    ; load 4 bytes at a time
     xor edx, edx
-    mov eax, [fs_fsize]
-    mov ecx, [fs_frag]
-    mul ecx
+    mov eax, [kernel_blksz]
     mov ecx, 4
-    div ecx
+    div ecx  ; eax = kernel_blksz / 4
     mov ecx, eax
 
     .move:
@@ -712,8 +731,6 @@ kernel_found:
 
     ; increase the current block address by 64 bits
     add edx, 8
-    ; increase the move location
-    add edi, [fs_bsize]
   .load_direct_blocks_next:
   loop .load_direct_blocks
 
@@ -934,6 +951,7 @@ kernel_loading_to_msg: db 'loading the kernel to location ', 0
 error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
 relocating_section_from_msg: db 'relocating section from ', 0
 relocating_section_to_msg: db ' to ', 0
+loading_block_to_msg: db 'loading block to location ', 0
 searching_for_msg: db 'searching for directory/file: ', 0
 found_inode_msg: db 'found inode: ', 0
 isafile_msg: db '.. which is a file', 0xd, 0xa, 0

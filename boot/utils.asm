@@ -352,6 +352,7 @@ blk_addr:
 ; loads a block into the memory
 ;
 ; param:  ECX - block's #
+;         EAX - block's size
 ;         ES:BX - where to load the block
 ; return: 1 in CF if the loading failed
 ;         0 in CF if the loading succeeded
@@ -359,6 +360,7 @@ load_blk:
 ; {{{
   push ecx
   push esi
+  push eax
 
 %ifdef DEBUG
 ; {{{
@@ -394,15 +396,13 @@ load_blk:
   ; now ch, dh, cl and dl contain the right values
   ; es and bx also should be upright, but that's up to the caller
 
-  ; calculate the number of sectors to load (fs_fsize * fs_frag / 512)
+  pop eax  ; eax is the block's size
+  ; calculate the number of sectors to load (block's size (param) / 512)
   push edx
   push ecx
-  xor edx, edx
-  mov eax, [fs_fsize]
-  mov ecx, [fs_frag]
-  mul ecx
-  mov ecx, 512
-  div dword ecx
+    xor edx, edx
+    mov ecx, 512
+    div dword ecx
   pop ecx
   pop edx
 

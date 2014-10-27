@@ -9,7 +9,7 @@ blksize:
   inc ebx   ; lbn++
   mov eax, ebx
   call smalllblktosize
-  cmp eax, ecx
+  cmp ecx, eax
   jge .return_fs_bsize
 
   jmp .return_fragroundup
@@ -25,6 +25,7 @@ blksize:
     jmp .end
 
   .end:
+call putnl
   ret
 
 ; param:  EAX - loc
@@ -43,7 +44,7 @@ blkoff:
   ret
 
 ; param:  EAX - the file's length
-; return: EAX - the result of loc / fs_bsize
+; return: EAX - the result of the file's length / fs_bsize
 lblkno:
   push ebx
   push edx
