@@ -12,6 +12,8 @@ kernel_fsize: dd 0
 kernel_preloc: dd 0
 ; kernel file's block size
 kernel_blksz: dd 0
+; kernel's entry point
+kernel_entry: dd 0
 
 %define MAX_FNAME_SIZE 255
 
@@ -752,6 +754,10 @@ relocate:
   mov [e_%1], ax
 %endmacro
 
+  ; a nonstandard name for 'fetch'
+  mov eax, [esi + 0x18]
+  mov [kernel_entry], eax
+
   fetch_dd phoff,     0x1c
   fetch_dw phnum,     0x2c
   fetch_dw phentsize, 0x2a
@@ -878,8 +884,8 @@ pmode:
   ; is that necessary?
   mov esp, 0x5c00
 
-  ; that's upsetting..
-  jmp $
+  ; farewell!
+  jmp [kernel_entry]
 
 halt:
   cli
