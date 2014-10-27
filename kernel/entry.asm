@@ -13,7 +13,7 @@ align 4
   dd FLAGS
   dd CHECKSUM
 
-section .rodata
+section .data
   ; the linker fills this in
   kernels_end: dd 0 ; 32 bits (ought to do it)
 
