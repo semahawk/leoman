@@ -49,7 +49,7 @@ void vga_putch(char ch)
   switch (ch){
     case 0xa: /* newline */
       vga_row++;
-      vga_col = 0;
+      vga_col = -1; /* it's gonna be ++'d few lines ahead anyway */
       break;
     default:
       vga_putchat(ch, vga_color, vga_col, vga_row);
