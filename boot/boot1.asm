@@ -779,18 +779,23 @@ relocate:
 
     .is_loadable:
       mov eax, [kernel_preloc]
-      ; 0x4 is the offset of `p_offset'
-      add eax, [esi + 0x04]
-      ; 0x10 is the offset of `p_filesz' (ie. number of bytes to copy)
-      mov ecx, [esi + 0x10]
       ; edi now points to the section's `p_vaddr'
       mov edi, [esi + 0x08]
-      ; esi now points to the section's actual contents in memory
-      mov esi, eax
 
       ; don't load sections that want to go nowhere
       cmp edi, 0x0
       je .loop_phdrs_next
+
+      ; 0x4 is the offset of `p_offset'
+      add eax, [esi + 0x04]
+      ; 0x10 is the offset of `p_filesz' (ie. number of bytes to copy)
+      mov ecx, [esi + 0x10]
+      push ecx
+      ; 0x14 is the offset of `p_memsz'
+      mov ebx, [esi + 0x14]
+      push ebx
+      ; esi now points to the section's actual contents in memory
+      mov esi, eax
 
 %ifdef DEBUG
 ; {{{
@@ -808,6 +813,7 @@ relocate:
 ; }}}
 %endif
 
+      ; relocate the section's contents
       .move:
         mov ebx, [esi]
         mov [edi], ebx
@@ -816,11 +822,42 @@ relocate:
         add edi, 1
       loop .move
 
+      ; zero out the remainder of memsz (`p_memsz' - `p_filesz')
+      pop eax  ; eax = `p_memsz'
+      pop ebx  ; ebx = `p_filesz'
+
+      sub eax, ebx
+
+      xor edx, edx
+      mov ebx, 4
+      div ebx
+
+      mov ecx, eax
+
+      ; don't zero out if there's nothing to be zeroed
+      ; for example when `p_memsz' is equal to `p_filesz'
+      cmp ecx, 0
+      je .dont_zero_out
+
+      mov esi, zeroing_msg
+      call putstr
+      call putnl
+
+      .zero_out:
+        ;mov [edi], dword 0x0
+
+        add edi, 4
+      loop .zero_out
+      .dont_zero_out:
+
     .loop_phdrs_next:
       pop ecx
       pop esi
       add si, [e_phentsize]
-  loop .loop_phdrs
+
+  ;loop .loop_phdrs
+  dec ecx
+  jnz .loop_phdrs
 
 enter_pmode:
   cli
@@ -954,6 +991,7 @@ relocating_section_to_msg: db ' to ', 0
 loading_block_to_msg: db 'loading block to location ', 0
 searching_for_msg: db 'searching for directory/file: ', 0
 found_inode_msg: db 'found inode: ', 0
+zeroing_msg: db 'p_memsz is bigger than p_filesz, zeroing the remainder', 0
 isafile_msg: db '.. which is a file', 0xd, 0xa, 0
 isadir_msg: db '.. which is a directory', 0xd, 0xa, 0
 isunknown_msg: db '.. which is unknown..', 0xd, 0xa, 0
