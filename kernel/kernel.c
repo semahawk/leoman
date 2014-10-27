@@ -68,8 +68,8 @@ void kmain(uint32_t kernels_end)
 
   asm volatile("sti");
 
-  vga_puts("\n Nihilum\n\n");
-  vga_puts(" Quidquid Latine dictum, sit altum videtur\n\n");
+  vga_puts("\n Gorm\n\n");
+  vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n\n");
 
   for (;;);
 }

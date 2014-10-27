@@ -1,6 +1,6 @@
 .PHONY: all bootloader kernel run disk_image clean
 
-DISK_IMAGE = nihilum.fs
+DISK_IMAGE = gorm.fs
 DISK_IMAGE_SIZE = 32m
 
 SUBDIRS = boot kernel
@@ -29,6 +29,7 @@ $(DISK_IMAGE): bootloader kernel
 	dd conv=notrunc if=boot/boot.bin of=$(DISK_IMAGE) bs=512 count=128
 
 clean:
+	rm -f *.fs
 .for dir in $(SUBDIRS)
 	$(MAKE) -C ${dir} clean
 .endfor

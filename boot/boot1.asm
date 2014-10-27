@@ -1012,8 +1012,7 @@ s_msg: db 's:', 0
 enable_a20_msg: db 'Enabling the a20 line', 0xd, 0xa, 0
 enable_a20_fail_msg: db 'Failed to enable the a20 line!', 0xd, 0xa, 0
 magic_not_found_msg: db 'fatal: UFS2 magic not found!', 0xd, 0xa, 0
-welcome_msg: db 'Quidquid Latine dictum, sit altum videtur.', 0xd, 0xa, 0xd, 0xa, 0
-goodbye_msg: db 'Sit vis vobiscum', 0xd, 0xa, 0
+welcome_msg: db 'Gorm is booting...', 0xd, 0xa, 0xd, 0xa, 0
 
 ; make it be 127 sectors wide
 times 512*127-($-$$) db 0
