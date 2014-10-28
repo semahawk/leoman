@@ -9,12 +9,6 @@ SECTIONS
     text = .;
     *(.multiboot)
     *(.text)
-    . = ALIGN(4K);
-  }
-
-  .rodata : AT(phys + (rodata - text))
-  {
-    rodata = .;
     *(.rodata*)
     . = ALIGN(4K);
   }
