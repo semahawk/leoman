@@ -21,8 +21,6 @@ kernel: $(OBJS) linker.ld
 
 run:
 	cd ..; $(MAKE) run
-runk:
-	cd ..; $(MAKE) runk
 
 clean:
 	rm -f *.o

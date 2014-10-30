@@ -1,18 +1,5 @@
 BITS 32
 
-; declare constants used for creating a multiboot header
-MBALIGN  equ 1 << 0
-MEMINFO  equ 1 << 1
-FLAGS    equ MBALIGN | MEMINFO
-MAGIC    equ 0x1BADB002
-CHECKSUM equ -(MAGIC + FLAGS)
-
-section .multiboot
-align 4
-  dd MAGIC
-  dd FLAGS
-  dd CHECKSUM
-
 section .data
   ; the linker fills this in
   kernels_end: dd 0 ; 32 bits (ought to do it)
