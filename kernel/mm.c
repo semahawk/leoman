@@ -16,9 +16,9 @@
 
 static struct memblock *blocks; /* do we need a 'tail'? */
 
-void mm_init(struct kern_bootinfo *bootinfo)
+uint32_t mm_init(struct kern_bootinfo *bootinfo)
 {
-  struct memblock *initial = (struct memblock *)bootinfo->kern_size;
+  struct memblock *initial = (struct memblock *)bootinfo->kernel_addr + bootinfo->kernel_size;
 
   initial->prev = NULL;
   initial->next = NULL;
@@ -30,6 +30,8 @@ void mm_init(struct kern_bootinfo *bootinfo)
   initial->used = MM_UNUSED;
 
   blocks = initial;
+
+  return (uint32_t)bootinfo->kernel_addr + bootinfo->kernel_size;
 }
 
 void *kmalloc(size_t size)

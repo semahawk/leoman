@@ -792,6 +792,12 @@ relocate:
       cmp edi, 0x0
       je .loop_phdrs_next
 
+      ; if edi < kernel_addr then kernel_addr = edi
+      cmp edi, [kernel_addr]
+      jae .dont_update_kern_start
+        mov [kernel_addr], edi
+      .dont_update_kern_start:
+
       ; 0x4 is the offset of `p_offset'
       add eax, [esi + 0x04]
       ; 0x10 is the offset of `p_filesz' (ie. number of bytes to copy)
@@ -799,6 +805,7 @@ relocate:
       push ecx
       ; 0x14 is the offset of `p_memsz'
       mov ebx, [esi + 0x14]
+      add [kernel_size], ebx
       push ebx
       ; esi now points to the section's actual contents in memory
       mov esi, eax
@@ -956,15 +963,14 @@ halt:
 ;
 ; the `struct bootinfo' definition
 ; the field order and sizes must match with those in the declaration
-; of `struct bootinfo'
-;
-; side note: `kern_size' has to be the first field
+; of `struct bootinfo' (found in kernel/common.h)
 ;
 bootinfo:
 ; {{{
-; strange inits to spot the potential bug rather sooner than later
-kern_size: dd 0xffffffff
-mem_avail: dd 0xffffffff
+; keep the initial values as they are, these are intentional
+kernel_addr: dd 0xffffffff
+kernel_size: dd 0x0
+mem_avail:   dd 0x0
 memory_map: times 24 * 64 db 0 ; max 64 entries (is it enough?)
 ; }}}
 

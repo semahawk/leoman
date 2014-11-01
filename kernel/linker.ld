@@ -28,7 +28,5 @@ SECTIONS
     *(.stack)
     . = ALIGN(4K);
   }
-
-  kern_size = .;
 }
 

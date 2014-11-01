@@ -96,14 +96,15 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* install the keyboard */
   kbd_install();
   /* initialize the memory management */
-  mm_init(bootinfo);
+  uint32_t heap_addr = mm_init(bootinfo);
 
   asm volatile("sti");
 
   vga_puts("\n Gorm\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
-  vga_printf(" heap created: 0x%x\n", bootinfo->kern_size);
+  vga_printf(" kernel's address:          0x%x\n", bootinfo->kernel_addr);
+  vga_printf(" heap created:              0x%x\n", heap_addr);
   vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
   vga_printf(" memory map:\n");
   vga_printf(" base address         length              type\n");
