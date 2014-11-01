@@ -16,9 +16,9 @@
 
 static struct memblock *blocks; /* do we need a 'tail'? */
 
-void mm_init(uint32_t start)
+void mm_init(struct kern_bootinfo *bootinfo)
 {
-  struct memblock *initial = (struct memblock *)start;
+  struct memblock *initial = (struct memblock *)bootinfo->kern_size;
 
   initial->prev = NULL;
   initial->next = NULL;

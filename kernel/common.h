@@ -36,6 +36,23 @@ static inline void outb(uint16_t port, uint8_t data)
   asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
 }
 
+struct kern_bootinfo {
+  /* kernel's size */
+  /* (to keep things more simple, this field must be the first one) */
+  uint32_t kern_size;
+  /* the total amount of available RAM memory */
+  uint32_t mem_avail;
+  /* the memory map entries */
+  struct memory_map_entry {
+    uint32_t base_low;
+    uint32_t base_high;
+    uint32_t len_low;
+    uint32_t len_high;
+    uint32_t type;
+    uint32_t acpi_ext;
+  } __PACKED memory_map[64];
+} __PACKED;
+
 #endif /* COMMON_H */
 
 /*

@@ -29,6 +29,6 @@ SECTIONS
     . = ALIGN(4K);
   }
 
-  kernels_end = .;
+  kern_size = .;
 }
 

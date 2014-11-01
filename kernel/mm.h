@@ -24,7 +24,7 @@ struct memblock {
   uint8_t used; /* MM_USED / MM_UNUSED (free) */
 } __PACKED;
 
-void mm_init(uint32_t starting_point);
+void mm_init(struct kern_bootinfo *);
 
 void *kmalloc(size_t size);
 void kfree(void *ptr);
@@ -34,5 +34,4 @@ void kfree(void *ptr);
 /*
  * vi: ft=c:ts=2:sw=2:expandtab
  */
-
 

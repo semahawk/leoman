@@ -55,8 +55,15 @@ void *memcpy(void *dst, void *src, size_t len)
 extern "C"
 #endif
 
-void kmain(uint32_t kernels_end)
+void kmain(struct kern_bootinfo *bootinfo)
 {
+  for (int i = 0; i < 64; i++){
+    struct memory_map_entry *e = &bootinfo->memory_map[i];
+
+    if (e->type == 1 || e->type == 3)
+      bootinfo->mem_avail += e->len_low;
+  }
+
   /* set up the printing utilities */
   vga_init();
   /* install the IDT (ISRs and IRQs) */
@@ -64,12 +71,24 @@ void kmain(uint32_t kernels_end)
   /* install the keyboard */
   kbd_install();
   /* initialize the memory management */
-  mm_init(kernels_end);
+  mm_init(bootinfo);
 
   asm volatile("sti");
 
   vga_puts("\n Gorm\n\n");
-  vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n\n");
+  vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
+  vga_puts(" ------------------------------------------\n\n");
+  vga_printf(" heap created: 0x%x\n", bootinfo->kern_size);
+  vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
+  vga_printf(" memory map:\n");
+  vga_printf(" base address         length              type\n");
+  vga_printf(" ---------------------------------------------\n");
+
+  for (int i = 0; i < 64; i++){
+    struct memory_map_entry *e = &bootinfo->memory_map[i];
+    if ((e->len_low | e->len_high) == 0) continue;
+    vga_printf(" 0x%x%x - 0x%x%x     %d\n", e->base_high, e->base_low, e->len_high, e->len_low, e->type);
+  }
 
   for (;;);
 }

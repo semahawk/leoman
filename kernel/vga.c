@@ -142,7 +142,6 @@ void vga_puthd(uint32_t v)
   uint32_t mask = (uint32_t)0xf0000000;
   uint8_t i = 8; /* number of digits in a dword */
 
-  vga_puts("0x");
   for (; mask > 0; mask >>= 4, i--)
     vga_put_digit((mask & v) >> (i * 4 - 4));
 }
@@ -155,7 +154,6 @@ void vga_puthw(uint16_t v)
   uint16_t mask = (uint16_t)0xf000;
   uint8_t i = 4; /* number of digits in a word */
 
-  vga_puts("0x");
   for (; mask > 0; mask >>= 4, i--)
     vga_put_digit((mask & v) >> (i * 4 - 4));
 }
@@ -168,7 +166,6 @@ void vga_puthb(uint8_t v)
   uint8_t mask = (uint8_t)0xf0;
   uint8_t i = 2; /* number of digits in a byte */
 
-  vga_puts("0x");
   for (; mask > 0; mask >>= 4, i--)
     vga_put_digit((mask & v) >> (i * 4 - 4));
 }

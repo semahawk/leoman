@@ -865,6 +865,64 @@ relocate:
   dec ecx
   jnz .loop_phdrs
 
+detect_memory:
+  xor eax, eax
+  mov es, eax
+  mov edi, memory_map       ; point es:edi to the memory map buffer
+
+  mov eax, 0xe820
+  xor ebx, ebx              ; ebx must be 0
+  mov ecx, 24               ; ask for 24 bytes
+  mov edx, 0x534d4150
+  int 15h
+
+  jc .fail
+
+  mov edx, 0x534d4150
+  cmp eax, edx
+  jne .fail
+
+  ; ebx == 0 implies list is only 1 entry long (so, worthless)
+  test ebx, ebx
+  je .fail
+
+  jmp .skip_interrupt
+
+  .next_entry:
+    mov eax, 0xe820
+    mov ecx, 24               ; ask for 24 bytes
+    mov [es:di + 20], dword 1 ; force a valid ACPI 3.X entry
+    int 15h
+    jc .ok                    ; carry set means "end of list already reached"
+    mov edx, 0x534d4150       ; repair potentially trashed register
+
+  .skip_interrupt:
+    jcxz .skip_entry          ; skip any 0 length entries
+    cmp cl, 20                ; got a 24 byte ACPI 3.X response?
+    jbe .not_extended
+    test byte [es:di + 20], 1 ; if so: is the "ignore this data" bit clear?
+    je .skip_entry
+
+  .not_extended:
+    mov ecx, [es:di + 8]      ; get lower dword of memory region length
+    or  ecx, [es:di + 12]     ; "or" it with upper dword to test for zero
+    jz  .skip_entry           ; if length qword is 0; skip entry
+    add edi, 24               ; point to the next entry in the buffer
+
+  .skip_entry:
+    test ebx, ebx             ; if ebx is 0, list is complete
+    jne .next_entry
+
+  .ok:
+    clc ; I'm not sure if that's necessary
+    jmp detect_memory_end
+
+  .fail:
+    mov esi, memory_map_failed_msg
+    call putstr
+    jmp halt
+
+detect_memory_end:
 enter_pmode:
   cli
   lgdt [gdt]
@@ -884,6 +942,9 @@ pmode:
   ; is that necessary?
   mov esp, 0x5c00
 
+  mov eax, bootinfo
+  push eax
+
   ; farewell!
   jmp [kernel_entry]
 
@@ -891,6 +952,21 @@ halt:
   cli
   hlt
   jmp halt
+
+;
+; the `struct bootinfo' definition
+; the field order and sizes must match with those in the declaration
+; of `struct bootinfo'
+;
+; side note: `kern_size' has to be the first field
+;
+bootinfo:
+; {{{
+; strange inits to spot the potential bug rather sooner than later
+kern_size: dd 0xffffffff
+mem_avail: dd 0xffffffff
+memory_map: times 24 * 64 db 0 ; max 64 entries (is it enough?)
+; }}}
 
 ;
 ; The Global Descriptor Table
@@ -1010,8 +1086,9 @@ c_msg: db 'c:', 0
 h_msg: db 'h:', 0
 s_msg: db 's:', 0
 enable_a20_msg: db 'Enabling the a20 line', 0xd, 0xa, 0
-enable_a20_fail_msg: db 'Failed to enable the a20 line!', 0xd, 0xa, 0
+enable_a20_fail_msg: db 'fatal: failed to enable the a20 line!', 0xd, 0xa, 0
 magic_not_found_msg: db 'fatal: UFS2 magic not found!', 0xd, 0xa, 0
+memory_map_failed_msg: db 'fatal: failed to detect the memory map!', 0xd, 0xa, 0
 welcome_msg: db 'Gorm is booting...', 0xd, 0xa, 0xd, 0xa, 0
 
 ; make it be 127 sectors wide
