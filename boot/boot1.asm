@@ -857,7 +857,7 @@ relocate:
       call putnl
 
       .zero_out:
-        ;mov [edi], dword 0x0
+        mov [edi], dword 0x0
 
         add edi, 4
       loop .zero_out
