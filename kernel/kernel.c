@@ -57,39 +57,6 @@ extern "C" {
 
 static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 {
-  /* merge any adjacent entries of the same type */
-  for (int i = 0; i < 64; i++){
-    struct memory_map_entry *e = &bootinfo->memory_map[i];
-
-    if ((e->len_low | e->len_high) == 0) continue;
-
-    if ((e + 1)->type == e->type){
-      int j = 1;
-
-      while ((e + j)->type == e->type){
-        e->len_low += (e + j)->len_low;
-        j++;
-      }
-
-      j--;
-
-      for (int k = i + 1; k < 64 - i - 1; k++){
-        struct memory_map_entry *p = &bootinfo->memory_map[k];
-
-        *p = *(p + j);
-      }
-    }
-  }
-
-  /* calculate the (total) available memory */
-  for (int i = 0; i < 64; i++){
-    struct memory_map_entry *e = &bootinfo->memory_map[i];
-
-    if (e->type == 1 || e->type == 3)
-      /* FIXME handle len_high */
-      bootinfo->mem_avail += e->len_low;
-  }
-
   /* add a (reserved) memory entry for kernel's guts */
   struct memory_map_entry kernentry = {
     .base_low  = bootinfo->kernel_addr,
@@ -154,6 +121,39 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
         }
       }
     }
+  }
+
+  /* merge any adjacent entries of the same type */
+  for (int i = 0; i < 64; i++){
+    struct memory_map_entry *e = &bootinfo->memory_map[i];
+
+    if ((e->len_low | e->len_high) == 0) continue;
+
+    if ((e + 1)->type == e->type){
+      int j = 1;
+
+      while ((e + j)->type == e->type){
+        e->len_low += (e + j)->len_low;
+        j++;
+      }
+
+      j--;
+
+      for (int k = i + 1; k < 64 - i - 1; k++){
+        struct memory_map_entry *p = &bootinfo->memory_map[k];
+
+        *p = *(p + j);
+      }
+    }
+  }
+
+  /* calculate the (total) available memory */
+  for (int i = 0; i < 64; i++){
+    struct memory_map_entry *e = &bootinfo->memory_map[i];
+
+    if (e->type == 1 || e->type == 3)
+      /* FIXME handle len_high */
+      bootinfo->mem_avail += e->len_low;
   }
 }
 
