@@ -169,7 +169,7 @@ static inline void idt_load(void *base, uint16_t size)
   idtr.limit = size;
   idtr.base = (uint32_t)base;
 
-  asm("lidt %0" : : "p"(idtr));
+  __asm("lidt %0" : : "p"(idtr));
 }
 
 void idt_install(void)

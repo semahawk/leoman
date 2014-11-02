@@ -2,7 +2,7 @@
 
 AS = nasm
 CC = clang
-CFLAGS := -target i386-pc-none -ffreestanding -fno-builtin -nostdlib
+CFLAGS := -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 
 C_SRC = kernel.c mm.c idt.c kbd.c vga.c
 S_SRC = entry.asm isr.asm

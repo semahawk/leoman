@@ -98,7 +98,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* initialize the memory management */
   uint32_t heap_addr = mm_init(bootinfo);
 
-  asm volatile("sti");
+  __asm volatile("sti");
 
   vga_puts("\n Gorm\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
