@@ -52,10 +52,10 @@ void *memcpy(void *dst, void *src, size_t len)
 }
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 
-void kmain(struct kern_bootinfo *bootinfo)
+static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 {
   /* merge any adjacent entries of the same type */
   for (int i = 0; i < 64; i++){
@@ -81,6 +81,7 @@ void kmain(struct kern_bootinfo *bootinfo)
     }
   }
 
+  /* calculate the (total) available memory */
   for (int i = 0; i < 64; i++){
     struct memory_map_entry *e = &bootinfo->memory_map[i];
 
@@ -89,8 +90,78 @@ void kmain(struct kern_bootinfo *bootinfo)
       bootinfo->mem_avail += e->len_low;
   }
 
+  /* add a (reserved) memory entry for kernel's guts */
+  struct memory_map_entry kernentry = {
+    .base_low  = bootinfo->kernel_addr,
+    .base_high = 0x0,
+    .len_low   = bootinfo->kernel_size,
+    .len_high  = 0x0,
+    .type      = 2,
+    .acpi_ext  = 0
+  };
+
+  /* the 61 is intentional (64 - 3 since at most 3 entries may be added) */
+  for (int i = 0; i < 61; i++){
+    struct memory_map_entry e = bootinfo->memory_map[i];
+
+    /* see if the kernel's is going to fit in that (available) entry */
+    if (e.type == 1){
+      if (kernentry.base_low >= e.base_low){
+        if (e.len_low >= kernentry.len_low + (kernentry.base_low - e.base_low)){
+          struct memory_map_entry pre = e;
+          struct memory_map_entry pre_align = e;
+
+          pre.len_low = kernentry.base_low - e.base_low;
+          pre.len_high = 0x0;
+
+          pre_align.base_low = pre.base_low + pre.len_low;
+          pre_align.base_high = 0x0;
+          pre_align.len_low = e.len_low - pre.len_low;
+          pre_align.len_high = 0x0;
+
+          /* we might need to create an available entry preceding the kernel's */
+          if (kernentry.base_low - e.base_low > 0){
+            int k;
+
+            for (k = 62; k > i; k--)
+              bootinfo->memory_map[k + 1] = bootinfo->memory_map[k];
+
+            bootinfo->memory_map[k] = pre;
+            bootinfo->memory_map[k + 1] = pre_align;
+            i++;
+          }
+
+          bootinfo->memory_map[i] = kernentry;
+
+          /* we might need to create an (available) entry following the kernel's */
+          if (e.len_low - kernentry.len_low - (kernentry.base_low - e.base_low) > 0){
+            struct memory_map_entry post = {
+              .base_low  = kernentry.base_low + kernentry.len_low,
+              .base_high = 0x0,
+              .len_low   = (e.len_low + e.base_low) - (kernentry.base_low + kernentry.len_low),
+              .len_high  = 0x0,
+              .type      = 1,
+              .acpi_ext  = 0
+            };
+
+            int k;
+
+            for (k = 62; k > i; k--)
+              bootinfo->memory_map[k + 1] = bootinfo->memory_map[k];
+
+            bootinfo->memory_map[k + 1] = post;
+          }
+        }
+      }
+    }
+  }
+}
+
+void kmain(struct kern_bootinfo *bootinfo)
+{
   /* set up the printing utilities */
   vga_init();
+  adjust_the_memory_map(bootinfo);
   /* install the IDT (ISRs and IRQs) */
   idt_install();
   /* install the keyboard */
@@ -118,6 +189,10 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   for (;;);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * vi: ft=c:ts=2:sw=2:expandtab
