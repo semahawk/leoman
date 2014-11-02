@@ -18,20 +18,25 @@ static struct memblock *blocks; /* do we need a 'tail'? */
 
 uint32_t mm_init(struct kern_bootinfo *bootinfo)
 {
-  struct memblock *initial = (struct memblock *)bootinfo->kernel_addr + bootinfo->kernel_size;
+  struct memblock *initial = 0x0;
+  uint32_t max_size = 0;
+
+  /* find the biggest available memory area */
+  for (int i = 0; i < 64; i++){
+    if (bootinfo->memory_map[i].len_low >= max_size){
+      max_size = bootinfo->memory_map[i].len_low;
+      initial  = (struct memblock *)bootinfo->memory_map[i].base_low;
+    }
+  }
 
   initial->prev = NULL;
   initial->next = NULL;
-  /* TODO FIXME XXX boy do I need a memory map..
-   *
-   * see how much memory we have in total
-   * and use it here (delta kernel code &c.) */
-  initial->size = 3096;
+  initial->size = max_size;
   initial->used = MM_UNUSED;
 
   blocks = initial;
 
-  return (uint32_t)bootinfo->kernel_addr + bootinfo->kernel_size;
+  return (uint32_t)initial;
 }
 
 void *kmalloc(size_t size)
