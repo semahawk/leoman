@@ -18,6 +18,7 @@
 #include "kbd.h"
 #include "vga.h"
 #include "mm.h"
+#include "timer.h"
 
 #ifndef __i386__
 #error "the only supported architecture is i386"
@@ -166,6 +167,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   idt_install();
   /* install the keyboard */
   kbd_install();
+  /* install the timer */
+  timer_install();
   /* initialize the memory management */
   uint32_t heap_addr = mm_init(bootinfo);
 

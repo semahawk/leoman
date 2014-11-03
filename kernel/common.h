@@ -54,6 +54,20 @@ struct kern_bootinfo {
   } __PACKED memory_map[64];
 } __PACKED;
 
+/* preserved processor's state
+ * passed from `isr_common_stub' to `isr_handler'
+ * and    from `irq_common_stub' to `irq_handler' */
+struct regs {
+  /* data segment selector */
+  uint32_t ds;
+  /* pushed by `pusha' */
+  uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
+  /* interrupt number and error code */
+  uint32_t num, err;
+  /* pushed by the processor automatically */
+  uint32_t eip, cs, eflags, useresp, ss;
+};
+
 #endif /* COMMON_H */
 
 /*

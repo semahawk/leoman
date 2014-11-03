@@ -27,20 +27,6 @@ struct idt_ptr {
   uint32_t base;
 } __PACKED;
 
-/* preserved processor's state
- * passed from `isr_common_stub' to `isr_handler'
- * and    from `irq_common_stub' to `irq_handler' */
-struct regs {
-  /* data segment selector */
-  uint32_t ds;
-  /* pushed by `pusha' */
-  uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-  /* interrupt number and error code */
-  uint32_t num, err;
-  /* pushed by the processor automatically */
-  uint32_t eip, cs, eflags, useresp, ss;
-};
-
 typedef void (*irq_handler_t)(struct regs *);
 
 void idt_install(void);
