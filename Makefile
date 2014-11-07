@@ -1,6 +1,6 @@
 .PHONY: all bootloader kernel run disk_image clean
 
-DISK_IMAGE = gorm.fs
+DISK_IMAGE = figh.fs
 DISK_IMAGE_SIZE = 32m
 
 SUBDIRS = boot kernel

@@ -128,7 +128,7 @@ times 446-($-$$) db 0
 %rep 48
   db 0x00
 %endrep
-; Gorm's entry (shamelessly copied from /usr/src/sys/boot/i386/boot2/boot1.S)
+; Figh's entry (shamelessly copied from /usr/src/sys/boot/i386/boot2/boot1.S)
 db 0x80, 0x00, 0x02, 0x00
 db 0x7f, 0xfe, 0xff, 0xff
 db 0x00, 0x00, 0x00, 0x00

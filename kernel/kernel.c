@@ -174,7 +174,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   __asm volatile("sti");
 
-  vga_puts("\n Gorm\n\n");
+  vga_puts("\n Figh\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
   vga_printf(" kernel's address:          0x%x\n", bootinfo->kernel_addr);
