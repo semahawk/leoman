@@ -62,10 +62,7 @@ void unmap_page(void *vaddr)
 
 uint32_t *paging_init(struct kern_bootinfo *bootinfo)
 {
-  uint32_t kernel_end = bootinfo->kernel_addr + bootinfo->kernel_size;
-  /* page align the kernel's end address */
-  kernel_end = (kernel_end & (0xffffffff - (PAGE_SIZE - 1))) + PAGE_SIZE;
-  page_directory = (uint32_t *)kernel_end;
+  page_directory = (uint32_t *)PALIGN(bootinfo->kernel_addr + bootinfo->kernel_size);
 
   /* zero-out the page directory */
   for (int i = 0; i < 1024; i++){

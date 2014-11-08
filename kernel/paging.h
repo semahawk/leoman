@@ -18,6 +18,8 @@
 #include "common.h"
 
 #define PAGE_SIZE 0x1000
+/* page-align the given address */
+#define PALIGN(addr) (((addr) & (0xffffffff - (PAGE_SIZE - 1))) + PAGE_SIZE)
 
 /* page directory attribute masks */
 #define PDIR_ATTR_IGNORE   (1 << 8)
