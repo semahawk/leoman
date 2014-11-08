@@ -42,6 +42,9 @@
 #define PTAB_ATTR_PRESENT  (1 << 0)
 
 uint32_t *paging_init(struct kern_bootinfo *);
+void *paddr(void *vaddr);
+void map_page(void *paddr, void *vaddr, unsigned int flags);
+void unmap_page(void *vaddr);
 
 #endif /* PAGING_H */
 
