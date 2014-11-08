@@ -87,14 +87,43 @@ void isr_handler(struct regs regs)
     for (x = 0; x < VGA_WIDTH; x++)
       vga_putch(' ');
 
-  vga_row = 1; vga_col = 2;
-  vga_printf("%s!\n\n", messages[regs.num]);
-  vga_printf("eax: %x  eip: %x\n", regs.eax, regs.eip);
-  vga_printf("ebx: %x   ds: %x\n", regs.ebx, regs.ds);
-  vga_printf("ecx: %x   cs: %x\n", regs.ecx, regs.cs);
-  vga_printf("edx: %x  flg: %x\n", regs.edx, regs.eflags);
-  vga_printf("esi: %x   ss: %x\n", regs.esi, regs.ss);
-  vga_printf("edi: %x  err: %x\n", regs.edi, regs.err);
+  vga_row = 1; vga_col = 1;
+  vga_printf("%s (%d)!\n\n", messages[regs.num], regs.num);
+  vga_printf(" eax: %x  eip: %x\n", regs.eax, regs.eip);
+  vga_printf(" ebx: %x   ds: %x\n", regs.ebx, regs.ds);
+  vga_printf(" ecx: %x   cs: %x\n", regs.ecx, regs.cs);
+  vga_printf(" edx: %x  flg: %x\n", regs.edx, regs.eflags);
+  vga_printf(" esi: %x   ss: %x\n", regs.esi, regs.ss);
+  vga_printf(" edi: %x  err: %x\n", regs.edi, regs.err);
+  vga_printf("\n");
+
+  /* print additional informations about the exception */
+  vga_printf(" Additional notes / possible causes:\n");
+  if (regs.num == 14 /* page fault */){
+    /* {{{ */
+    vga_printf(" - the page fault was caused by ");
+    if (regs.err & (1 << 0))
+      vga_printf("a protection violation\n");
+    else
+      vga_printf("a non-present page\n");
+
+    vga_printf(" - the page fault was caused by ");
+    if (regs.err & (1 << 1))
+      vga_printf("write access\n");
+    else
+      vga_printf("read access\n");
+
+    vga_printf(" - the page fault occurred in ");
+    if (regs.err & (1 << 2))
+      vga_printf("user mode\n");
+    else
+      vga_printf("supervisor mode\n");
+
+    uint32_t cr2;
+    __asm volatile("mov %%cr2, %0" : "=b"(cr2));
+    vga_printf(" - the cr2 register contains: 0x%x\n", cr2);
+    /* }}} */
+  }
 
   /* hm.. let's hang */
   /* I don't see a better option really */

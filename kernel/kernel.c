@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "paging.h"
 #include "idt.h"
 #include "kbd.h"
 #include "vga.h"
@@ -62,7 +63,8 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
   struct memory_map_entry kernentry = {
     .base_low  = bootinfo->kernel_addr,
     .base_high = 0x0,
-    .len_low   = bootinfo->kernel_size,
+    /* make room for the paging stuff (4MiB) */
+    .len_low   = bootinfo->kernel_size + 0x400000,
     .len_high  = 0x0,
     .type      = 2,
     .acpi_ext  = 0
@@ -160,9 +162,11 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 
 void kmain(struct kern_bootinfo *bootinfo)
 {
+  adjust_the_memory_map(bootinfo);
+  /* set up paging */
+  uint32_t *pdir_addr = paging_init(bootinfo);
   /* set up the printing utilities */
   vga_init();
-  adjust_the_memory_map(bootinfo);
   /* install the IDT (ISRs and IRQs) */
   idt_install();
   /* install the keyboard */
@@ -170,7 +174,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* install the timer */
   timer_install();
   /* initialize the memory management */
-  uint32_t heap_addr = mm_init(bootinfo);
+  /*uint32_t heap_addr = mm_init(bootinfo);*/
+  uint32_t *heap_addr = NULL;
 
   __asm volatile("sti");
 
@@ -179,6 +184,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_puts(" ------------------------------------------\n\n");
   vga_printf(" kernel's address:          0x%x\n", bootinfo->kernel_addr);
   vga_printf(" heap created:              0x%x\n", heap_addr);
+  vga_printf(" page directory created:    0x%x\n", pdir_addr);
   vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
   vga_printf(" memory map:\n");
   vga_printf(" base address         length              type\n");
