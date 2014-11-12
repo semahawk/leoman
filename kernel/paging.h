@@ -19,7 +19,8 @@
 
 #define PAGE_SIZE 0x1000
 /* page-align the given address */
-#define PALIGN(addr) (void *)(((uint32_t)(addr) & (0xffffffff - (PAGE_SIZE - 1))) + PAGE_SIZE)
+/* shockingly, this magic works.. */
+#define PALIGN(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 
 /* page directory attribute masks */
 #define PDIR_ATTR_IGNORE   (1 << 8)

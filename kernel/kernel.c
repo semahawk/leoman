@@ -183,6 +183,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
   vga_printf(" kernel's address:          0x%x\n", bootinfo->kernel_addr);
+  vga_printf(" kernel's size:             0x%x\n", bootinfo->kernel_size);
   vga_printf(" heap created:              0x%x\n", heap_addr);
   vga_printf(" page directory created:    0x%x\n", pdir_addr);
   vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
