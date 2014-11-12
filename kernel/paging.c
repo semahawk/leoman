@@ -32,7 +32,7 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
   uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
 
   uint32_t *pdir = page_directory;
-  uint32_t *ptab = page_directory_end + pdir_idx * 0x400;
+  uint32_t *ptab = page_directory_end + pdir_idx * KiB(1);
 
   pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
   ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
@@ -56,7 +56,7 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned num)
     pdir_idx = (uint32_t)vaddr >> 22;
     ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
 
-    ptab = page_directory_end + pdir_idx * 0x400;
+    ptab = page_directory_end + pdir_idx * KiB(1);
 
     pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
     ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
@@ -69,16 +69,16 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned num)
 uint32_t *paging_init(struct kern_bootinfo *bootinfo)
 {
   page_directory = PALIGN(bootinfo->kernel_addr + bootinfo->kernel_size);
-  page_directory_end = page_directory + 0x400;
+  page_directory_end = page_directory + KiB(1);
 
   /* setup the page directory */
   for (int i = 0; i < 1024; i++){
     /* attributes: supervisor level, read + write, not present */
-    page_directory[i] = (uint32_t)(page_directory_end + i * 0x400) | PDIR_ATTR_RDWR;
+    page_directory[i] = (uint32_t)(page_directory_end + i * KiB(1)) | PDIR_ATTR_RDWR;
   }
 
-  /* 1MiB (BIOS &c) + kernel's size + 4KiB + 4MiB (page directory and tables) */
-  unsigned npages = (0x100000 + bootinfo->kernel_size + 0x401000) / PAGE_SIZE;
+  /* BIOS &c + kernel's + page directory and tables */
+  unsigned npages = (MiB(1) + bootinfo->kernel_size + KiB(4) + MiB(4)) / PAGE_SIZE;
   /* identity-map the first <npages> pages */
   map_pages(0x0, 0x0, PTAB_ATTR_RDWR, npages);
 

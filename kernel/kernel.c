@@ -63,8 +63,8 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
   struct memory_map_entry kernentry = {
     .base_low  = bootinfo->kernel_addr,
     .base_high = 0x0,
-    /* make room for the paging stuff (4MiB + 4KiB) */
-    .len_low   = bootinfo->kernel_size + 0x401000,
+    /* make room for the paging stuff */
+    .len_low   = bootinfo->kernel_size + KiB(4) + MiB(4),
     .len_high  = 0x0,
     .type      = 2,
     .acpi_ext  = 0
@@ -155,7 +155,6 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
     struct memory_map_entry *e = &bootinfo->memory_map[i];
 
     if (e->type == 1 || e->type == 3)
-      /* FIXME handle len_high */
       bootinfo->mem_avail += e->len_low;
   }
 }

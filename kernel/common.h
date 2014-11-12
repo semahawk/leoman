@@ -20,6 +20,10 @@
 #define __PACKED __attribute__((packed))
 #define __NAKED  __attribute__((naked))
 
+#define KiB(n) (0x00000400 * (n))
+#define MiB(n) (0x00100000 * (n))
+#define GiB(n) (0x40000000 * (n))
+
 /* these should later go to string.h, as soon as we have libc */
 void *memset(void *dst, int ch, size_t len);
 void *memcpy(void *dst, void *src, size_t len);

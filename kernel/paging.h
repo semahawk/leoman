@@ -17,7 +17,7 @@
 
 #include "common.h"
 
-#define PAGE_SIZE 0x1000
+#define PAGE_SIZE KiB(4)
 /* page-align the given address */
 /* shockingly, this magic works.. */
 #define PALIGN(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
