@@ -15,89 +15,47 @@
 #include "common.h"
 #include "paging.h"
 
-/* TODO: write a page frame allocator */
-
+static int paging_enabled = 0;
+/* those addresses are physical */
 static uint32_t *page_directory;
+static uint32_t *page_directory_end;
 
-void *paddr(void *vaddr)
-{
-  unsigned long pdir_idx = (unsigned long)vaddr >> 22;
-  unsigned long ptab_idx = (unsigned long)vaddr >> 12 & 0x03ff;
-
-  unsigned long *pdir = (unsigned long *)0xfffff000;
-  /* TODO: check whether the page directory entry is present */
-  unsigned long *ptab = ((unsigned long *)0xffc00000) + (0x400 * pdir_idx);
-  /* TODO: check whether the page table entry is present */
-
-  return (void *)((ptab[ptab_idx] & ~0xFFF) + ((unsigned long)vaddr & 0xfff));
-}
-
+/*
+ * Map a single page
+ */
 void map_page(void *paddr, void *vaddr, unsigned int flags)
 {
-  /* TODO: make sure both paddr and vaddr are page-aligned */
-  unsigned long pdir_idx = (unsigned long)vaddr >> 22;
-  unsigned long ptab_idx = (unsigned long)vaddr >> 12 & 0x03ff;
+  paddr = PALIGN(paddr);
+  vaddr = PALIGN(vaddr);
 
-  unsigned long *pdir = (unsigned long *)0xfffff000;
-  /* TODO: check whether the page directory entry is present */
-  unsigned long *ptab = ((unsigned long *)0xffc00000) + (0x400 * pdir_idx);
-  /* TODO: check whether the page table entry is present */
+  uint32_t pdir_idx = (uint32_t)vaddr >> 22;
+  uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
 
-  ptab[ptab_idx] = ((unsigned long)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
-}
+  uint32_t *pdir = page_directory;
+  uint32_t *ptab = page_directory_end + pdir_idx * 0x400;
 
-void unmap_page(void *vaddr)
-{
-  /* TODO: make sure both paddr and vaddr are page-aligned */
-  unsigned long pdir_idx = (unsigned long)vaddr >> 22;
-  unsigned long ptab_idx = (unsigned long)vaddr >> 12 & 0x03ff;
-
-  unsigned long *pdir = (unsigned long *)0xfffff000;
-  /* TODO: check whether the page directory entry is present */
-  unsigned long *ptab = ((unsigned long *)0xffc00000) + (0x400 * pdir_idx);
-  /* TODO: check whether the page table entry is present */
-
- ptab[ptab_idx] = 0x0;
+  pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
+  ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
 }
 
 uint32_t *paging_init(struct kern_bootinfo *bootinfo)
 {
-  page_directory = (uint32_t *)PALIGN(bootinfo->kernel_addr + bootinfo->kernel_size);
+  page_directory = PALIGN(bootinfo->kernel_addr + bootinfo->kernel_size);
+  page_directory_end = page_directory + 0x400;
 
-  /* zero-out the page directory */
+  /* setup the page directory */
   for (int i = 0; i < 1024; i++){
     /* attributes: supervisor level, read + write, not present */
-    page_directory[i] = PDIR_ATTR_RDWR;
+    page_directory[i] = (uint32_t)(page_directory_end + i * 0x400) | PDIR_ATTR_RDWR;
   }
 
-  /* create the first page table */
-  uint32_t *page_table = page_directory + 1024;
-  /* the first page table will identity page the first 4MiB */
-  uint32_t addr = 0x0;
-
-  for (int i = 0; i < 1024; i++, addr += PAGE_SIZE){
-    /* attributes: supervisor level, read + write, present */
-    page_table[i] = addr | PTAB_ATTR_RDWR | PTAB_ATTR_PRESENT;
+  /* 1MiB (BIOS &c) + kernel's size + 4KiB + 4MiB (page directory and tables) */
+  unsigned npages = (0x100000 + bootinfo->kernel_size + 0x401000) / PAGE_SIZE;
+  void *addr = 0x0;
+  /* identity-map the first <npages> pages */
+  for (int i = 0; i < npages - 1; i++, addr += PAGE_SIZE){
+    map_page(addr, addr, PTAB_ATTR_RDWR);
   }
-
-  /* also, create a second page table, which will 'point' back at the page
-   * directory */
-  uint32_t *pdir_table = page_table + PAGE_SIZE;
-  addr = (uint32_t)page_directory;
-
-  for (int i = 0; i < 1024; i++, addr += PAGE_SIZE){
-    /* attributes: supervisor level, read + write, present */
-    pdir_table[i] = addr | PTAB_ATTR_RDWR | PTAB_ATTR_PRESENT;
-  }
-
-  /* put the page table in the page directory */
-  page_directory[0]  = (uint32_t)page_table;
-  /* set the page table #0 to be present */
-  page_directory[0] |= PDIR_ATTR_PRESENT;
-  /* put the page table in the page directory (in the last slot) */
-  page_directory[1023]  = (uint32_t)pdir_table;
-  /* set the page table #1023 to be present */
-  page_directory[1023] |= PDIR_ATTR_PRESENT;
 
   /* actually enable paging */
   uint32_t cr0;
@@ -106,6 +64,8 @@ uint32_t *paging_init(struct kern_bootinfo *bootinfo)
   __asm volatile("mov %%cr0, %0" : "=b"(cr0));
   cr0 |= 0x80000000;
   __asm volatile("mov %0, %%cr0" : : "b"(cr0));
+
+  paging_enabled = 1;
 
   return page_directory;
 }

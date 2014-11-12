@@ -63,8 +63,8 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
   struct memory_map_entry kernentry = {
     .base_low  = bootinfo->kernel_addr,
     .base_high = 0x0,
-    /* make room for the paging stuff (4MiB) */
-    .len_low   = bootinfo->kernel_size + 0x400000,
+    /* make room for the paging stuff (4MiB + 4KiB) */
+    .len_low   = bootinfo->kernel_size + 0x401000,
     .len_high  = 0x0,
     .type      = 2,
     .acpi_ext  = 0
