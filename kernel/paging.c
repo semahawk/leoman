@@ -23,7 +23,7 @@ static uint32_t *page_directory_end;
 /*
  * Map a single page
  */
-void map_page(void *paddr, void *vaddr, unsigned int flags)
+void map_page(void *paddr, void *vaddr, unsigned flags)
 {
   paddr = PALIGN(paddr);
   vaddr = PALIGN(vaddr);
@@ -36,6 +36,34 @@ void map_page(void *paddr, void *vaddr, unsigned int flags)
 
   pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
   ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
+}
+
+/*
+ * Map <num> continuous pages
+ */
+void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned num)
+{
+  paddr = PALIGN(paddr);
+  vaddr = PALIGN(vaddr);
+
+  uint32_t pdir_idx;
+  uint32_t ptab_idx;
+
+  uint32_t *pdir = page_directory;
+  uint32_t *ptab;
+
+  for (int i = 0; i < num; i++){
+    pdir_idx = (uint32_t)vaddr >> 22;
+    ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
+
+    ptab = page_directory_end + pdir_idx * 0x400;
+
+    pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
+    ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
+
+    paddr += PAGE_SIZE;
+    vaddr += PAGE_SIZE;
+  }
 }
 
 uint32_t *paging_init(struct kern_bootinfo *bootinfo)
@@ -51,11 +79,8 @@ uint32_t *paging_init(struct kern_bootinfo *bootinfo)
 
   /* 1MiB (BIOS &c) + kernel's size + 4KiB + 4MiB (page directory and tables) */
   unsigned npages = (0x100000 + bootinfo->kernel_size + 0x401000) / PAGE_SIZE;
-  void *addr = 0x0;
   /* identity-map the first <npages> pages */
-  for (int i = 0; i < npages - 1; i++, addr += PAGE_SIZE){
-    map_page(addr, addr, PTAB_ATTR_RDWR);
-  }
+  map_pages(0x0, 0x0, PTAB_ATTR_RDWR, npages);
 
   /* actually enable paging */
   uint32_t cr0;
