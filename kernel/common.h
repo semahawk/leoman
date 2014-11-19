@@ -42,6 +42,7 @@ static inline void outb(uint16_t port, uint8_t data)
 
 struct kern_bootinfo {
   /* address at which the kernel begins */
+  /* NOTE: this field *must* to be first one in the struct */
   uint32_t kernel_addr;
   /* kernel's size, d'uh */
   uint32_t kernel_size;

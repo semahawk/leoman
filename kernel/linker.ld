@@ -1,10 +1,26 @@
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(_start)
-phys = 0x100000;
+
+kernel_phys = 0x100000;
+off  = 0xe0000000;
+virt = off - kernel_phys;
 
 SECTIONS
 {
-  .text phys : AT(phys)
+  . = kernel_phys;
+
+  .preamble : AT(ADDR(.preamble))
+  {
+    preamble = .;
+    *(.preamble)
+    . = ALIGN(4K);
+  }
+
+  . += virt;
+
+  kernel_start = .;
+
+  .text : AT(ADDR(.text) - virt)
   {
     text = .;
     *(.multiboot)
@@ -13,14 +29,14 @@ SECTIONS
     . = ALIGN(4K);
   }
 
-  .data : AT(phys + (data - text))
+  .data : AT(ADDR(.data) - virt)
   {
     data = .;
     *(.data)
     . = ALIGN(4K);
   }
 
-  .bss : AT(phys + (bss - text))
+  .bss : AT(ADDR(.bss) - virt)
   {
     bss = .;
     *(COMMON)
@@ -28,5 +44,7 @@ SECTIONS
     *(.stack)
     . = ALIGN(4K);
   }
+
+  kernel_end = .;
 }
 

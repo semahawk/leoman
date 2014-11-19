@@ -785,8 +785,8 @@ relocate:
 
     .is_loadable:
       mov eax, [kernel_preloc]
-      ; edi now points to the section's `p_vaddr'
-      mov edi, [esi + 0x08]
+      ; edi now points to the section's `p_paddr'
+      mov edi, [esi + 0x0c]
 
       ; don't load sections that want to go nowhere
       cmp edi, 0x0

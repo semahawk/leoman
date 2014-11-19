@@ -59,6 +59,7 @@ extern "C" {
 
 static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 {
+  /* {{{ */
   /* add a (reserved) memory entry for kernel's guts */
   struct memory_map_entry kernentry = {
     .base_low  = bootinfo->kernel_addr,
@@ -157,13 +158,15 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
     if (e->type == 1 || e->type == 3)
       bootinfo->mem_avail += e->len_low;
   }
+  /* }}} */
 }
 
 void kmain(struct kern_bootinfo *bootinfo)
 {
   adjust_the_memory_map(bootinfo);
   /* set up paging */
-  uint32_t *pdir_addr = paging_init(bootinfo);
+  /*uint32_t *pdir_addr = paging_init(bootinfo);*/
+  uint32_t *pdir_addr = NULL;
   /* set up the printing utilities */
   vga_init();
   /* install the IDT (ISRs and IRQs) */
