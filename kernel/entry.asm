@@ -12,7 +12,8 @@ extern kernel_end
 section .stack
 align 4
 stack_bottom:
-  resb 16384
+  ; that's 16KiB
+  times 2048 dq 0
 stack_top:
 
 section .preamble
@@ -41,7 +42,8 @@ page_table_0:
 
 ; this, sadly, can't be computed at compile time (or can it?)
 page_table_896:
-  resd 1024 ; reserve 4KiB
+  ; that's 4KiB
+  times 512 dq 0
 
 _start:
   ; set up the #896 page table
