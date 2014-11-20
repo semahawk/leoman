@@ -805,7 +805,6 @@ relocate:
       push ecx
       ; 0x14 is the offset of `p_memsz'
       mov ebx, [esi + 0x14]
-      add [kernel_size], ebx
       push ebx
       ; esi now points to the section's actual contents in memory
       mov esi, eax
@@ -969,7 +968,7 @@ bootinfo:
 ; {{{
 ; keep the initial values as they are, these are intentional
 kernel_addr: dd 0xffffffff
-kernel_size: dd 0x0
+kernel_size: dd 0xffffffff
 mem_avail:   dd 0x0
 memory_map: times 24 * 64 db 0 ; max 64 entries (is it enough?)
 ; }}}

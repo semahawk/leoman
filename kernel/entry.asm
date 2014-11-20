@@ -7,6 +7,7 @@ global _higherhalf
 extern kernel_phys
 extern kernel_start
 extern kernel_end
+extern kernel_size
 
 ; the stack is 16KiB
 section .stack
@@ -86,6 +87,7 @@ _higherhalf:
   ; fix the `kernel_addr' field in the `bootinfo' structure to be the virtual
   ; address, not the physical one
   mov [eax], dword kernel_start
+  mov [eax + 4], dword kernel_size
 
   ; we are now ready to actually execute C code
   ; calling kmain(eax)
