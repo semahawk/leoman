@@ -27,7 +27,8 @@
 #define PAGE_SIZE KiB(4)
 /* page-align the given address */
 /* shockingly, this magic works.. */
-#define PALIGN(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+#define PALIGNUP(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
+#define PALIGNDOWN(addr) (void *)(((uint32_t)(addr)) & ~(PAGE_SIZE - 1))
 
 /* page directory attribute masks */
 #define PDIR_ATTR_IGNORE   (1 << 8)
@@ -51,6 +52,7 @@
 #define PTAB_ATTR_RDWR     (1 << 1)
 #define PTAB_ATTR_PRESENT  (1 << 0)
 
+void *kalloc(void);
 uint32_t *paging_init(struct kern_bootinfo *);
 void *paddr(void *vaddr);
 void map_page(void *paddr, void *vaddr, unsigned int flags);

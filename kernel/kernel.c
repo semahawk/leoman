@@ -62,10 +62,10 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
   /* {{{ */
   /* add a (reserved) memory entry for kernel's guts */
   struct memory_map_entry kernentry = {
-    .base_low  = bootinfo->kernel_addr,
+    .base_low  = &kernel_start,
     .base_high = 0x0,
     /* make room for the paging stuff */
-    .len_low   = bootinfo->kernel_size + KiB(4) + MiB(4),
+    .len_low   = (uint32_t)&kernel_size + KiB(4) + MiB(4),
     .len_high  = 0x0,
     .type      = 2,
     .acpi_ext  = 0
@@ -183,8 +183,9 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_puts("\n Figh\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
-  vga_printf(" kernel's address:          0x%x\n", bootinfo->kernel_addr);
-  vga_printf(" kernel's size:             0x%x\n", bootinfo->kernel_size);
+  vga_printf(" kernel's physical address: 0x%x\n", &kernel_phys);
+  vga_printf(" kernel's  virtual address: 0x%x\n", &kernel_start);
+  vga_printf(" kernel's size:             0x%x\n", &kernel_size);
   vga_printf(" heap created:              0x%x\n", heap_addr);
   vga_printf(" page directory created:    0x%x\n", pdir_addr);
   vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);

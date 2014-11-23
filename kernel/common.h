@@ -41,18 +41,12 @@ static inline void outb(uint16_t port, uint8_t data)
 }
 
 struct kern_bootinfo {
-  /* address at which the kernel begins */
-  /* NOTE: this field *must* be the first one in the struct */
-  uint32_t kernel_addr;
-  /* kernel's size, d'uh */
-  /* NOTE: this field *must* be the second one in the struct */
-  uint32_t kernel_size;
   /* the total amount of available RAM memory */
   uint32_t mem_avail;
   /* the memory map entries */
   struct memory_map_entry {
-    uint32_t base_low;
-    uint32_t base_high;
+    uint32_t *base_low;
+    uint32_t *base_high;
     uint32_t len_low;
     uint32_t len_high;
     uint32_t type;
@@ -73,6 +67,13 @@ struct regs {
   /* pushed by the processor automatically */
   uint32_t eip, cs, eflags, useresp, ss;
 };
+
+/* provided by the linker */
+extern uint32_t kernel_start;
+extern uint32_t kernel_end;
+extern uint32_t kernel_size;
+extern uint32_t kernel_phys;
+extern uint32_t kernel_off;
 
 #endif /* COMMON_H */
 

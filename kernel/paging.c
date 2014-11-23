@@ -17,7 +17,7 @@
 
 uint32_t *paging_init(struct kern_bootinfo *bootinfo)
 {
-  return NULL;
+  return &kernel_size;
 }
 
 /*

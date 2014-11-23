@@ -792,12 +792,6 @@ relocate:
       cmp edi, 0x0
       je .loop_phdrs_next
 
-      ; if edi < kernel_addr then kernel_addr = edi
-      cmp edi, [kernel_addr]
-      jae .dont_update_kern_start
-        mov [kernel_addr], edi
-      .dont_update_kern_start:
-
       ; 0x4 is the offset of `p_offset'
       add eax, [esi + 0x04]
       ; 0x10 is the offset of `p_filesz' (ie. number of bytes to copy)
@@ -966,10 +960,7 @@ halt:
 ;
 bootinfo:
 ; {{{
-; keep the initial values as they are, these are intentional
-kernel_addr: dd 0xffffffff
-kernel_size: dd 0xffffffff
-mem_avail:   dd 0x0
+mem_avail: dd 0x0
 memory_map: times 24 * 64 db 0 ; max 64 entries (is it enough?)
 ; }}}
 

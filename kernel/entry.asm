@@ -84,11 +84,6 @@ _higherhalf:
   ; yup, right here
   mov esp, stack_top
 
-  ; fix the `kernel_addr' field in the `bootinfo' structure to be the virtual
-  ; address, not the physical one
-  mov [eax], dword kernel_start
-  mov [eax + 4], dword kernel_size
-
   ; we are now ready to actually execute C code
   ; calling kmain(eax)
   push eax
