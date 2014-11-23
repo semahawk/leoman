@@ -165,8 +165,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 {
   adjust_the_memory_map(bootinfo);
   /* set up paging */
-  /*uint32_t *pdir_addr = paging_init(bootinfo);*/
-  uint32_t *pdir_addr = NULL;
+  uint32_t *pdir_addr = paging_init(bootinfo);
   /* set up the printing utilities */
   vga_init();
   /* install the IDT (ISRs and IRQs) */

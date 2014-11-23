@@ -17,6 +17,13 @@
 
 #include "common.h"
 
+#define KERN_PHYS (0x00100000)
+/* the virtual offset */
+#define KERN_VOFF (0xe0000000)
+/* convert between physical and virtual addresses */
+#define P2V(a) (  (void *)(a) + KERN_VOFF)
+#define V2P(a) ((uint32_t)(a) - KERN_VOFF)
+
 #define PAGE_SIZE KiB(4)
 /* page-align the given address */
 /* shockingly, this magic works.. */

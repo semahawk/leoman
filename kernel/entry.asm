@@ -48,8 +48,8 @@ page_table_896:
 
 _start:
   ; set up the #896 page table
-  mov eax, 0x0         ; counter
-  mov ebx, kernel_phys ; address
+  mov eax, 0x0 ; counter
+  mov ebx, 0x0 ; address
 
   ; map 4MiB from the physical location to 0xe0000000
   .fill_table:
