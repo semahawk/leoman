@@ -74,6 +74,9 @@ uint32_t *paging_init(struct kern_bootinfo *bootinfo)
   /* so yeah, whole 4MiB+4KiB are reserved for kernel's paging stuff */
   page_directory_end = page_directory + KiB(4);
 
+  /* zero-out the page directory and the page tables */
+  memset(page_directory, 0x0, KiB(4) + MiB(4));
+
   for (int i = 0; i < 1024; i++)
     page_directory[i] = v2p(page_directory_end + i * KiB(1)) | PDIR_ATTR_RDWR;
 
