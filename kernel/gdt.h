@@ -22,6 +22,8 @@
 
 #define SEG_KCODE  0x1  /* kernel code */
 #define SEG_KDATA  0x2  /* kernel data */
+#define SEG_UCODE  0x3  /* user code */
+#define SEG_UDATA  0x4  /* user data */
 
 #define GDTE_X     0x8 /* executable segment */
 #define GDTE_E     0x4 /* expand down (non-executable segments) */

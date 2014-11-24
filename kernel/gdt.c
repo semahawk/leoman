@@ -40,6 +40,8 @@ void gdt_init(void)
 {
   gdt_set_segment(SEG_KCODE, 0x0, 0xffffffff, GDTE_X | GDTE_R, DPL_KERNEL);
   gdt_set_segment(SEG_KDATA, 0x0, 0xffffffff, GDTE_W, DPL_KERNEL);
+  gdt_set_segment(SEG_UCODE, 0x0, 0xffffffff, GDTE_X | GDTE_R, DPL_USER);
+  gdt_set_segment(SEG_UDATA, 0x0, 0xffffffff, GDTE_W, DPL_USER);
 
   gdt_load(gdt, sizeof(gdt));
 
