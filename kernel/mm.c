@@ -39,7 +39,7 @@ uint32_t mm_init(struct kern_bootinfo *bootinfo)
   return (uint32_t)initial;
 }
 
-void *kmalloc(size_t size)
+void *malloc(size_t size)
 {
   /* traverse the memory blocks searching for a sufficiently large free block */
   struct memblock *block;
@@ -76,7 +76,7 @@ void *kmalloc(size_t size)
   return NULL;
 }
 
-void kfree(void *ptr)
+void free(void *ptr)
 {
   struct memblock *p;
   struct memblock *block = (struct memblock *)((size_t)ptr - sizeof(struct memblock));

@@ -26,8 +26,8 @@ struct memblock {
 
 uint32_t mm_init(struct kern_bootinfo *);
 
-void *kmalloc(size_t size);
-void kfree(void *ptr);
+void *malloc(size_t size);
+void free(void *ptr);
 
 #endif /* MM_H */
 

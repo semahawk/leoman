@@ -49,8 +49,10 @@
 #define PTAB_ATTR_RDWR     (1 << 1)
 #define PTAB_ATTR_PRESENT  (1 << 0)
 
+void *kvm_init(struct kern_bootinfo *);
 void *kalloc(void);
-uint32_t *paging_init(struct kern_bootinfo *);
+void  kfree(void *);
+void *paging_init(struct kern_bootinfo *);
 void *paddr(void *vaddr);
 void map_page(void *paddr, void *vaddr, unsigned int flags);
 void unmap_page(void *vaddr);

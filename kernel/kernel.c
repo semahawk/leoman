@@ -168,6 +168,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_init();
   /* set up paging */
   uint32_t *pdir_addr = paging_init(bootinfo);
+  /* set up the kernel's virtual memory (manager, &c, w/e) */
+  void *page_bmap = kvm_init(bootinfo);
   /* install the IDT (ISRs and IRQs) */
   idt_install();
   /* install the keyboard */
@@ -183,21 +185,39 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_puts("\n Figh\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
+  vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
   vga_printf(" kernel's physical address: 0x%x\n", &kernel_phys);
   vga_printf(" kernel's  virtual address: 0x%x\n", &kernel_start);
   vga_printf(" kernel's size:             0x%x\n", &kernel_size);
   vga_printf(" heap created:              0x%x\n", heap_addr);
   vga_printf(" page directory created:    0x%x\n", pdir_addr);
-  vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
-  vga_printf(" memory map:\n");
-  vga_printf(" base address         length              type\n");
-  vga_printf(" ---------------------------------------------\n");
+  vga_printf(" pages' byte map:           0x%x\n", page_bmap);
+  /*vga_printf(" memory map:\n");*/
+  /*vga_printf(" base address         length              type\n");*/
+  /*vga_printf(" ---------------------------------------------\n");*/
 
-  for (int i = 0; i < 64; i++){
-    struct memory_map_entry *e = &bootinfo->memory_map[i];
-    if ((e->len_low | e->len_high) == 0) continue;
-    vga_printf(" 0x%x%x - 0x%x%x     %d\n", e->base_high, e->base_low, e->len_high, e->len_low, e->type);
-  }
+  /*for (int i = 0; i < 64; i++){*/
+    /*struct memory_map_entry *e = &bootinfo->memory_map[i];*/
+    /*if ((e->len_low | e->len_high) == 0) continue;*/
+    /*vga_printf(" 0x%x%x - 0x%x%x     %d\n", e->base_high, e->base_low, e->len_high, e->len_low, e->type);*/
+  /*}*/
+
+  vga_printf("\n");
+
+  void *zero  = kalloc();
+  void *one   = kalloc();
+  void *two   = kalloc();
+  void *three = kalloc();
+
+  vga_printf(" requested a page #0: 0x%x\n", zero);
+  vga_printf(" requested a page #1: 0x%x\n", one);
+  vga_printf(" requested a page #2: 0x%x\n", two);
+  vga_printf(" requested a page #3: 0x%x\n", three);
+
+  kfree(zero);
+  kfree(one);
+  kfree(two);
+  kfree(three);
 
   for (;;);
 }
