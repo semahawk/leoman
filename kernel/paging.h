@@ -27,27 +27,27 @@
 #define PALIGNUP(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 #define PALIGNDOWN(addr) (void *)(((uint32_t)(addr)) & ~(PAGE_SIZE - 1))
 
-/* page directory attribute masks */
-#define PDIR_ATTR_IGNORE   (1 << 8)
-#define PDIR_ATTR_SIZE     (1 << 7)
-/* GAP                     (1 << 6) */
-#define PDIR_ATTR_ACCESSED (1 << 5)
-#define PDIR_ATTR_CSHDISB  (1 << 4)
-#define PDIR_ATTR_WRTHRU   (1 << 3)
-#define PDIR_ATTR_USER     (1 << 2)
-#define PDIR_ATTR_RDWR     (1 << 1)
-#define PDIR_ATTR_PRESENT  (1 << 0)
+/* page directory entry attribute masks */
+#define PDE_IGNORE   (1 << 8) /* ignoreeeed */
+#define PDE_S        (1 << 7) /* size */
+/* GAP               (1 << 6) */
+#define PDE_A        (1 << 5) /* accessed */
+#define PDE_C        (1 << 4) /* cache disabled */
+#define PDE_T        (1 << 3) /* write through */
+#define PDE_U        (1 << 2) /* user */
+#define PDE_W        (1 << 1) /* writeable */
+#define PDE_P        (1 << 0) /* present */
 
-/* page table attribute masks */
-#define PTAB_ATTR_GLOBAL   (1 << 8)
-/* GAP                     (1 << 7) */
-#define PTAB_ATTR_DIRTY    (1 << 6)
-#define PTAB_ATTR_ACCESSED (1 << 5)
-#define PTAB_ATTR_CSHDISB  (1 << 4)
-#define PTAB_ATTR_WRTHRU   (1 << 3)
-#define PTAB_ATTR_USER     (1 << 2)
-#define PTAB_ATTR_RDWR     (1 << 1)
-#define PTAB_ATTR_PRESENT  (1 << 0)
+/* page table entry attribute masks */
+#define PTE_G        (1 << 8) /* global */
+/* GAP               (1 << 7) */
+#define PTE_D        (1 << 6) /* dirty */
+#define PTE_A        (1 << 5) /* accessed */
+#define PTE_C        (1 << 4) /* cashe disabled */
+#define PTE_T        (1 << 3) /* write through */
+#define PTE_U        (1 << 2) /* user */
+#define PTE_W        (1 << 1) /* writeable */
+#define PTE_P        (1 << 0) /* present */
 
 void *kvm_init(struct kern_bootinfo *);
 void *kalloc(void);

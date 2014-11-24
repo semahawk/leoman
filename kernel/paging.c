@@ -38,8 +38,8 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
   uint32_t *pdir = page_directory;
   uint32_t *ptab = page_directory_end + pdir_idx * KiB(1);
 
-  pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
-  ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
+  pdir[pdir_idx] |= PDE_P;
+  ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTE_P;
 }
 
 /*
@@ -79,8 +79,8 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
 
     ptab = page_directory_end + pdir_idx * KiB(1);
 
-    pdir[pdir_idx] |= PDIR_ATTR_PRESENT;
-    ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
+    pdir[pdir_idx] |= PDE_P;
+    ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTE_P;
 
     paddr += PAGE_SIZE;
     vaddr += PAGE_SIZE;
@@ -125,7 +125,7 @@ void *kalloc(void)
       /* calculate it's address */
       page = page_bmap_end + i * PAGE_SIZE;
       /* map it */
-      map_page((void *)v2p(page), page, PTAB_ATTR_RDWR);
+      map_page((void *)v2p(page), page, PTE_W);
       /* mark it 'used' */
       page_bmap[i] = 1;
 
@@ -170,7 +170,7 @@ void *kvm_init(struct kern_bootinfo *bootinfo)
   page_bmap_size = (uint32_t)PALIGNUP(page_bmap_num);
   page_bmap_end = page_bmap + page_bmap_size;
 
-  map_pages((void *)v2p(page_bmap), page_bmap, PTAB_ATTR_RDWR, page_bmap_size);
+  map_pages((void *)v2p(page_bmap), page_bmap, PTE_W, page_bmap_size);
   /* zero-out the bytemap */
   memset(page_bmap, 0x0, page_bmap_size);
 
@@ -190,12 +190,12 @@ void *paging_init(struct kern_bootinfo *bootinfo)
   memset(page_directory, 0x0, KiB(4) + MiB(4));
 
   for (int i = 0; i < 1024; i++)
-    page_directory[i] = v2p(page_directory_end + i * KiB(1)) | PDIR_ATTR_RDWR;
+    page_directory[i] = v2p(page_directory_end + i * KiB(1)) | PDE_W;
 
   /* identity map the first 1 MiB of memory */
-  map_pages(0x0, 0x0, PTAB_ATTR_RDWR, MiB(1));
+  map_pages(0x0, 0x0, PTE_W, MiB(1));
   /* map the kernel intestines to the higher half */
-  map_pages(0x0, &kernel_off, PTAB_ATTR_RDWR, ((uint32_t)&kernel_start - (uint32_t)&kernel_off) + ((uint32_t)&kernel_size) + MiB(4) + KiB(4));
+  map_pages(0x0, &kernel_off, PTE_W, ((uint32_t)&kernel_start - (uint32_t)&kernel_off) + ((uint32_t)&kernel_size) + MiB(4) + KiB(4));
 
   set_cr3(v2p(page_directory));
 
