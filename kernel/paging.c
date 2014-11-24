@@ -43,6 +43,21 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
 }
 
 /*
+ * Unmap a single page
+ */
+void unmap_page(void *vaddr)
+{
+  vaddr = PALIGNUP(vaddr);
+
+  uint32_t pdir_idx = (uint32_t)vaddr >> 22;
+  uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
+
+  uint32_t *ptab = page_directory_end + pdir_idx * KiB(1);
+
+  ptab[ptab_idx] = 0x0;
+}
+
+/*
  * Map <sz> memory of continuous pages
  */
 void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
@@ -68,6 +83,31 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
     ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTAB_ATTR_PRESENT;
 
     paddr += PAGE_SIZE;
+    vaddr += PAGE_SIZE;
+  }
+}
+
+/*
+ * Unmap <sz> memory of continuous pages
+ */
+void unmap_pages(void *vaddr, unsigned sz)
+{
+  vaddr = PALIGNUP(vaddr);
+
+  uint32_t pdir_idx;
+  uint32_t ptab_idx;
+
+  uint32_t *pdir = page_directory;
+  uint32_t *ptab;
+
+  unsigned npages = sz / PAGE_SIZE;
+
+  for (int i = 0; i < npages; i++){
+    pdir_idx = (uint32_t)vaddr >> 22;
+    ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
+
+    ptab = page_directory_end + pdir_idx * KiB(1);
+    ptab[ptab_idx] = 0x0;
     vaddr += PAGE_SIZE;
   }
 }
@@ -101,7 +141,7 @@ void kfree(void *addr)
   /* page's index in `page_bmap' */
   size_t idx = ((uint32_t)addr - (uint32_t)page_bmap_end) / PAGE_SIZE;
 
-  /* TODO unmap the page */
+  unmap_page(addr);
   /* mark it 'free' / 'unused' */
   page_bmap[idx] = 0;
 }

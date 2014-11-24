@@ -54,8 +54,10 @@ void *kalloc(void);
 void  kfree(void *);
 void *paging_init(struct kern_bootinfo *);
 void *paddr(void *vaddr);
-void map_page(void *paddr, void *vaddr, unsigned int flags);
+void map_page(void *paddr, void *vaddr, unsigned flags);
 void unmap_page(void *vaddr);
+void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz);
+void unmap_pages(void *vaddr, unsigned sz);
 
 /* convert between physical and virtual addresses */
 static inline void *p2v(uint32_t addr)
