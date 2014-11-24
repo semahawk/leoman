@@ -5,12 +5,14 @@ CC = clang
 CFLAGS := -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 
 C_SRC = kernel.c gdt.c paging.c mm.c idt.c kbd.c vga.c timer.c
-S_SRC = entry.asm isr.asm
-OBJS  = ${S_SRC:.asm=.o} ${C_SRC:.c=.o}
+S_SRC = entry.asm gdt.asm isr.asm
+OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
 all: kernel
 
-.asm.o:
+.SUFFIXES: .asm.o
+
+.asm.asm.o:
 	$(AS) -felf32 $< -o $@
 
 .c.o:

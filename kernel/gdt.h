@@ -66,6 +66,7 @@ static inline void gdt_load(void *base, uint16_t size)
 }
 
 void gdt_init(void);
+void reload_segments(void);
 
 #endif /* GDT_H */
 
