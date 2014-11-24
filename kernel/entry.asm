@@ -25,25 +25,30 @@ page_directory:
   ; fill the void between PDE #0 and PDE #896
   times (896 - 1) dd 0
   dd page_table_896 + 3
+  dd page_table_897 + 3
   ; fill the remainder of PDEs
-  times (1024 - 896 - 1) dd 0
+  times (1024 - 896 - 2) dd 0
 
 ; the first page table is also computable at compile time
-; it will identity-map the first 1MiB+16KiB of memory
+; it will identity-map the first 1MiB+20KiB of memory
 ; (BIOS stuff plus the .preamble section)
 page_table_0:
 %assign addr 0x0
-%rep 260
+%rep 261
   ; attributes: supervisor level, read + write, present
   dd addr | 3
   %assign addr addr + 4096
 %endrep
   ; fill the remainder of the PTEs
-  times (1024 - 260) dd 0
+  times (1024 - 261) dd 0
 
 ; this, sadly, can't be computed at compile time (or can it?)
 page_table_896:
   ; that's 4KiB
+  times 512 dq 0
+
+page_table_897:
+  ; that's also 4KiB
   times 512 dq 0
 
 _start:
@@ -52,16 +57,31 @@ _start:
   mov ebx, 0x0 ; address
 
   ; map 4MiB from the physical location to 0xe0000000
-  .fill_table:
+  .fill_table_896:
     mov ecx, ebx
     or  ecx, 3
     mov [page_table_896 + eax * 4], ecx
     add ebx, 0x1000
     inc eax
     cmp eax, 1024
-    je .end
-    jmp .fill_table
-  .end:
+    je .end_896
+    jmp .fill_table_896
+  .end_896:
+
+  ; reset the counter
+  mov eax, 0x0
+
+  ; map next 4MiB from the physical location to 0xe0400000
+  .fill_table_897:
+    mov ecx, ebx
+    or  ecx, 3
+    mov [page_table_897 + eax * 4], ecx
+    add ebx, 0x1000
+    inc eax
+    cmp eax, 1024
+    je .end_897
+    jmp .fill_table_897
+  .end_897:
 
   ; enable paging
   mov eax, page_directory

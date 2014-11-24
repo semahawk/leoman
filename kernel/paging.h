@@ -20,9 +20,6 @@
 #define KERN_PHYS (0x00100000)
 /* the virtual offset */
 #define KERN_VOFF (0xe0000000)
-/* convert between physical and virtual addresses */
-#define P2V(a) (  (void *)(a) + KERN_VOFF)
-#define V2P(a) ((uint32_t)(a) - KERN_VOFF)
 
 #define PAGE_SIZE KiB(4)
 /* page-align the given address */
@@ -57,6 +54,22 @@ uint32_t *paging_init(struct kern_bootinfo *);
 void *paddr(void *vaddr);
 void map_page(void *paddr, void *vaddr, unsigned int flags);
 void unmap_page(void *vaddr);
+
+/* convert between physical and virtual addresses */
+static inline void *p2v(uint32_t addr)
+{
+  return (void *)addr + KERN_VOFF;
+}
+
+static inline uint32_t v2p(void *addr)
+{
+  return (uint32_t)addr - KERN_VOFF;
+}
+
+static inline void set_cr3(uint32_t pdir)
+{
+  __asm volatile("movl %0, %%cr3" : : "r"(pdir));
+}
 
 #endif /* PAGING_H */
 

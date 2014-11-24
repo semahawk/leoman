@@ -62,7 +62,7 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
   /* {{{ */
   /* add a (reserved) memory entry for kernel's guts */
   struct memory_map_entry kernentry = {
-    .base_low  = &kernel_start,
+    .base_low  = &kernel_phys,
     .base_high = 0x0,
     /* make room for the paging stuff */
     .len_low   = (uint32_t)&kernel_size + KiB(4) + MiB(4),
@@ -164,10 +164,10 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 void kmain(struct kern_bootinfo *bootinfo)
 {
   adjust_the_memory_map(bootinfo);
-  /* set up paging */
-  uint32_t *pdir_addr = paging_init(bootinfo);
   /* set up the printing utilities */
   vga_init();
+  /* set up paging */
+  uint32_t *pdir_addr = paging_init(bootinfo);
   /* install the IDT (ISRs and IRQs) */
   idt_install();
   /* install the keyboard */
