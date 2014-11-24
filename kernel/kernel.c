@@ -15,6 +15,7 @@
 
 #include "common.h"
 #include "paging.h"
+#include "gdt.h"
 #include "idt.h"
 #include "kbd.h"
 #include "vga.h"
@@ -170,6 +171,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   uint32_t *pdir_addr = paging_init(bootinfo);
   /* set up the kernel's virtual memory (manager, &c, w/e) */
   void *page_bmap = kvm_init(bootinfo);
+  /* set up the segments, kernel code and data, &c */
+  gdt_init();
   /* install the IDT (ISRs and IRQs) */
   idt_install();
   /* install the keyboard */
