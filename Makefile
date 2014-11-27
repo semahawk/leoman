@@ -19,6 +19,7 @@ run: $(DISK_IMAGE)
 $(DISK_IMAGE): bootloader kernel
 	mkdir -p image/boot
 	cp kernel/kernel image/boot
+	cp kernel/initrd image/boot
 	@# the original makefs has a little bug, which creates the bootblock of
 	@# size 8KiB, instead of 64KiB
 	@#

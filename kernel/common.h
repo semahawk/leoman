@@ -20,13 +20,15 @@
 #define __PACKED __attribute__((packed))
 #define __NAKED  __attribute__((naked))
 
-#define KiB(n) (0x00000400 * (n))
-#define MiB(n) (0x00100000 * (n))
-#define GiB(n) (0x40000000 * (n))
+#define KiB(n) ((uint32_t)0x00000400 * (n))
+#define MiB(n) ((uint32_t)0x00100000 * (n))
+#define GiB(n) ((uint32_t)0x40000000 * (n))
 
 /* these should later go to string.h, as soon as we have libc */
-void *memset(void *dst, int ch, size_t len);
-void *memcpy(void *dst, void *src, size_t len);
+void *memset(void *, int, size_t);
+void *memcpy(void *, void *, size_t);
+size_t strlen(const char *);
+int strcmp(const char *, const char *);
 
 static inline uint8_t inb(uint16_t port)
 {
@@ -41,6 +43,10 @@ static inline void outb(uint16_t port, uint8_t data)
 }
 
 struct kern_bootinfo {
+  /* address of the initrd file loaded by boot1 */
+  uint32_t *initrd_addr;
+  /* size of the initrd file */
+  uint32_t initrd_size;
   /* the total amount of available RAM memory */
   uint32_t mem_avail;
   /* the memory map entries */

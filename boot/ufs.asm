@@ -82,12 +82,14 @@ fragroundup:
 
 ; param:  ESI - the file's name
 ;         EAX - the address at which to load the file
-; return: carry is cleared if the file was found
+; return: EAX - size of the loaded file (if was possible)
+;         carry is cleared if the file was found
 ;         carry is set if there were problems loading
 load_file:
   jmp load_file_vars
-    name_ptr: dd 0
+    name_ptr:  dd 0
     load_addr: dd 0
+    file_size: dd 0
   load_file_vars:
 
   mov [name_ptr], esi
@@ -315,6 +317,11 @@ load_file:
             ; but, if the carry was set, we've hit a problem
             jc .file_not_found
 
+            ; save the file's size
+            mov ebx, 0x17a10 ; 0x17a00 + 0x10 (offset of the `size' field)
+            mov eax, [ebx]
+            mov dword [file_size], eax
+
             ; clean up the stack
             add esp, 23 * 4 ; 23 4-byte values were pushed
             jmp file_found
@@ -506,6 +513,8 @@ load_file:
   loop .load_direct_blocks
 
   ; TODO: load also indirect blocks
+
+  mov eax, [file_size]
 
   clc
   ret

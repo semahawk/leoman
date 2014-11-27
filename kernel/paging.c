@@ -62,6 +62,9 @@ void unmap_page(void *vaddr)
  */
 void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
 {
+  if (sz == 0)
+    return;
+
   paddr = PALIGNUP(paddr);
   vaddr = PALIGNUP(vaddr);
 
@@ -71,7 +74,7 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
   uint32_t *pdir = page_directory;
   uint32_t *ptab;
 
-  unsigned npages = sz / PAGE_SIZE;
+  unsigned npages = sz / PAGE_SIZE + (sz % PAGE_SIZE > 0);
 
   for (int i = 0; i < npages; i++){
     pdir_idx = (uint32_t)vaddr >> 22;

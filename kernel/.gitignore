@@ -1,4 +1,5 @@
 kernel
+initrd*
 
 *.o
 *.i

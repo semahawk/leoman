@@ -20,6 +20,7 @@
 #include "kbd.h"
 #include "vga.h"
 #include "mm.h"
+#include "tar.h"
 #include "timer.h"
 
 #ifndef __i386__
@@ -34,6 +35,15 @@ size_t strlen(const char *s)
     ;
 
   return ret;
+}
+
+int strcmp(const char *s1, const char *s2)
+{
+  while (*s1 == *s2++)
+    if (*s1++ == '\0')
+      return 0;
+
+  return (*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
 }
 
 void *memset(void *dst, int ch, size_t len)
@@ -185,6 +195,11 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   __asm volatile("sti");
 
+  /* map the initrd file */
+  map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);
+  /* update the initrd's address to be the virtual one */
+  bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);
+
   vga_puts("\n Figh\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
@@ -195,6 +210,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf(" heap created:              0x%x\n", heap_addr);
   vga_printf(" page directory created:    0x%x\n", pdir_addr);
   vga_printf(" pages' byte map:           0x%x\n", page_bmap);
+  vga_printf(" initrd loaded to:          0x%x\n", bootinfo->initrd_addr);
+  vga_printf(" initrd's size:             0x%x\n", bootinfo->initrd_size);
   /*vga_printf(" memory map:\n");*/
   /*vga_printf(" base address         length              type\n");*/
   /*vga_printf(" ---------------------------------------------\n");*/
@@ -206,6 +223,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   /*}*/
 
   vga_printf("\n");
+
+  vga_printf(" file 'initrdtestfile's contents' address: 0x%x\n\n", tar_get_contents(bootinfo->initrd_addr, "initrdtestfile"));
 
   void *zero  = kalloc();
   void *one   = kalloc();

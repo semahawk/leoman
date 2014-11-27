@@ -5,12 +5,17 @@ jmp near boot1
 
 ; the kernel's path
 kernel_name: db '/boot/kernel', 0
-; the kernel's file size
-kernel_fsize: dd 0
 ; where the kernel is located before ELF relocation (meh) to 1MiB
 kernel_preloc equ 0x1000000 ; that's 16MiB
 ; kernel's entry point
 kernel_entry: dd 0
+
+; the initrd's file name
+initrd_name: db '/boot/initrd', 0
+; where to load it
+; yes, it would overwrite the kernel, but the kernel's been already
+; relocated (ELF paddr thingy) so it's no problem
+initrd_load_addr equ 0x1000000 ; 16MiB
 
 %define MAX_FNAME_SIZE 255
 
@@ -469,6 +474,26 @@ detect_memory:
     jmp halt
 
 detect_memory_end:
+
+load_initrd:
+  mov esi, initrd_name
+  mov eax, initrd_load_addr
+  call load_file
+  jnc load_initrd_end
+
+  mov esi, problems_loading_msg
+  call putstr
+  mov esi, initrd_name
+  call putstr
+  call putnl
+
+  jmp halt
+
+load_initrd_end:
+  ; set the `bootinfo' field
+  mov dword [initrd_addr], initrd_load_addr
+  mov dword [initrd_size], eax
+
 enter_pmode:
   cli
   lgdt [gdt]
@@ -506,6 +531,8 @@ halt:
 ;
 bootinfo:
 ; {{{
+initrd_addr: dd 0xffffffff
+initrd_size: dd 0xffffffff
 mem_avail: dd 0x0
 memory_map: times 24 * 64 db 0 ; max 64 entries (is it enough?)
 ; }}}
@@ -607,6 +634,7 @@ loading_inode_msg1: db 'loading inode ', 0
 loading_inode_msg2: db ' into memory', 0xd, 0xa, 0
 traversing_block_msg: db 'traversing block ', 0
 kernel_not_found_msg: db "couldn't find ", 0
+problems_loading_msg: db 'oops, there were problems loading ', 0
 kernel_found_msg: db 'kernel found: ', 0
 kernel_loading_to_msg: db 'loading the kernel to location ', 0
 error_loading_kernel_msg: db 'error loading kernel!', 0xd, 0xa, 0
