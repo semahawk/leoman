@@ -101,23 +101,46 @@ void isr_handler(struct regs regs)
   vga_printf(" Additional notes / possible causes:\n");
   if (regs.num == 14 /* page fault */){
     /* {{{ */
-    vga_printf(" - the page fault was caused by ");
-    if (regs.err & (1 << 0))
-      vga_printf("a protection violation\n");
-    else
-      vga_printf("a non-present page\n");
+    uint8_t err = regs.err & 0x7;
 
-    vga_printf(" - the page fault was caused by ");
-    if (regs.err & (1 << 1))
-      vga_printf("write access\n");
-    else
-      vga_printf("read access\n");
+    switch (err){
+      case 00:
+        vga_printf(" - supervisory process tried to read a non-present\n"
+                   "   page entry\n");
+        break;
+      case 01:
+        vga_printf(" - supervisory process tried to read a page\n"
+                   "   and caused a protection fault\n");
+        break;
+      case 02:
+        vga_printf(" - supervisory process tried to write to a\n"
+                   "   non-present page entry\n");
+        break;
+      case 03:
+        vga_printf(" - supervisory process tried to write to a page\n"
+                   "   and caused a protection fault\n");
+        break;
+      case 04:
+        vga_printf(" - user process tried to read a non-present\n"
+                   "   page entry\n");
+        break;
+      case 05:
+        vga_printf(" - user process tried to read a page\n"
+                   "   and caused a protection fault\n");
+        break;
+      case 06:
+        vga_printf(" - user process tried to write to a\n"
+                   "   non-present page entry\n");
+        break;
+      case 07:
+        vga_printf(" - user process tried to write to a page\n"
+                   "   and caused a protection fault\n");
+        break;
+      default:
+        vga_printf(" - unknown..\n");
+        break;
+    }
 
-    vga_printf(" - the page fault occurred in ");
-    if (regs.err & (1 << 2))
-      vga_printf("user mode\n");
-    else
-      vga_printf("supervisor mode\n");
 
     uint32_t cr2;
     __asm volatile("mov %%cr2, %0" : "=b"(cr2));

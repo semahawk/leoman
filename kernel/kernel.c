@@ -224,22 +224,11 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("\n");
 
-  vga_printf(" file 'initrdtestfile's contents' address: 0x%x\n\n", tar_get_contents(bootinfo->initrd_addr, "initrdtestfile"));
+  unsigned size = tar_get_size(bootinfo->initrd_addr, "initrdtestfile");
+  void *initrdtestfile = tar_get_contents(bootinfo->initrd_addr, "initrdtestfile");
 
-  void *zero  = kalloc();
-  void *one   = kalloc();
-  void *two   = kalloc();
-  void *three = kalloc();
-
-  vga_printf(" requested a page #0: 0x%x\n", zero);
-  vga_printf(" requested a page #1: 0x%x\n", one);
-  vga_printf(" requested a page #2: 0x%x\n", two);
-  vga_printf(" requested a page #3: 0x%x\n", three);
-
-  kfree(zero);
-  kfree(one);
-  kfree(two);
-  kfree(three);
+  vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile);
+  vga_printf(" initrdtestfile's size:              0x%x\n", size);
 
   for (;;);
 }

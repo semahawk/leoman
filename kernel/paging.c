@@ -29,8 +29,8 @@ static  uint8_t *page_bmap_end;
  */
 void map_page(void *paddr, void *vaddr, unsigned flags)
 {
-  paddr = PALIGNUP(paddr);
-  vaddr = PALIGNUP(vaddr);
+  paddr = PALIGNDOWN(paddr);
+  vaddr = PALIGNDOWN(vaddr);
 
   uint32_t pdir_idx = (uint32_t)vaddr >> 22;
   uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
@@ -47,7 +47,7 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
  */
 void unmap_page(void *vaddr)
 {
-  vaddr = PALIGNUP(vaddr);
+  vaddr = PALIGNDOWN(vaddr);
 
   uint32_t pdir_idx = (uint32_t)vaddr >> 22;
   uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
@@ -65,8 +65,8 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
   if (sz == 0)
     return;
 
-  paddr = PALIGNUP(paddr);
-  vaddr = PALIGNUP(vaddr);
+  paddr = PALIGNDOWN(paddr);
+  vaddr = PALIGNDOWN(vaddr);
 
   uint32_t pdir_idx;
   uint32_t ptab_idx;
@@ -75,6 +75,8 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
   uint32_t *ptab;
 
   unsigned npages = sz / PAGE_SIZE + (sz % PAGE_SIZE > 0);
+
+  vga_printf(" mapping %d pages (%d KiB) from 0x%x to 0x%x\n", npages, sz / KiB(1), paddr, vaddr);
 
   for (int i = 0; i < npages; i++){
     pdir_idx = (uint32_t)vaddr >> 22;
@@ -95,7 +97,7 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
  */
 void unmap_pages(void *vaddr, unsigned sz)
 {
-  vaddr = PALIGNUP(vaddr);
+  vaddr = PALIGNDOWN(vaddr);
 
   uint32_t pdir_idx;
   uint32_t ptab_idx;

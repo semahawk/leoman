@@ -13,7 +13,7 @@ INITRD_OBJS = ${INITRD_SRCS:.c=}
 
 all: kernel initrd
 
-.SUFFIXES: .asm.o .initrd
+.SUFFIXES: .asm.o
 
 .asm.asm.o:
 	$(AS) -felf32 $< -o $@
@@ -24,16 +24,20 @@ all: kernel initrd
 kernel: $(OBJS) linker.ld
 	$(CC) $(CFLAGS) -T linker.ld -o $@ $(OBJS)
 
+# file.c -> file
+# initrd stuff
 .c:
-	$(CC) $(CFLAGS) -fPIC $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@.o
+	$(CC) $(CFLAGS) -T initrd.ld -o $@ $@.o
 
-initrd: $(INITRD_OBJS)
+initrd: $(INITRD_OBJS) initrd.ld
 	tar -cf $@ $(INITRD_OBJS)
 
 run:
 	cd ..; $(MAKE) run
 
 clean:
+	rm -f ${INITRD_OBJS}
 	rm -f *.o
 	rm -f *.i
 	rm -f *.s
