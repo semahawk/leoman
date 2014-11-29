@@ -76,8 +76,6 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
 
   unsigned npages = sz / PAGE_SIZE + (sz % PAGE_SIZE > 0);
 
-  vga_printf(" mapping %d pages (%d KiB) from 0x%x to 0x%x\n", npages, sz / KiB(1), paddr, vaddr);
-
   for (int i = 0; i < npages; i++){
     pdir_idx = (uint32_t)vaddr >> 22;
     ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;

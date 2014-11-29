@@ -3,8 +3,7 @@
 int main(void)
 {
   /* yeeah, no libc */
-  /**(uint16_t *)0xb8000 = 0x1020;*/
-  for (;;);
+  *(uint16_t *)0xb8000 = 0x0f01; /* white smiley face on black background */
 
   return 7;
 }

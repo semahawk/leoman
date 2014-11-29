@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #include "common.h"
+#include "elf.h"
 #include "paging.h"
 #include "gdt.h"
 #include "idt.h"
@@ -230,6 +231,11 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);
   vga_printf(" initrdtestfile's size:              0x%x\n", size);
+
+  int ret = 3;
+  ret = elf_execute(initrdtestfile_cont);
+
+  vga_printf(" initrdtestfile's main returned:     %d\n", ret);
 
   for (;;);
 }
