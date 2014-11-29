@@ -4,7 +4,7 @@ AS = nasm
 CC = clang
 CFLAGS := -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 
-C_SRC = kernel.c gdt.c paging.c mm.c idt.c kbd.c vga.c tar.c timer.c
+C_SRC = kernel.c gdt.c paging.c mm.c idt.c kbd.c vga.c sar.c timer.c
 S_SRC = entry.asm gdt.asm idt.asm
 OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
@@ -30,11 +30,14 @@ kernel: $(OBJS) linker.ld
 	$(CC) -c $(CFLAGS) $< -o $@.o
 	$(CC) $(CFLAGS) -T initrd.ld -o $@ $@.o
 
-initrd: $(INITRD_OBJS) initrd.ld
-	tar -cf $@ $(INITRD_OBJS)
+initrd: tools $(INITRD_OBJS) initrd.ld
+	../tools/sar c $@ $(INITRD_OBJS)
 
 run:
 	cd ..; $(MAKE) run
+
+tools:
+	cd ..; $(MAKE) tools
 
 clean:
 	rm -f ${INITRD_OBJS}

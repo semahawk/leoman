@@ -1,9 +1,9 @@
-.PHONY: all bootloader kernel run disk_image clean
+.PHONY: all bootloader kernel tools run disk_image clean
 
 DISK_IMAGE = figh.fs
 DISK_IMAGE_SIZE = 32m
 
-SUBDIRS = boot kernel
+SUBDIRS = boot kernel tools
 
 all: bootloader $(DISK_IMAGE)
 
@@ -15,6 +15,9 @@ kernel:
 
 run: $(DISK_IMAGE)
 	qemu -hda $(DISK_IMAGE) -monitor stdio
+
+tools:
+	cd tools; $(MAKE)
 
 $(DISK_IMAGE): bootloader kernel
 	mkdir -p image/boot

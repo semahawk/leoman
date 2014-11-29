@@ -20,7 +20,7 @@
 #include "kbd.h"
 #include "vga.h"
 #include "mm.h"
-#include "tar.h"
+#include "sar.h"
 #include "timer.h"
 
 #ifndef __i386__
@@ -224,10 +224,11 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("\n");
 
-  unsigned size = tar_get_size(bootinfo->initrd_addr, "initrdtestfile");
-  void *initrdtestfile = tar_get_contents(bootinfo->initrd_addr, "initrdtestfile");
+  struct sar_file *initrdtestfile = sar_lookup(bootinfo->initrd_addr, "initrdtestfile");
+  unsigned size = initrdtestfile->size;
+  void *initrdtestfile_cont = sar_get_contents(bootinfo->initrd_addr, "initrdtestfile");
 
-  vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile);
+  vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);
   vga_printf(" initrdtestfile's size:              0x%x\n", size);
 
   for (;;);
