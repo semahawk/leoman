@@ -19,7 +19,7 @@ static volatile int timer_ticks = 0;
 
 /* this is actually very simple: we increment the tick counter every time the
  * timer fires (by default the timer fires 18.222 times per second) */
-void timer_handler(struct regs *r)
+void timer_handler(struct intregs *r)
 {
   timer_ticks++;
 }

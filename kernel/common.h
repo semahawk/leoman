@@ -63,7 +63,7 @@ struct kern_bootinfo {
 /* preserved processor's state
  * passed from `isr_common_stub' to `isr_handler'
  * and    from `irq_common_stub' to `irq_handler' */
-struct regs {
+struct intregs {
   /* data segment selector */
   uint32_t ds;
   /* pushed by `pusha' */

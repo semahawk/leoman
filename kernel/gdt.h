@@ -24,6 +24,7 @@
 #define SEG_KDATA  0x2  /* kernel data */
 #define SEG_UCODE  0x3  /* user code */
 #define SEG_UDATA  0x4  /* user data */
+#define SEG_TSS    0x5  /* task state segment */
 
 #define GDTE_X     0x8 /* executable segment */
 #define GDTE_E     0x4 /* expand down (non-executable segments) */
@@ -67,8 +68,9 @@ static inline void gdt_load(void *base, uint16_t size)
   __asm volatile("lgdt %0" : : "p"(gdtr));
 }
 
+void gdt_set_segment(uint32_t idx, void *base, uint32_t limit, unsigned type, unsigned dpl);
 void gdt_init(void);
-void reload_segments(void);
+void gdt_flush(void);
 
 #endif /* GDT_H */
 

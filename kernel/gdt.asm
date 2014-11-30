@@ -1,8 +1,10 @@
-global reload_segments
+global gdt_flush
 
-reload_segments:
-  jmp 0x08:.reload
-.reload:
+gdt_flush:
+  ; SEG_KCODE
+  jmp 0x08:.flush
+.flush:
+  ; SEG_KDATA
   mov ax, 0x10
   mov ds, ax
   mov es, ax

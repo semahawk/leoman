@@ -27,7 +27,7 @@ struct idt_ptr {
   uint32_t base;
 } __PACKED;
 
-typedef void (*irq_handler_t)(struct regs *);
+typedef void (*irq_handler_t)(struct intregs *);
 
 void idt_install(void);
 void irq_install_handler(int, irq_handler_t);

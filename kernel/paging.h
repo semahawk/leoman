@@ -49,6 +49,7 @@
 #define PTE_W        (1 << 1) /* writeable */
 #define PTE_P        (1 << 0) /* present */
 
+uint32_t *new_page_directory(void);
 void *kvm_init(struct kern_bootinfo *);
 void *kalloc(void);
 void  kfree(void *);

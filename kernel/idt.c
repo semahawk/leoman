@@ -71,7 +71,7 @@ static const char *const messages[] =
   /* }}} */
 };
 
-void isr_handler(struct regs regs)
+void isr_handler(struct intregs regs)
 {
   /* {{{ */
   /* paint the screen bloood */
@@ -154,7 +154,7 @@ void isr_handler(struct regs regs)
   /* }}} */
 }
 
-void irq_handler(struct regs *regs)
+void irq_handler(struct intregs *regs)
 {
   irq_handler_t handler = irq_routines[regs->num - 32];
 

@@ -53,7 +53,7 @@ static uint8_t layout[][2] =
   { 0x0, 0x0   }, { ' ', ' '   }, { 0x0, 0x0   }, { 0x0, 0x0   }
 };
 
-static void kbd_handler(struct regs *regs)
+static void kbd_handler(struct intregs *regs)
 {
   uint8_t scancode = inb(0x60);
   uint8_t mask = MASK_NORMAL;

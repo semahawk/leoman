@@ -44,8 +44,7 @@ void gdt_init(void)
   gdt_set_segment(SEG_UDATA, 0x0, 0xffffffff, GDTE_W, DPL_USER);
 
   gdt_load(gdt, sizeof(gdt));
-
-  reload_segments();
+  gdt_flush();
 }
 
 /*

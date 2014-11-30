@@ -24,6 +24,18 @@ static uint32_t  page_bmap_num;
 static uint32_t  page_bmap_size;
 static  uint8_t *page_bmap_end;
 
+uint32_t *new_page_directory(void)
+{
+  uint32_t *pgdir = kalloc();
+
+  if (!pgdir)
+    return NULL;
+
+  memset(pgdir, 0x0, PAGE_SIZE);
+
+  return pgdir;
+}
+
 /*
  * Map a single page
  */
