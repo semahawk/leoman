@@ -15,13 +15,9 @@
 #include "common.h"
 #include "elf.h"
 #include "paging.h"
+#include "proc.h"
 
-void *elf_get_entry(const void *file)
-{
-  return (void *)((struct elf_header *)file)->e_entry;
-}
-
-int elf_execute(const void *file)
+void elf_execute(const void *file)
 {
   struct elf_header *hdr = (struct elf_header *)file;
   struct elf_pheader *phdr = (struct elf_pheader *)(file + hdr->e_phoff);
@@ -29,6 +25,7 @@ int elf_execute(const void *file)
   for (int i = 0; i < hdr->e_phnum; i++, phdr++){
     switch (phdr->p_type){
       case PT_NULL:
+        /* nuthin' */
         break;
 
       case PT_LOAD:
@@ -37,7 +34,7 @@ int elf_execute(const void *file)
     }
   }
 
-  return ((int (*)(void))hdr->e_entry)();
+  proc_new((void *)hdr->e_entry);
 }
 
 /*

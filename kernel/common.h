@@ -30,18 +30,6 @@ void *memcpy(void *, void *, size_t);
 size_t strlen(const char *);
 int strcmp(const char *, const char *);
 
-static inline uint8_t inb(uint16_t port)
-{
-  uint8_t ret;
-  __asm volatile("inb %1, %0" : "=a"(ret) : "Nd"(port));
-  return ret;
-}
-
-static inline void outb(uint16_t port, uint8_t data)
-{
-  __asm volatile("outb %0, %1" : : "a"(data), "Nd"(port));
-}
-
 struct kern_bootinfo {
   /* address of the initrd file loaded by boot1 */
   uint32_t *initrd_addr;
@@ -64,8 +52,8 @@ struct kern_bootinfo {
  * passed from `isr_common_stub' to `isr_handler'
  * and    from `irq_common_stub' to `irq_handler' */
 struct intregs {
-  /* data segment selector */
-  uint32_t ds;
+  /* segment selectors */
+  uint32_t gs, fs, es, ds;
   /* pushed by `pusha' */
   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
   /* interrupt number and error code */
@@ -80,6 +68,8 @@ extern uint32_t kernel_end;
 extern uint32_t kernel_size;
 extern uint32_t kernel_phys;
 extern uint32_t kernel_off;
+
+extern uint32_t stack_top;
 
 #endif /* COMMON_H */
 

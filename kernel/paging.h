@@ -76,6 +76,9 @@ static inline void set_cr3(uint32_t pdir)
   __asm volatile("movl %0, %%cr3" : : "r"(pdir));
 }
 
+/* defined in paging.c */
+extern uint32_t *page_directory;
+
 #endif /* PAGING_H */
 
 /*

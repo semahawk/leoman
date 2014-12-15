@@ -61,8 +61,7 @@ struct elf_sheader {
 #define PT_NULL 0
 #define PT_LOAD 1
 
-void *elf_get_entry(const void *);
-int   elf_execute(const void *);
+void elf_execute(const void *);
 
 #endif /* ELF_H */
 

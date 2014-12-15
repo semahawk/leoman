@@ -13,6 +13,7 @@
 #include "common.h"
 #include "idt.h"
 #include "vga.h"
+#include "x86.h"
 
 /* last key pressed */
 static uint8_t key_buffer;
@@ -71,6 +72,12 @@ static void kbd_handler(struct intregs *regs)
   /* don't bother with break codes */
   if (!(scancode & 0x80)){
     key_buffer = layout[scancode][mask];
+
+    /* halt the system upon clicking 'h', mwahah */
+    if (key_buffer == 'h'){
+      __asm volatile("cli\nhlt");
+    }
+
     vga_putch(key_buffer);
   }
 }

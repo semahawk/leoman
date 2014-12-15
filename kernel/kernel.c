@@ -21,8 +21,11 @@
 #include "kbd.h"
 #include "vga.h"
 #include "mm.h"
+#include "proc.h"
 #include "sar.h"
 #include "timer.h"
+#include "tss.h"
+#include "x86.h"
 
 #ifndef __i386__
 #error "the only supported architecture is i386"
@@ -194,25 +197,31 @@ void kmain(struct kern_bootinfo *bootinfo)
   /*uint32_t heap_addr = mm_init(bootinfo);*/
   uint32_t *heap_addr = NULL;
 
-  __asm volatile("sti");
+  sti();
+  /*for(;;);*/
+  /*cli();*/
+  /*__asm volatile("int $0x0");*/
 
   /* map the initrd file */
   map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);
   /* update the initrd's address to be the virtual one */
   bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);
 
-  vga_puts("\n Figh\n\n");
-  vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
-  vga_puts(" ------------------------------------------\n\n");
-  vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
-  vga_printf(" kernel's physical address: 0x%x\n", &kernel_phys);
-  vga_printf(" kernel's  virtual address: 0x%x\n", &kernel_start);
-  vga_printf(" kernel's size:             0x%x\n", &kernel_size);
-  vga_printf(" heap created:              0x%x\n", heap_addr);
-  vga_printf(" page directory created:    0x%x\n", pdir_addr);
-  vga_printf(" pages' byte map:           0x%x\n", page_bmap);
-  vga_printf(" initrd loaded to:          0x%x\n", bootinfo->initrd_addr);
-  vga_printf(" initrd's size:             0x%x\n", bootinfo->initrd_size);
+  /* start the processes stuff */
+  proc_init();
+
+  /*vga_puts("\n Figh\n\n");*/
+  /*vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");*/
+  /*vga_puts(" ------------------------------------------\n\n");*/
+  /*vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);*/
+  /*vga_printf(" kernel's physical address: 0x%x\n", &kernel_phys);*/
+  /*vga_printf(" kernel's  virtual address: 0x%x\n", &kernel_start);*/
+  /*vga_printf(" kernel's size:             0x%x\n", &kernel_size);*/
+  /*vga_printf(" heap created:              0x%x\n", heap_addr);*/
+  /*vga_printf(" page directory created:    0x%x\n", pdir_addr);*/
+  /*vga_printf(" pages' byte map:           0x%x\n", page_bmap);*/
+  /*vga_printf(" initrd loaded to:          0x%x\n", bootinfo->initrd_addr);*/
+  /*vga_printf(" initrd's size:             0x%x\n", bootinfo->initrd_size);*/
   /*vga_printf(" memory map:\n");*/
   /*vga_printf(" base address         length              type\n");*/
   /*vga_printf(" ---------------------------------------------\n");*/
@@ -223,19 +232,19 @@ void kmain(struct kern_bootinfo *bootinfo)
     /*vga_printf(" 0x%x%x - 0x%x%x     %d\n", e->base_high, e->base_low, e->len_high, e->len_low, e->type);*/
   /*}*/
 
-  vga_printf("\n");
+  /*vga_printf("\n");*/
 
   struct sar_file *initrdtestfile = sar_lookup(bootinfo->initrd_addr, "initrdtestfile");
   unsigned size = initrdtestfile->size;
   void *initrdtestfile_cont = sar_get_contents(bootinfo->initrd_addr, "initrdtestfile");
 
-  vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);
-  vga_printf(" initrdtestfile's size:              0x%x\n", size);
+  /*vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);*/
+  /*vga_printf(" initrdtestfile's size:              0x%x\n", size);*/
 
   int ret = 3;
-  ret = elf_execute(initrdtestfile_cont);
+  elf_execute(initrdtestfile_cont);
 
-  vga_printf(" initrdtestfile's main returned:     %d\n", ret);
+  /*vga_printf(" initrdtestfile's main returned:     %d\n", ret);*/
 
   for (;;);
 }

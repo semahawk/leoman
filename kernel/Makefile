@@ -4,8 +4,8 @@ AS = nasm
 CC = clang
 CFLAGS := -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 
-C_SRC = elf.c kernel.c gdt.c paging.c mm.c idt.c kbd.c vga.c proc.c sar.c timer.c
-S_SRC = entry.asm gdt.asm idt.asm
+C_SRC = elf.c kernel.c gdt.c paging.c mm.c idt.c kbd.c vga.c proc.c sar.c timer.c tss.c
+S_SRC = entry.asm gdt.asm idt.asm x86.asm
 OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
 INITRD_SRCS = initrdtestfile.c

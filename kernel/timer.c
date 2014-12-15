@@ -12,6 +12,9 @@
 
 #include "common.h"
 #include "idt.h"
+#include "proc.h"
+#include "vga.h"
+#include "x86.h"
 
 /* this counter will keep track of how many ticks the system has been
  * running for */
@@ -22,6 +25,11 @@ static volatile int timer_ticks = 0;
 void timer_handler(struct intregs *r)
 {
   timer_ticks++;
+
+  /*vga_printf("timer fired eip %x cs %x flg %x useresp %x ss %x; ", r->eip, r->cs, r->eflags, r->useresp, r->ss);*/
+
+  if (current_proc != NULL)
+    proc_sched();
 }
 
 void timer_wait(int ticks)

@@ -15,7 +15,8 @@
 #include "common.h"
 #include "paging.h"
 
-static uint32_t *page_directory;
+/* kernel page directory */
+       uint32_t *page_directory;
 static uint32_t *page_directory_end;
 static uint32_t *page_tables_end;
 /* the byte map */

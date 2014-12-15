@@ -18,13 +18,21 @@
 #include "common.h"
 
 /* number of segments */
-#define SEGNUM     0x10
+#define SEGNUM     0x6
 
-#define SEG_KCODE  0x1  /* kernel code */
-#define SEG_KDATA  0x2  /* kernel data */
-#define SEG_UCODE  0x3  /* user code */
-#define SEG_UDATA  0x4  /* user data */
-#define SEG_TSS    0x5  /* task state segment */
+#define SEG_NULL_IDX   0x0
+#define SEG_KCODE_IDX  0x1  /* kernel code */
+#define SEG_KDATA_IDX  0x2  /* kernel data */
+#define SEG_UCODE_IDX  0x3  /* user code */
+#define SEG_UDATA_IDX  0x4  /* user data */
+#define SEG_TSS_IDX    0x5  /* task state segment */
+
+#define SEG_NULL       ((SEG_NULL_IDX)  * sizeof(struct gdt_entry))
+#define SEG_KCODE      ((SEG_KCODE_IDX) * sizeof(struct gdt_entry))
+#define SEG_KDATA      ((SEG_KDATA_IDX) * sizeof(struct gdt_entry))
+#define SEG_UCODE      ((SEG_UCODE_IDX) * sizeof(struct gdt_entry))
+#define SEG_UDATA      ((SEG_UDATA_IDX) * sizeof(struct gdt_entry))
+#define SEG_TSS        ((SEG_TSS_IDX)   * sizeof(struct gdt_entry))
 
 #define GDTE_X     0x8 /* executable segment */
 #define GDTE_E     0x4 /* expand down (non-executable segments) */
@@ -32,6 +40,9 @@
 #define GDTE_W     0x2 /* writeable (non-executable segments) */
 #define GDTE_R     0x2 /* readable (executable segments) */
 #define GDTE_A     0x1 /* accessed */
+
+#define GDTE_SYS   0x1
+#define GDTE_NOSYS 0x0
 
 /* privilege levels */
 #define DPL_KERNEL 0x0
@@ -68,7 +79,7 @@ static inline void gdt_load(void *base, uint16_t size)
   __asm volatile("lgdt %0" : : "p"(gdtr));
 }
 
-void gdt_set_segment(uint32_t idx, void *base, uint32_t limit, unsigned type, unsigned dpl);
+void gdt_set_segment(uint32_t, void *, uint32_t, unsigned, unsigned, unsigned);
 void gdt_init(void);
 void gdt_flush(void);
 

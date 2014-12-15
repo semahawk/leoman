@@ -1,5 +1,7 @@
 BITS 32
 
+global stack_top
+
 extern kmain
 global _start
 global _higherhalf

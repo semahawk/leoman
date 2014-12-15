@@ -16,6 +16,7 @@
 #include "common.h"
 #include "idt.h"
 #include "vga.h"
+#include "x86.h"
 
 /* THE mighty IDT */
 static struct idt_entry idt[256];
@@ -71,7 +72,7 @@ static const char *const messages[] =
   /* }}} */
 };
 
-void isr_handler(struct intregs regs)
+void isr_handler(struct intregs *regs)
 {
   /* {{{ */
   /* paint the screen bloood */
@@ -80,7 +81,7 @@ void isr_handler(struct intregs regs)
   vga_color = vga_make_color(COLOR_WHITE, COLOR_RED);
 
   /* make sure it's an ISR, not an IRQ */
-  if (regs.num > 31)
+  if (regs->num > 31)
     return;
 
   for (y = 0; y < VGA_HEIGHT; y++)
@@ -88,20 +89,22 @@ void isr_handler(struct intregs regs)
       vga_putch(' ');
 
   vga_row = 1; vga_col = 1;
-  vga_printf("%s (%d)!\n\n", messages[regs.num], regs.num);
-  vga_printf(" eax: %x  eip: %x\n", regs.eax, regs.eip);
-  vga_printf(" ebx: %x   ds: %x\n", regs.ebx, regs.ds);
-  vga_printf(" ecx: %x   cs: %x\n", regs.ecx, regs.cs);
-  vga_printf(" edx: %x  flg: %x\n", regs.edx, regs.eflags);
-  vga_printf(" esi: %x   ss: %x\n", regs.esi, regs.ss);
-  vga_printf(" edi: %x  err: %x\n", regs.edi, regs.err);
+  vga_printf("%s!\n\n", messages[regs->num]);
+  vga_printf(" eax: %x   ds: %x\n", regs->eax, regs->ds);
+  vga_printf(" ebx: %x   es: %x\n", regs->ebx, regs->es);
+  vga_printf(" ecx: %x   fs: %x\n", regs->ecx, regs->fs);
+  vga_printf(" edx: %x   gs: %x\n", regs->edx, regs->gs);
+  vga_printf(" esi: %x   cs: %x\n", regs->esi, regs->cs);
+  vga_printf(" edi: %x   ss: %x\n", regs->edi, regs->ss);
+  vga_printf(" eip: %x  err: %x\n", regs->eip, regs->err);
+  vga_printf(" flg: %x  num: %x\n", regs->eflags, regs->num);
   vga_printf("\n");
 
   /* print additional informations about the exception */
   vga_printf(" Additional notes / possible causes:\n");
-  if (regs.num == 14 /* page fault */){
+  if (regs->num == 14 /* page fault */){
     /* {{{ */
-    uint8_t err = regs.err & 0x7;
+    uint8_t err = regs->err & 0x7;
 
     switch (err){
       case 00:
