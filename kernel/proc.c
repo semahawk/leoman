@@ -28,29 +28,39 @@ static struct proc *find_next_proc(enum proc_state state)
 {
   static int i = 0;
 
-  for (; i < NPROCS; i++){
-    /* wrap around the array if got to the end of it */
-    /* NOTE that might be wrong (the last element might not be 'visited') */
-    if (i >= NPROCS - 1)
-      i = 0;
-
+  for (i %= NPROCS; /* no guard */; i = (i + 1) % NPROCS)
     if (procs[i].state == state)
-      return &procs[i];
-  }
+      return &procs[i++];
 
   return NULL;
 }
 
-void proc_idle(void)
+void proc_idle1(void)
 {
-  static char c = '0' - 1;
-
-  c++;
-
   while (1){
-    vga_putch('i');
-    vga_putch(c);
-    vga_putch(' ');
+    vga_puts("idle1 ");
+
+    /* wait a bit not to flood the screen */
+    for (int i = 0; i < 10000000; i++)
+      ;
+  }
+}
+
+void proc_idle2(void)
+{
+  while (1){
+    vga_puts("idle2 ");
+
+    /* wait a bit not to flood the screen */
+    for (int i = 0; i < 10000000; i++)
+      ;
+  }
+}
+
+void proc_idle3(void)
+{
+  while (1){
+    vga_puts("idle3 ");
 
     /* wait a bit not to flood the screen */
     for (int i = 0; i < 10000000; i++)
@@ -63,10 +73,34 @@ void proc_sched(void)
   struct proc *proc = find_next_proc(PROC_SLEEPING);
 
   current_proc->state = PROC_SLEEPING;
+
+  /* TODO save the current CPU state */
+  /* magic time! */
+  __asm volatile("add $72, %esp");
+  __asm volatile("movl %%esp, %0" : "=r"(current_proc->esp));
+
   current_proc = proc;
   current_proc->state = PROC_RUNNING;
 
-  vga_printf("p%d ", proc->pid);
+  __asm volatile("mov %0, %%esp" : : "r"(current_proc->esp));
+
+  /* restore all the data segments */
+  __asm volatile("pop %gs");
+  __asm volatile("pop %fs");
+  __asm volatile("pop %es");
+  __asm volatile("pop %ds");
+
+  /* restore the general registers */
+  __asm volatile("popa");
+
+  /* skip over the `err' and `num' */
+  __asm volatile("add $8, %esp");
+
+  /* send an EOI to the master PIC */
+  __asm volatile("outb %0, %1" : : "a"(0x20), "N"(0x20));
+
+  /* goodbye :) */
+  __asm volatile("iret");
 }
 
 struct proc *proc_new(void *entry)
@@ -128,12 +162,20 @@ void proc_exec(void)
   current_proc->state = PROC_RUNNING;
 
   __asm volatile("movl %0, %%esp" : : "g"(current_proc->esp));
+
+  /* pop the current process's data segment registers back to the CPU */
   __asm volatile("pop %gs");
   __asm volatile("pop %fs");
   __asm volatile("pop %es");
   __asm volatile("pop %ds");
+
+  /* all the general registers */
   __asm volatile("popa");
+
+  /* skip over the `err' and `num' */
   __asm volatile("add $8, %esp");
+
+  /* hello current process :) */
   __asm volatile("iret");
 }
 
@@ -141,14 +183,16 @@ void proc_init(void)
 {
   /* initialize the whole processes table to a "zero" state */
   for (int i = 0; i < NPROCS; i++){
-    procs[i].state = PROC_UNUSED;
+    procs[i].pid    = -1;
+    procs[i].eip    = 0x0;
+    procs[i].esp    = 0x0;
+    procs[i].esptop = 0x0;
+    procs[i].state  = PROC_UNUSED;
   }
 
-  /* that's intentional */
-  current_proc = proc_new(proc_idle);
-  proc_new(proc_idle);
-  proc_new(proc_idle);
-  proc_new(proc_idle);
+  current_proc = proc_new(proc_idle1);
+  current_proc = proc_new(proc_idle2);
+  current_proc = proc_new(proc_idle3);
 
   proc_exec();
 }

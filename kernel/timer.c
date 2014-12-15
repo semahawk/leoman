@@ -26,8 +26,6 @@ void timer_handler(struct intregs *r)
 {
   timer_ticks++;
 
-  /*vga_printf("timer fired eip %x cs %x flg %x useresp %x ss %x; ", r->eip, r->cs, r->eflags, r->useresp, r->ss);*/
-
   if (current_proc != NULL)
     proc_sched();
 }
