@@ -208,7 +208,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);
 
   /* start the processes stuff */
-  proc_init();
+  proc_earlyinit();
 
   /*vga_puts("\n Figh\n\n");*/
   /*vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");*/
@@ -241,10 +241,10 @@ void kmain(struct kern_bootinfo *bootinfo)
   /*vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);*/
   /*vga_printf(" initrdtestfile's size:              0x%x\n", size);*/
 
-  int ret = 3;
   elf_execute(initrdtestfile_cont);
 
-  /*vga_printf(" initrdtestfile's main returned:     %d\n", ret);*/
+  /* finish initializing the processes */
+  proc_lateinit();
 
   for (;;);
 }

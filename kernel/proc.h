@@ -35,7 +35,8 @@ struct proc {
 
 struct proc *proc_new(void *);
 void proc_sched(void);
-void proc_init(void);
+void proc_earlyinit(void);
+void proc_lateinit(void);
 void proc_exec(void);
 
 /* defined in proc.c */

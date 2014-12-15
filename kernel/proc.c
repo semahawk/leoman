@@ -22,48 +22,34 @@
 
 static struct proc procs[NPROCS];
 static uint32_t next_pid = 0;
+static struct proc *idle = NULL;
 volatile struct proc *current_proc = NULL;
 
 static struct proc *find_next_proc(enum proc_state state)
 {
   static int i = 0;
+  int n = 0;
 
-  for (i %= NPROCS; /* no guard */; i = (i + 1) % NPROCS)
+  for (i %= NPROCS; /* no guard */; n++, i = (i + 1) % NPROCS){
+    if (n >= NPROCS)
+      /* we've visited every slot */
+      break;
+
     if (procs[i].state == state)
       return &procs[i++];
-
-  return NULL;
-}
-
-void proc_idle1(void)
-{
-  while (1){
-    vga_puts("idle1 ");
-
-    /* wait a bit not to flood the screen */
-    for (int i = 0; i < 10000000; i++)
-      ;
   }
+
+  /* default to the idle process */
+  return idle;
 }
 
-void proc_idle2(void)
+void proc_idle(void)
 {
   while (1){
-    vga_puts("idle2 ");
+    vga_puts("i");
 
     /* wait a bit not to flood the screen */
-    for (int i = 0; i < 10000000; i++)
-      ;
-  }
-}
-
-void proc_idle3(void)
-{
-  while (1){
-    vga_puts("idle3 ");
-
-    /* wait a bit not to flood the screen */
-    for (int i = 0; i < 10000000; i++)
+    for (int i = 0; i < 2000000; i++)
       ;
   }
 }
@@ -74,9 +60,11 @@ void proc_sched(void)
 
   current_proc->state = PROC_SLEEPING;
 
-  /* TODO save the current CPU state */
-  /* magic time! */
+  /* the CPU state is actually saved, by the interrupt handler
+   * (timer_handler), but it's 18 dwords below the top of the stack */
+  /* why 18? yeah, I have no freakin' idea... */
   __asm volatile("add $72, %esp");
+
   __asm volatile("movl %%esp, %0" : "=r"(current_proc->esp));
 
   current_proc = proc;
@@ -179,8 +167,10 @@ void proc_exec(void)
   __asm volatile("iret");
 }
 
-void proc_init(void)
+void proc_earlyinit(void)
 {
+  cli();
+
   /* initialize the whole processes table to a "zero" state */
   for (int i = 0; i < NPROCS; i++){
     procs[i].pid    = -1;
@@ -190,10 +180,17 @@ void proc_init(void)
     procs[i].state  = PROC_UNUSED;
   }
 
-  current_proc = proc_new(proc_idle1);
-  current_proc = proc_new(proc_idle2);
-  current_proc = proc_new(proc_idle3);
+  sti();
+}
 
+void proc_lateinit(void)
+{
+  cli();
+
+  current_proc = idle = proc_new(proc_idle);
+
+  cli();
+  /* proc_exec switches interrupts on */
   proc_exec();
 }
 
