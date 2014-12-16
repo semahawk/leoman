@@ -13,7 +13,8 @@
 #include "config.h"
 #include "common.h"
 #include "gdt.h"
-#include "paging.h"
+#include "pm.h"
+#include "vm.h"
 #include "proc.h"
 #include "vga.h"
 #include "timer.h"
@@ -70,7 +71,8 @@ void proc_sched(void)
   current_proc = proc;
   current_proc->state = PROC_RUNNING;
 
-  __asm volatile("mov %0, %%esp" : : "r"(current_proc->esp));
+  /*__asm volatile("movl %0, %%cr3" : : "r"(current_proc->pdir));*/
+  __asm volatile("movl %0, %%esp" : : "r"(current_proc->esp));
 
   /* restore all the data segments */
   __asm volatile("pop %gs");
@@ -96,7 +98,7 @@ struct proc *proc_new(void *entry)
   cli();
 
   struct proc *proc = find_next_proc(PROC_UNUSED);
-  uint32_t *stack = kalloc() + PAGE_SIZE;
+  uint32_t *stack = palloc() + PAGE_SIZE;
 
   proc->esptop = (uint32_t)stack;
 
@@ -131,9 +133,10 @@ struct proc *proc_new(void *entry)
   proc->state = PROC_SLEEPING;
   proc->esp   = (uint32_t)stack;
   proc->eip   = (uint32_t)entry;
+  proc->pdir  = (uint32_t *)v2p(new_pdir());
   proc->memsz = PAGE_SIZE;
 
-  vga_printf("new proc #%d: entry at 0x%x, stack 0x%x, stacktop 0x%x\n", proc->pid, proc->eip, proc->esp, proc->esptop);
+  /*vga_printf("new proc #%d: entry at 0x%x, stack 0x%x, stacktop 0x%x, pdir 0x%x\n", proc->pid, proc->eip, proc->esp, proc->esptop, proc->pdir);*/
 
   sti();
 

@@ -14,7 +14,7 @@
 
 #include "common.h"
 #include "elf.h"
-#include "paging.h"
+#include "vm.h"
 #include "proc.h"
 
 void elf_execute(const void *file)

@@ -10,13 +10,17 @@
  *
  */
 
-#ifndef PAGING_H
-#define PAGING_H
+#ifndef VM_H
+#define VM_H
 
 #include <stdint.h>
 
 #include "common.h"
 
+typedef uint32_t pde_t;
+
+/* the physical start of kernel's guts */
+/* note that .text might not begin exactly right here */
 #define KERN_PHYS (0x00100000)
 /* the virtual offset */
 #define KERN_VOFF (0xe0000000)
@@ -49,16 +53,17 @@
 #define PTE_W        (1 << 1) /* writeable */
 #define PTE_P        (1 << 0) /* present */
 
-uint32_t *new_page_directory(void);
-void *kvm_init(struct kern_bootinfo *);
-void *kalloc(void);
-void  kfree(void *);
-void *paging_init(struct kern_bootinfo *);
-void *paddr(void *vaddr);
-void map_page(void *paddr, void *vaddr, unsigned flags);
-void unmap_page(void *vaddr);
-void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz);
-void unmap_pages(void *vaddr, unsigned sz);
+uint32_t *new_pdir(void);
+void *vm_init(struct kern_bootinfo *);
+
+/*void map_page(pde_t *, void *, void *, unsigned);*/
+/*void unmap_page(pde_t *, void *);*/
+/*void map_pages(pde_t *, void *, void *, unsigned, unsigned);*/
+/*void unmap_pages(pde_t *, void *, unsigned);*/
+void map_page(void *, void *, unsigned);
+void unmap_page(void *);
+void map_pages(void *, void *, unsigned, unsigned);
+void unmap_pages(void *, unsigned);
 
 /* convert between physical and virtual addresses */
 static inline void *p2v(uint32_t addr)
@@ -79,7 +84,7 @@ static inline void set_cr3(uint32_t pdir)
 /* defined in paging.c */
 extern uint32_t *page_directory;
 
-#endif /* PAGING_H */
+#endif /* VM_H */
 
 /*
  * vi: ft=c:ts=2:sw=2:expandtab
