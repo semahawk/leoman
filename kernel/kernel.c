@@ -203,7 +203,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* update the initrd's address to be the virtual one */
   bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);
 
-  vga_puts("\n Figh\n\n");
+  vga_printf("\n Leoman\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
   vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);

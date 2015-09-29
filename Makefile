@@ -1,6 +1,6 @@
 .PHONY: all bootloader kernel tools run disk_image clean
 
-DISK_IMAGE = figh.fs
+DISK_IMAGE = leoman.fs
 DISK_IMAGE_SIZE = 32m
 
 SUBDIRS = boot kernel tools

@@ -659,7 +659,7 @@ enable_a20_msg: db 'Enabling the a20 line', 0xd, 0xa, 0
 enable_a20_fail_msg: db 'fatal: failed to enable the a20 line!', 0xd, 0xa, 0
 magic_not_found_msg: db 'fatal: UFS2 magic not found!', 0xd, 0xa, 0
 memory_map_failed_msg: db 'fatal: failed to detect the memory map!', 0xd, 0xa, 0
-welcome_msg: db 'Figh is booting...', 0xd, 0xa, 0xd, 0xa, 0
+welcome_msg: db 'Leoman is booting...', 0xd, 0xa, 0xd, 0xa, 0
 
 ; make it be 127 sectors wide
 times 512*127-($-$$) db 0
