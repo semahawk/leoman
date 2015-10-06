@@ -8,7 +8,6 @@ isr_common_stub:
   push es
   push fs
   push gs
-  ;mov ax, ds
 
   mov ax, 0x10 ; load the kernel data segment descriptor
   mov ds, ax
@@ -20,8 +19,8 @@ isr_common_stub:
   push eax
   mov eax, isr_handler
   call eax
+  pop eax
 
-  pop eax ; reload the original data segment descriptor
   pop gs
   pop fs
   pop es
@@ -29,7 +28,6 @@ isr_common_stub:
   popa ; pops e[ds]i, e[bs]p, e[abcd]x
 
   add esp, 8 ; cleans up the pushed error code and pushed ISR number
-  sti
   iret ; pops cs, epi, eflags, ss and esp
 
 irq_common_stub:
@@ -38,8 +36,6 @@ irq_common_stub:
   push es
   push fs
   push gs
-  ;mov ax, ds ; save the data segment
-  ;push eax
 
   mov ax, 0x10 ; load the kernel data segment
   mov ds, ax
@@ -51,18 +47,12 @@ irq_common_stub:
   push ecx
   mov ecx, irq_handler
   call ecx
-
   pop ecx
 
   pop gs ; restore the data segments
   pop fs
   pop es
   pop ds
-
-  mov ds, ax
-  mov es, ax
-  mov fs, ax
-  mov gs, ax
   popa
 
   add esp, 8
