@@ -18,12 +18,13 @@
 enum proc_state {
   PROC_UNUSED,
   PROC_RUNNING,
-  PROC_SLEEPING
+  PROC_SLEEPING,
 };
 
 struct proc {
   unsigned pid;
   enum proc_state state;
+
   uint32_t eip;
   uint32_t esptop; /* the very top of the process's stack */
   uint32_t esp;    /* process's stack */

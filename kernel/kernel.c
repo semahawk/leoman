@@ -23,6 +23,7 @@
 #include "vga.h"
 #include "proc.h"
 #include "sar.h"
+#include "syscall.h"
 #include "timer.h"
 #include "tss.h"
 #include "x86.h"
@@ -193,6 +194,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   kbd_install();
   /* install the timer */
   timer_install();
+  /* initiate system calls */
+  syscall_install();
   /* part one of processes init */
   proc_earlyinit();
 

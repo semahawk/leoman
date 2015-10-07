@@ -27,13 +27,22 @@ struct idt_ptr {
   uint32_t base;
 } __PACKED;
 
+typedef void (*isr_handler_t)(struct intregs *);
 typedef void (*irq_handler_t)(struct intregs *);
+typedef void (*int_handler_t)(struct intregs *);
 
 void idt_install(void);
+
 void irq_install_handler(int, irq_handler_t);
 void irq_uninstall_handler(int);
 
-/* {{{ IRS declarations, defined in isr.asm */
+void int_install_handler(int, int_handler_t);
+void int_uninstall_handler(int);
+
+void idt_set_gate(uint8_t, void *, uint16_t, uint8_t);
+uint32_t idt_get_gate(uint8_t);
+
+/* {{{ IRS declarations, defined in idt.asm */
 extern void isr0 (void);
 extern void isr1 (void);
 extern void isr2 (void);
@@ -67,7 +76,7 @@ extern void isr29(void);
 extern void isr30(void);
 extern void isr31(void);
 /* }}} */
-/* {{{ IRQ declarations, defined in irq.asm */
+/* {{{ IRQ declarations, defined in idt.asm */
 extern void irq0 (void);
 extern void irq1 (void);
 extern void irq2 (void);
@@ -84,6 +93,9 @@ extern void irq12(void);
 extern void irq13(void);
 extern void irq14(void);
 extern void irq15(void);
+/* }}} */
+/* {{{ INT declarations, defined in idt.asm */
+extern void int128(void); /* syscall */
 /* }}} */
 
 /*

@@ -21,11 +21,35 @@
 /* THE mighty IDT */
 static struct idt_entry idt[256];
 
-/* IRQ subroutine table */
-/* it's actually an array of function pointers */
-static void *irq_routines[16] = { 0 };
+/*
+ * It's not beautiful, but it works.
+ */
 
-static const char *const messages[] =
+/* ISR routines */
+/* an array of function pointers, which get executed if an exception / trap
+ * is raised (IDT entries below index 32) to handle it */
+static void *isr_handlers[32] = { 0 };
+
+/* IRQ subroutine table */
+/* an array of function pointers, which get executed if a hardware interrupt is
+ * issued (IDT entries between 32 and 47, inclusively) to handle it */
+static void *irq_handlers[16] = { 0 };
+
+/* INT subroutine table */
+/* an array of function pointers, which get executed if a software interrupt is
+ * issued (IDT entries above 47) to handle it */
+static void *int_handlers[256 - (32 + 16)] = { 0 };
+
+/* the sizes of `{isr,irq,int}_handlers` should total in 256 4-byte entries */
+/* if you were to lay down the three arrays contiguously you'd get 1:1 mapping
+ * between IDT entries and the higher-level C functions that would handle the
+ * corresponding interrupt */
+
+/* note: IDT entries actually contain pointers to functions defined in
+ * `idt.asm` which call a common function which in turn calls the corresponding
+ * function defined in one of these arrays */
+
+static const char *const isr_names[] =
 {
   /* {{{ exception messages */
   "Division by Zero",
@@ -72,7 +96,7 @@ static const char *const messages[] =
   /* }}} */
 };
 
-void isr_handler(struct intregs *regs)
+static void screen_of_death(struct intregs *regs)
 {
   /* {{{ */
   /* paint the screen bloood */
@@ -80,16 +104,12 @@ void isr_handler(struct intregs *regs)
   /* change the colors */
   vga_color = vga_make_color(COLOR_WHITE, COLOR_RED);
 
-  /* make sure it's an ISR, not an IRQ */
-  if (regs->num > 31)
-    return;
-
   for (y = 0; y < VGA_HEIGHT; y++)
     for (x = 0; x < VGA_WIDTH; x++)
       vga_putch(' ');
 
   vga_row = 1; vga_col = 1;
-  vga_printf("%s!\n\n", messages[regs->num]);
+  vga_printf("%s!\n\n", isr_names[regs->num]);
   vga_printf(" eax: %x   ds: %x\n", regs->eax, regs->ds);
   vga_printf(" ebx: %x   es: %x\n", regs->ebx, regs->es);
   vga_printf(" ecx: %x   fs: %x\n", regs->ecx, regs->fs);
@@ -102,6 +122,7 @@ void isr_handler(struct intregs *regs)
 
   /* print additional informations about the exception */
   vga_printf(" Additional notes / possible causes:\n");
+
   if (regs->num == 14 /* page fault */){
     /* {{{ */
     uint8_t err = regs->err & 0x7;
@@ -157,13 +178,39 @@ void isr_handler(struct intregs *regs)
   /* }}} */
 }
 
+/*
+ * Every function `isr[0-31]` defined in idt.asm and has a slot in the IDT calls
+ * this function which dispatches the interrupt to an actual function which
+ * deals with it. Pretty much the exact same follows for `irq_handler` and
+ * `int_handler`
+ */
+void isr_handler(struct intregs *regs)
+{
+  if (regs->num < 32){
+    isr_handler_t handler = isr_handlers[regs->num];
+
+    if (handler){
+      handler(regs);
+    } else {
+      /* if not found, display a upper case S on red background */
+      *((uint16_t *)0xb8000) = 0x0c53;
+    }
+  }
+}
+
 void irq_handler(struct intregs *regs)
 {
-  irq_handler_t handler = irq_routines[regs->num - 32];
+  if (regs->num >= 32 && regs->num < 48){
+    irq_handler_t handler = irq_handlers[regs->num - 32];
 
-  /* launch the handler if there is any associated with the IRQ being fired */
-  if (handler)
-    handler(regs);
+    /* launch the handler if there is any associated with the IRQ being fired */
+    if (handler){
+      handler(regs);
+    } else {
+      /* if not found, display a upper case Q on red background */
+      *((uint16_t *)0xb8002) = 0x0c51;
+    }
+  }
 
   /* if the IDT entry that was invoked was greater than 40 (meaning IRQ8-15)
    * then we need to send an End of Interrupt to the slave controller */
@@ -180,7 +227,9 @@ void irq_handler(struct intregs *regs)
  */
 void irq_install_handler(int num, irq_handler_t handler)
 {
-  irq_routines[num] = handler;
+  if (num < 16)
+    irq_handlers[num] = handler;
+  /* else error? */
 }
 
 /*
@@ -188,7 +237,35 @@ void irq_install_handler(int num, irq_handler_t handler)
  */
 void irq_uninstall_handler(int num)
 {
-  irq_routines[num] = 0;
+  if (num < 16)
+    irq_handlers[num] = 0;
+  /* else error? */
+}
+
+void int_handler(struct intregs *regs)
+{
+  if (regs->num >= 48){
+    int_handler_t handler = int_handlers[regs->num - (32 + 16)];
+
+    if (handler){
+      handler(regs);
+    } else {
+      /* if not found, display a upper case N on red background */
+      *((uint16_t *)0xb8004) = 0x0c4e;
+    }
+  }
+}
+
+void int_install_handler(int num, int_handler_t handler)
+{
+  if (num >= 48)
+    int_handlers[num - (32 + 16)] = handler;
+}
+
+void int_uninstall_handler(int num)
+{
+  if (num >= 48)
+    int_handlers[num - (32 + 16)] = 0;
 }
 
 /*
@@ -208,13 +285,18 @@ static inline void irq_remap(void)
   outb(0xa1, 0x00);
 }
 
-static void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
+void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
 {
   idt[num].base_low  = ((uint32_t)base & 0xffff);
   idt[num].base_high = ((uint32_t)base & 0xffff0000) >> 16;
   idt[num].zero = 0x0;
   idt[num].flags = flags;
   idt[num].segm = segm;
+}
+
+uint32_t idt_get_gate(uint8_t num)
+{
+  return (idt[num].base_high << 16) | idt[num].base_low;
 }
 
 static inline void idt_load(void *base, uint16_t size)
@@ -286,6 +368,10 @@ void idt_install(void)
 
   /* load the IDT into the processor */
   idt_load(idt, sizeof(idt));
+
+  for (int i = 0; i < 32; i++)
+    if (isr_handlers[i] == 0)
+      isr_handlers[i] = screen_of_death;
 }
 
 /*

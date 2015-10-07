@@ -1,6 +1,7 @@
 ; defined in idt.c
 extern isr_handler
 extern irq_handler
+extern int_handler
 
 isr_common_stub:
   pusha ; pushes e[ds]i, e[bs]p, e[abcd]x
@@ -58,6 +59,34 @@ irq_common_stub:
   add esp, 8
   iret
 
+int_common_stub:
+  pusha
+  push ds
+  push es
+  push fs
+  push gs
+
+  mov ax, 0x10 ; load the kernel data segment
+  mov ds, ax
+  mov es, ax
+  mov fs, ax
+  mov gs, ax
+
+  mov ecx, esp
+  push ecx
+  mov ecx, int_handler
+  call ecx
+  pop ecx
+
+  pop gs ; restore the data segments
+  pop fs
+  pop es
+  pop ds
+  popa
+
+  add esp, 8
+  iret
+
 ; DRY
 ; argument #1: the ISR number
 %macro isr_noerr 1
@@ -85,8 +114,18 @@ irq_common_stub:
   irq%1:
     cli
     push byte 0 ; dummy error code
-    push byte %2
+    push byte %2 ; num
     jmp irq_common_stub
+%endmacro
+
+; argument #1: the INT number
+%macro intrpt 1
+  global int%1
+  int%1:
+    cli
+    push byte 0 ; dummy error code
+    push dword %1
+    jmp int_common_stub
 %endmacro
 
 isr_noerr 0
@@ -138,6 +177,8 @@ irq   12, 44
 irq   13, 45
 irq   14, 46
 irq   15, 47
+
+intrpt    128 ; syscall
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

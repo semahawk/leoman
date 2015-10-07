@@ -2,16 +2,20 @@
 
 int main(void)
 {
-  static uint16_t *buf = (uint16_t *)0xb8000;
-
   /* feel the power of nolibc! */
   while (1){
-    /* a white smiley face on a black background */
-    *buf++ = 0x0f01;
-    /* yup, no buffer overflow handling, yay */
+    char *msg = "\1";
+    int len = 1;
+
+    /* call syscall #4 (write) */
+    __asm volatile("movl %0, %%edx"::"r"(len));
+    __asm volatile("movl %0, %%ecx"::"r"(msg));
+    __asm volatile("movl $0, %ebx");
+    __asm volatile("movl $4, %eax");
+    __asm volatile("int $0x80");
 
     for (int i = 0; i < 3000000; i++)
-      ;
+      /* wait a bit */;
   }
 
   return 7;

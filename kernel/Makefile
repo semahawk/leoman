@@ -13,6 +13,7 @@ C_SRC = \
 	pm.c \
 	proc.c \
 	sar.c \
+	syscall.c \
 	timer.c \
 	tss.c \
 	vga.c \
