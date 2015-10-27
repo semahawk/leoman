@@ -241,8 +241,6 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   switch_to_userspace(kstack, ustack);
 
-  vga_printf("welcome to userspace :3\n");
-
   /*elf_execute(initrdtestfile_cont);*/
 
   /* finish initializing the processes */

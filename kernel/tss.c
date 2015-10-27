@@ -26,8 +26,6 @@ void tss_init(uint32_t ss, uint32_t esp)
   void *base = &tss;
   uint32_t limit = (uint32_t)base + sizeof(tss);
 
-  vga_printf("base: 0x%x, limit 0x%x\n", (uint32_t)base, limit);
-
   gdt_set_segment(SEG_TSS_IDX, base, limit,
       GDTE_DPL_USER | GDTE_X | GDTE_A | GDTE_TSS,
       GDTE_BYTE_GRAN | GDTE_32_BIT);
@@ -44,8 +42,6 @@ void tss_init(uint32_t ss, uint32_t esp)
   tss.ds =
   tss.fs =
   tss.gs = SEG_KDATA | 3;
-
-  vga_printf("tss at 0x%x\n", (uint32_t)&tss);
 }
 
 /*

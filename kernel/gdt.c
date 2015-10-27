@@ -35,9 +35,6 @@ void gdt_set_segment(uint32_t idx, void *base, uint32_t limit, uint8_t access, u
   gdt[idx].access = GDTE_PRESENT | access;
   /* granularity byte */
   gdt[idx].flags = flags;
-
-  vga_printf("gate %d (dpl %d), base %x, lim %x, acc %x, gran %x\n",
-      idx, (access >> 5) & 0x3, base, limit, gdt[idx].access, flags);
 }
 
 void gdt_init(void)
@@ -71,7 +68,7 @@ void gdt_init(void)
   gdt_load(gdt, sizeof(gdt));
   gdt_flush();
 
-  tss_flush(SEG_TSS | 3);
+  tss_flush(SEG_TSS);
 }
 
 /*

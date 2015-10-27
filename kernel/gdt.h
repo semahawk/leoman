@@ -27,12 +27,12 @@
 #define SEG_UDATA_IDX  0x4  /* user data */
 #define SEG_TSS_IDX    0x5  /* task state segment */
 
-#define SEG_NULL       ((SEG_NULL_IDX)  * sizeof(struct gdt_entry))
-#define SEG_KCODE      ((SEG_KCODE_IDX) * sizeof(struct gdt_entry))
-#define SEG_KDATA      ((SEG_KDATA_IDX) * sizeof(struct gdt_entry))
-#define SEG_UCODE      ((SEG_UCODE_IDX) * sizeof(struct gdt_entry))
-#define SEG_UDATA      ((SEG_UDATA_IDX) * sizeof(struct gdt_entry))
-#define SEG_TSS        ((SEG_TSS_IDX)   * sizeof(struct gdt_entry))
+#define SEG_NULL  ((SEG_NULL_IDX)  * sizeof(struct gdt_entry))
+#define SEG_KCODE ((SEG_KCODE_IDX) * sizeof(struct gdt_entry))
+#define SEG_KDATA ((SEG_KDATA_IDX) * sizeof(struct gdt_entry))
+#define SEG_UCODE ((SEG_UCODE_IDX) * sizeof(struct gdt_entry) | 3 /* RPL */)
+#define SEG_UDATA ((SEG_UDATA_IDX) * sizeof(struct gdt_entry) | 3 /* RPL */)
+#define SEG_TSS   ((SEG_TSS_IDX)   * sizeof(struct gdt_entry) | 3 /* RPL */)
 
 /*
  * values to put into the access byte
