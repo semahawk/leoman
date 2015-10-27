@@ -1,6 +1,6 @@
 BITS 32
 
-global stack_top
+global kernel_stack_top
 
 extern kmain
 global _start
@@ -14,10 +14,10 @@ extern kernel_size
 ; the stack is 16KiB
 section .stack
 align 4
-stack_bottom:
+kernel_stack_bottom:
   ; that's 16KiB
   times 2048 dq 0
-stack_top:
+kernel_stack_top:
 
 section .preamble
 ; the page directory is actually computable at compile time
@@ -104,7 +104,7 @@ _higherhalf:
   pop eax
 
   ; yup, right here
-  mov esp, stack_top
+  mov esp, kernel_stack_top
 
   ; we are now ready to actually execute C code
   ; calling kmain(eax)

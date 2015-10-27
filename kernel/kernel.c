@@ -202,9 +202,9 @@ void kmain(struct kern_bootinfo *bootinfo)
   sti();
 
   /* map the initrd file */
-  map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);
+  /*map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);*/
   /* update the initrd's address to be the virtual one */
-  bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);
+  /*bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);*/
 
   vga_printf("\n Leoman\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
@@ -231,16 +231,23 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   /*struct sar_file *initrdtestfile = sar_lookup(bootinfo->initrd_addr, "initrdtestfile");*/
   /*unsigned size = initrdtestfile->size;*/
-  void *initrdtestfile_cont = sar_get_contents(bootinfo->initrd_addr, "initrdtestfile");
+  /*void *initrdtestfile_cont = sar_get_contents(bootinfo->initrd_addr, "initrdtestfile");*/
 
   /*vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);*/
   /*vga_printf(" initrdtestfile's size:              0x%x\n", size);*/
 
-  elf_execute(initrdtestfile_cont);
+  void *kstack = palloc() + PAGE_SIZE;
+  void *ustack = palloc() + PAGE_SIZE;
+
+  switch_to_userspace(kstack, ustack);
+
+  vga_printf("welcome to userspace :3\n");
+
+  /*elf_execute(initrdtestfile_cont);*/
 
   /* finish initializing the processes */
   /* processes will start running right now */
-  proc_lateinit();
+  /*proc_lateinit();*/
 
   /* should never get here */
   for (;;);

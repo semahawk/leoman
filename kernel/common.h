@@ -69,7 +69,7 @@ extern uint32_t kernel_size;
 extern uint32_t kernel_phys;
 extern uint32_t kernel_off;
 
-extern uint32_t stack_top;
+extern uint32_t kernel_stack_top;
 
 #endif /* COMMON_H */
 

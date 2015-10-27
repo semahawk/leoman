@@ -1,29 +1,31 @@
 .PHONY: all run clean distclean
 
 AS = nasm
+ASFLAGS = -felf32
 CC = clang
 CFLAGS := -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 
-C_SRC = \
-  elf.c \
-	gdt.c \
-	idt.c \
-	kbd.c \
-	kernel.c \
-	pm.c \
-	proc.c \
-	sar.c \
+C_SRC =     \
+  elf.c     \
+	gdt.c     \
+	idt.c     \
+	kbd.c     \
+	kernel.c  \
+	pm.c      \
+	proc.c    \
+	sar.c     \
 	syscall.c \
-	timer.c \
-	tss.c \
-	vga.c \
-	vm.c \
+	timer.c   \
+	tss.c     \
+	vga.c     \
+	vm.c      \
 
-S_SRC = \
+S_SRC =     \
 	entry.asm \
-	gdt.asm \
-	idt.asm \
-	x86.asm \
+	gdt.asm   \
+	idt.asm   \
+	proc.asm  \
+	x86.asm   \
 
 OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
@@ -37,7 +39,7 @@ all: kernel initrd
 .SUFFIXES: .asm.o
 
 .asm.asm.o:
-	$(AS) -felf32 $< -o $@
+	$(AS) $(ASFLAGS) $< -o $@
 
 .c.o:
 	$(CC) -c $(CFLAGS) $<

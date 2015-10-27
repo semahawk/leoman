@@ -87,7 +87,8 @@ void proc_sched(void)
   __asm volatile("add $8, %esp");
 
   /* send an EOI to the master PIC */
-  __asm volatile("outb %0, %1" : : "a"(0x20), "N"(0x20));
+  __asm volatile("movb %0, %%al" : : "N"(0x20));
+  __asm volatile("outb %%al, %0" : : "N"(0x20));
 
   /* goodbye :) */
   __asm volatile("iret");
@@ -141,11 +142,6 @@ struct proc *proc_new(void *entry)
   sti();
 
   return proc;
-}
-
-void switch_to_userspace(void)
-{
-
 }
 
 void proc_exec(void)

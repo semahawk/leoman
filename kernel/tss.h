@@ -49,13 +49,8 @@ struct tss_entry {
 
 void tss_set_esp(uint32_t);
 void tss_init(uint32_t, uint32_t);
-
-static inline void tss_flush(void)
-{
-  uint16_t seg = SEG_TSS | 3;
-
-  __asm volatile("mov %0, %%ax\nltr %%ax" : : "g"(seg));
-}
+/* defined in x86.asm */
+void tss_flush(uint8_t);
 
 #endif /* TSS_H */
 

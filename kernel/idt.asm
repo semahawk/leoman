@@ -29,7 +29,7 @@ isr_common_stub:
   popa ; pops e[ds]i, e[bs]p, e[abcd]x
 
   add esp, 8 ; cleans up the pushed error code and pushed ISR number
-  iret ; pops cs, epi, eflags, ss and esp
+  iret ; pops cs, eip, eflags, ss and esp
 
 irq_common_stub:
   pusha

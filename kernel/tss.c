@@ -10,6 +10,7 @@
  *
  */
 
+#include "common.h"
 #include "gdt.h"
 #include "tss.h"
 
@@ -22,21 +23,29 @@ void tss_set_esp(uint32_t esp)
 
 void tss_init(uint32_t ss, uint32_t esp)
 {
-  uint32_t base = (uint32_t)&tss;
+  void *base = &tss;
+  uint32_t limit = (uint32_t)base + sizeof(tss);
 
-  memset(&tss, 0, sizeof(struct tss_entry));
+  vga_printf("base: 0x%x, limit 0x%x\n", (uint32_t)base, limit);
 
-  gdt_set_segment(SEG_TSS_IDX, (void *)base, base + sizeof(struct tss_entry), GDTE_X | GDTE_A, DPL_USER, GDTE_NOSYS);
+  gdt_set_segment(SEG_TSS_IDX, base, limit,
+      GDTE_DPL_USER | GDTE_X | GDTE_A | GDTE_TSS,
+      GDTE_BYTE_GRAN | GDTE_32_BIT);
+
+  /* make sure the TSS descriptor is initially zero */
+  memset(&tss, 0x0, sizeof(struct tss_entry));
 
   tss.ss0 = ss;
   tss.esp0 = esp;
 
-  tss.cs = SEG_KCODE;
-  tss.ss = SEG_KDATA;
-  tss.es = SEG_KDATA;
-  tss.ds = SEG_KDATA;
-  tss.fs = SEG_KDATA;
-  tss.gs = SEG_KDATA;
+  tss.cs = SEG_KCODE | 3;
+  tss.ss =
+  tss.es =
+  tss.ds =
+  tss.fs =
+  tss.gs = SEG_KDATA | 3;
+
+  vga_printf("tss at 0x%x\n", (uint32_t)&tss);
 }
 
 /*

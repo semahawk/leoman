@@ -117,7 +117,8 @@ static void screen_of_death(struct intregs *regs)
   vga_printf(" esi: %x   cs: %x\n", regs->esi, regs->cs);
   vga_printf(" edi: %x   ss: %x\n", regs->edi, regs->ss);
   vga_printf(" eip: %x  err: %x\n", regs->eip, regs->err);
-  vga_printf(" flg: %x  num: %x\n", regs->eflags, regs->num);
+  vga_printf(" esp: %x  num: %x\n", regs->esp, regs->num);
+  vga_printf(" ebp: %x  flg: %x\n", regs->ebp, regs->eflags);
   vga_printf("\n");
 
   /* print additional informations about the exception */
@@ -303,7 +304,7 @@ static inline void idt_load(void *base, uint16_t size)
 {
   struct idt_ptr idtr;
 
-  idtr.limit = size;
+  idtr.limit = size - 1;
   idtr.base = (uint32_t)base;
 
   __asm volatile("lidt %0" : : "p"(idtr));

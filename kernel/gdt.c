@@ -16,40 +16,62 @@
 #include "common.h"
 #include "gdt.h"
 #include "tss.h"
+#include "vga.h"
+#include "x86.h"
 
 /* THE mighty GDT */
 static struct gdt_entry gdt[SEGNUM];
 
-void gdt_set_segment(uint32_t idx, void *base, uint32_t limit, unsigned type, unsigned dpl, unsigned sys)
+void gdt_set_segment(uint32_t idx, void *base, uint32_t limit, uint8_t access, uint8_t flags)
 {
   gdt[idx].limit_low = limit & 0xffff;
+  gdt[idx].limit_high = (limit >> 16) & 0xf;
+
   gdt[idx].base_low = (uint32_t)base & 0xffff;
-  gdt[idx].base_mid = (uint32_t)base & 0xff0000 >> 16;
-  gdt[idx].type = type;
-  gdt[idx].sys = sys;
-  gdt[idx].dpl = dpl;
-  gdt[idx].present = 1;
-  gdt[idx].limit_high = limit >> 16;
-  gdt[idx].unused = 1;
-  gdt[idx].reserved = 1;
-  gdt[idx].bits = 1; /* 32 bits */
-  gdt[idx].granularity = 0; /* byte granularity */
-  gdt[idx].base_high = (uint32_t)base >> 24;
+  gdt[idx].base_mid = ((uint32_t)base >> 16) & 0xff;
+  gdt[idx].base_high = ((uint32_t)base >> 24) & 0xff;
+
+  /* the access byte */
+  gdt[idx].access = GDTE_PRESENT | access;
+  /* granularity byte */
+  gdt[idx].flags = flags;
+
+  vga_printf("gate %d (dpl %d), base %x, lim %x, acc %x, gran %x\n",
+      idx, (access >> 5) & 0x3, base, limit, gdt[idx].access, flags);
 }
 
 void gdt_init(void)
 {
-  gdt_set_segment(SEG_KCODE_IDX, 0x0, 0xffffffff, GDTE_X | GDTE_R, DPL_KERNEL, GDTE_SYS);
-  gdt_set_segment(SEG_KDATA_IDX, 0x0, 0xffffffff, GDTE_W, DPL_KERNEL, GDTE_SYS);
-  gdt_set_segment(SEG_UCODE_IDX, 0x0, 0xffffffff, GDTE_X | GDTE_R, DPL_USER, GDTE_SYS);
-  gdt_set_segment(SEG_UDATA_IDX, 0x0, 0xffffffff, GDTE_W, DPL_USER, GDTE_SYS);
+  /* that's kind of ugly (setting the null segment) */
+  memset(&gdt[SEG_NULL_IDX], 0x0, sizeof(struct gdt_entry));
+
+  /* 0x08 */
+  gdt_set_segment(SEG_KCODE_IDX, 0x0, 0xffffffff,
+      GDTE_DPL_KERNEL | GDTE_X | GDTE_W | GDTE_NOT_TSS,
+      GDTE_PAGE_GRAN | GDTE_32_BIT);
+
+  /* 0x10 */
+  gdt_set_segment(SEG_KDATA_IDX, 0x0, 0xffffffff,
+      GDTE_DPL_KERNEL | GDTE_R | GDTE_NOT_TSS,
+      GDTE_PAGE_GRAN | GDTE_32_BIT);
+
+  /* 0x18 */
+  gdt_set_segment(SEG_UCODE_IDX, 0x0, 0xffffffff,
+      GDTE_DPL_USER | GDTE_X | GDTE_W | GDTE_NOT_TSS,
+      GDTE_PAGE_GRAN | GDTE_32_BIT);
+
+  /* 0x20 */
+  gdt_set_segment(SEG_UDATA_IDX, 0x0, 0xffffffff,
+      GDTE_DPL_USER | GDTE_R | GDTE_NOT_TSS,
+      GDTE_PAGE_GRAN | GDTE_32_BIT);
+
   /* task switching structure */
-  tss_init(0x10, 0x0);
+  tss_init(SEG_KDATA, 0x0);
 
   gdt_load(gdt, sizeof(gdt));
   gdt_flush();
 
-  tss_flush();
+  tss_flush(SEG_TSS | 3);
 }
 
 /*

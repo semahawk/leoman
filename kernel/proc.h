@@ -40,6 +40,9 @@ void proc_earlyinit(void);
 void proc_lateinit(void);
 void proc_exec(void);
 
+/* defined in proc.asm */
+void switch_to_userspace(void *kstack, void *ustack);
+
 /* defined in proc.c */
 extern volatile struct proc *current_proc;
 

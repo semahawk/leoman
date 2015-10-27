@@ -37,6 +37,12 @@ static inline __NAKED void sti(void)
   __asm volatile("sti");
 }
 
+static inline __NAKED void halt(void)
+{
+  __asm volatile("cli");
+  __asm volatile("hlt");
+}
+
 #endif /* X86_H */
 
 /*

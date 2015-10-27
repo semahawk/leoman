@@ -47,7 +47,7 @@ void syscall_handler(struct intregs *regs)
 
 void syscall_install(void)
 {
-  idt_set_gate(0x80, int128, 8, 0x8e);
+  idt_set_gate(0x80, int128, 8, 0xee);
   int_install_handler(0x80, syscall_handler);
 }
 

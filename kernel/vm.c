@@ -48,7 +48,8 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
   uint32_t *ptab = kernel_pdir_end + pdir_idx * KiB(1);
 
   pdir[pdir_idx] |= PDE_P;
-  ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTE_P;
+  ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTE_P
+    /* TEMPORARY MEASURE */ | PTE_U;
 }
 
 /*
@@ -137,12 +138,13 @@ void *vm_init(struct kern_bootinfo *bootinfo)
   memset(kernel_pdir, 0x0, KiB(4) + MiB(4));
 
   for (int i = 0; i < 1024; i++)
-    kernel_pdir[i] = v2p(kernel_pdir_end + i * KiB(1)) | PDE_W;
+    kernel_pdir[i] = v2p(kernel_pdir_end + i * KiB(1)) | PDE_W
+      /* TODO FIXME that's just temporary */ | PDE_U;
 
   /* identity map the first 1 MiB of memory */
   map_pages(0x0, 0x0, PTE_W, MiB(1));
   /* map the kernel intestines to the higher half */
-  map_pages(0x0, &kernel_off, PTE_W, ((uint32_t)&kernel_start - (uint32_t)&kernel_off) + ((uint32_t)&kernel_size) + MiB(4) + KiB(4));
+  map_pages(0x0, &kernel_off, PTE_W | PTE_U, ((uint32_t)&kernel_start - (uint32_t)&kernel_off) + ((uint32_t)&kernel_size) + MiB(4) + KiB(4));
 
   set_cr3(v2p(kernel_pdir));
 
