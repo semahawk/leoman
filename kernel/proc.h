@@ -15,6 +15,10 @@
 
 #include <stdint.h>
 
+#include "common.h"
+
+#define MAX_PROC_NAME_LEN 32
+
 enum proc_state {
   PROC_UNUSED,
   PROC_RUNNING,
@@ -24,24 +28,23 @@ enum proc_state {
 struct proc {
   unsigned pid;
   enum proc_state state;
+  char name[MAX_PROC_NAME_LEN + 1];
 
-  uint32_t eip;
-  uint32_t esptop; /* the very top of the process's stack */
-  uint32_t esp;    /* process's stack */
+  /* the process' context (ie. all it's registers &c.) */
+  struct intregs trapframe;
 
   /* these are not really used yet */
   uint32_t *pdir;  /* the page directory */
   uint32_t memsz;  /* memory size the process has */
 };
 
-struct proc *proc_new(void *);
-void proc_sched(void);
+struct proc *proc_new(const char *name, void *entry_point);
 void proc_earlyinit(void);
 void proc_lateinit(void);
 void proc_exec(void);
 
-/* defined in proc.asm */
-void switch_to_userspace(void *kstack, void *ustack);
+void proc_schedule_without_irq(void);
+void proc_schedule_after_irq(struct intregs *);
 
 /* defined in proc.c */
 extern volatile struct proc *current_proc;

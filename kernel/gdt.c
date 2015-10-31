@@ -63,7 +63,7 @@ void gdt_init(void)
       GDTE_PAGE_GRAN | GDTE_32_BIT);
 
   /* task switching structure */
-  tss_init(SEG_KDATA, 0x0);
+  tss_init(SEG_KDATA, (uint32_t)&kernel_stack_top);
 
   gdt_load(gdt, sizeof(gdt));
   gdt_flush();

@@ -74,6 +74,7 @@ int_common_stub:
 
   mov ecx, esp
   push ecx
+;hlt
   mov ecx, int_handler
   call ecx
   pop ecx
@@ -118,13 +119,14 @@ int_common_stub:
     jmp irq_common_stub
 %endmacro
 
+; software interrupts
 ; argument #1: the INT number
-%macro intrpt 1
+%macro swint 1
   global int%1
   int%1:
     cli
-    push byte 0 ; dummy error code
-    push dword %1
+    push dword 0 ; dummy error code
+    push dword %1 ; num
     jmp int_common_stub
 %endmacro
 
@@ -178,7 +180,9 @@ irq   13, 45
 irq   14, 46
 irq   15, 47
 
-intrpt    128 ; syscall
+; hm, defines?
+swint 127 ; process scheduler
+swint 128 ; syscall
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

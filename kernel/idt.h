@@ -95,6 +95,7 @@ extern void irq14(void);
 extern void irq15(void);
 /* }}} */
 /* {{{ INT declarations, defined in idt.asm */
+extern void int127(void); /* process scheduler */
 extern void int128(void); /* syscall */
 /* }}} */
 

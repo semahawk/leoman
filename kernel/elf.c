@@ -29,12 +29,13 @@ void elf_execute(const void *file)
         break;
 
       case PT_LOAD:
-        map_pages((void *)v2p((void *)file + phdr->p_offset), (void *)phdr->p_vaddr, PTE_W, phdr->p_memsz);
+        /* FIXME fix user access (PTE_U) */
+        map_pages((void *)v2p((void *)file + phdr->p_offset), (void *)phdr->p_vaddr, PTE_W | PTE_U, phdr->p_memsz);
         break;
     }
   }
 
-  proc_new((void *)hdr->e_entry);
+  proc_new("[elf_exe]", (void *)hdr->e_entry);
 }
 
 /*

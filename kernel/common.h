@@ -59,7 +59,7 @@ struct intregs {
   /* interrupt number and error code */
   uint32_t num, err;
   /* pushed by the processor automatically */
-  uint32_t eip, cs, eflags, useresp, ss;
+  uint32_t eip, cs, eflags, useresp, ss, meh;
 };
 
 /* provided by the linker */

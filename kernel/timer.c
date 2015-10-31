@@ -26,8 +26,10 @@ void timer_handler(struct intregs *r)
 {
   timer_ticks++;
 
-  if (current_proc != NULL)
-    proc_sched();
+  vga_printf("irq0: ss: 0x%x; ", r->ss);
+
+  /*if (current_proc != NULL)*/
+    proc_schedule_after_irq(r);
 }
 
 void timer_wait(int ticks)

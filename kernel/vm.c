@@ -141,8 +141,9 @@ void *vm_init(struct kern_bootinfo *bootinfo)
     kernel_pdir[i] = v2p(kernel_pdir_end + i * KiB(1)) | PDE_W
       /* TODO FIXME that's just temporary */ | PDE_U;
 
+  /* TODO FIXME fix the user's access to the pages */
   /* identity map the first 1 MiB of memory */
-  map_pages(0x0, 0x0, PTE_W, MiB(1));
+  map_pages(0x0, 0x0, PTE_W | PTE_U, MiB(1));
   /* map the kernel intestines to the higher half */
   map_pages(0x0, &kernel_off, PTE_W | PTE_U, ((uint32_t)&kernel_start - (uint32_t)&kernel_off) + ((uint32_t)&kernel_size) + MiB(4) + KiB(4));
 

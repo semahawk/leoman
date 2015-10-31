@@ -37,6 +37,7 @@ switch_to_userspace:
   ; the instruction we want to execute in user mode
   push dword usermode
   ; let's go :)
+hlt
   iretd
 
 usermode:
