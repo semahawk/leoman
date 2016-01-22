@@ -1,4 +1,4 @@
-.PHONY: all bootloader kernel tools run disk_image clean
+.PHONY: all bootloader kernel tools run disk_image clean distclean
 
 DISK_IMAGE = leoman.iso
 
@@ -29,13 +29,14 @@ $(DISK_IMAGE): bootloader kernel
 	dd conv=notrunc if=boot/boot.bin of=$(DISK_IMAGE) bs=512 count=1
 
 clean:
-	rm -f *.fs
-.for dir in $(SUBDIRS)
-	$(MAKE) -C ${dir} clean
-.endfor
+	rm -f *.iso
+	
+	for DIR in $(SUBDIRS); do \
+		$(MAKE) -C $$DIR clean; \
+	done
 
 distclean: clean
-.for dir in $(SUBDIRS)
-	$(MAKE) -C ${dir} distclean
-.endfor
+	for DIR in $(SUBDIRS); do \
+		$(MAKE) -C $$DIR distclean; \
+	done
 
