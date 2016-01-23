@@ -1,18 +1,14 @@
-.PHONY: all
-.SUFFIXES: .asm .bin
+.PHONY: all isoboot
 
-BOOT_OBJS = boot0.bin boot1.bin
+all: isoboot
 
-all: boot.bin
-
-boot.bin: $(BOOT_OBJS)
-	cat $(BOOT_OBJS) > $@
-
-.asm.bin: print.asm utils.asm
+isoboot: isoboot.bin
+isoboot.bin: isoboot.asm
 	nasm -dDEBUG -f bin $< -o $@
 
 clean:
 	rm -f *.bin
 
 distclean: clean
+	rm -f isoboot.bin
 
