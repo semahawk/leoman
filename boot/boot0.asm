@@ -1,9 +1,18 @@
 BITS 16
 ORG 0
 
-jmp 0x07c0:boot0
-
 boot0:
+  jmp 0x07c0:known_offset
+
+  times 8-($-$$) db 0
+  ; boot information table
+  BIT_PrimaryVolumeDescriptor  dd  0  ; LBA of the Primary Volume Descriptor
+  BIT_BootFileLocation         dd  0  ; LBA of the Boot File
+  BIT_BootFileLength           dd  0  ; Length of the boot file in bytes
+  BIT_Checksum                 dd  0  ; 32 bit checksum
+  BIT_Reserved        times 40 db  0  ; Reserved 'for future standardization'
+
+known_offset:
   ; update the segment register
   mov ax, 0x07c0
   mov ds, ax
@@ -24,6 +33,7 @@ boot0:
   mov di, 0x7a00        ; destination
   mov cx, 0x0100        ; one whole sector (0x100 words - 0x200 bytes)
   rep movsw             ; do it!
+
   jmp 0x07a0:relocated  ; jump to the relocated bit
 
 relocated:
