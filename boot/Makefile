@@ -1,9 +1,13 @@
 .PHONY: all isoboot
 
-all: isoboot
+all: main isoboot
+
+main: main.bin
+main.bin: main.asm isofs.asm
+	nasm -dDEBUG -f bin $< -o $@
 
 isoboot: isoboot.bin
-isoboot.bin: isoboot.asm
+isoboot.bin: isoboot.asm isofs.asm
 	nasm -dDEBUG -f bin $< -o $@
 
 clean:
