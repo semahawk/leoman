@@ -36,6 +36,11 @@ boot:
   mov sp, 0x7bff
   sti
 
+clear_the_screen:
+  mov ah, 0
+  mov al, 3
+  int 10h
+
   ; remember the device's number
   mov [bootdrv], dl
 
