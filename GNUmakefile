@@ -25,7 +25,7 @@ $(DISK_IMAGE): bootloader kernel
 	cp boot/isoboot.bin iso_root/boot/loader
 	cp boot/main.bin iso_root/boot/loader
 # create the ISO
-	mkisofs -R -J -c boot/boot.cat -b boot/loader/isoboot.bin -no-emul-boot -boot-load-size 4 -o $(DISK_IMAGE) iso_root
+	mkisofs -quiet -R -J -l -c boot/boot.cat -b boot/loader/isoboot.bin -no-emul-boot -boot-load-size 4 -o $(DISK_IMAGE) iso_root
 
 clean:
 	rm -f *.iso

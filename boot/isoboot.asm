@@ -56,11 +56,28 @@ next_stage_is_loaded:
   putchar 0xd
   putchar 0xa
 
-  ; bye :)
-  jmp 0x0000:0x8000
+enter_protected_mode:
+  cli
+  lgdt [gdt]
+  mov eax, cr0
+  or al, 1
+  mov cr0, eax
+  jmp 0x08:protected_mode
 
-error:
-  putchar '!'
+BITS 32
+protected_mode:
+  mov eax, 0x10
+  mov ds, eax
+  mov es, eax
+  mov fs, eax
+  mov gs, eax
+  mov ss, eax
+  ; is that necessary?
+  mov esp, 0x5c00
+
+  ; farewell!
+  jmp 0x8000
+
 hang:
   cli
   hlt
@@ -69,6 +86,36 @@ hang:
 bootdrv: db 0
 ; name/location of the bootloader's next stage
 next_stage: db "/BOOT/LOADER/MAIN.BIN", 0
+
+;
+; The Global Descriptor Table
+;
+gdt_data:
+; {{{
+; the null selector
+  dq 0x0           ; nothing!
+
+; the code selector: base = 0x0, limit = 0xfffff
+  dw 0xffff        ; limit low (0-15)
+  dw 0x0           ; base low (0-15)
+  db 0x0           ; base middle (16-23)
+  db 10011010b     ; access byte
+  db 11001111b     ; flags + limit (16-19)
+  db 0x0           ; base high (24-31)
+
+; the data selector: base = 0x0, limit = 0xfffff
+  dw 0xffff        ; limit low (0-15)
+  dw 0x0           ; base low (0-15)
+  db 0x0           ; base middle (16-23)
+  db 10010010b     ; access byte
+  db 11001111b     ; flags + limit (16-19)
+  db 0x0           ; base high (24-31)
+; THE actual descriptor
+gdt_end:
+gdt:
+  dw gdt_end - gdt_data - 1 ; sizeof gdt
+  dd gdt_data
+; }}}
 
 ; the DAP used when issuing int 13h, ah=42h
 disk_address_packet:
