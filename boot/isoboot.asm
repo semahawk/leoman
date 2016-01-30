@@ -24,6 +24,7 @@ start:
 %endmacro
 
 %include "isofs.asm"
+%include "a20.asm"
 
 boot:
   ; update the segment register
@@ -46,20 +47,22 @@ clear_the_screen:
 
   putchar 0x01
 
+try_enabling_a20:
+  call enable_a20_or_die
+  ; ae
+  putchar 0x91
+
 load_next_stage:
   call initialize_isofs_utilities
-
+  ; a half
   putchar 0xab
 
   mov si, next_stage
   call find_and_load_file
 
-next_stage_is_loaded:
+bye_real_mode:
+  ; a lovely heart
   putchar 0x03
-
-  ; print a newline to signify that the first stage has finished
-  putchar 0xd
-  putchar 0xa
 
 enter_protected_mode:
   cli
