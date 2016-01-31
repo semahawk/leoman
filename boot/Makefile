@@ -8,11 +8,11 @@ ASFLAGS = -dDEBUG -f bin
 all: main isoboot
 
 main: main.bin
-main.bin: main.c
+main.bin: main.c main.ld
 	$(CC) $(CFLAGS) -T main.ld $< -o $@
 
 isoboot: isoboot.bin
-isoboot.bin: isoboot.asm isofs.asm
+isoboot.bin: isoboot.asm isofs.asm elf.asm
 	$(AS) $(ASFLAGS) $< -o $@
 
 clean:

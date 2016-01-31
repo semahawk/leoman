@@ -14,8 +14,10 @@ start:
   BIT_Reserved        times 40 db 0 ; reserved 'for future standardization'
 
 %macro putchar 1
+  push eax
   mov ax, 0xe00+%1
   int 10h
+  pop eax
 %endmacro
 
 %macro error 0
@@ -25,6 +27,7 @@ start:
 
 %include "isofs.asm"
 %include "a20.asm"
+%include "elf.asm"
 
 boot:
   ; update the segment register
@@ -45,7 +48,37 @@ clear_the_screen:
   ; remember the device's number
   mov [bootdrv], dl
 
+  ; a dwarf
   putchar 0x01
+
+; 'enter' unreal mode
+go_unreal:
+  ; disable interrupts
+  cli
+  ; save the data segment
+  push ds
+  ; load the GDT
+  lgdt [gdt]
+  ; set the PE bit
+  mov eax, cr0
+  or  al, 1
+  mov cr0, eax
+  ; tell 386/486 not to crash
+  jmp $+2
+  ; select the code descriptor
+  mov bx, 0x08
+  mov ds, bx
+  ; unset the PE bit, back to real mode
+  and al, 0xfe
+  mov cr0, eax
+  ; restore the data segment
+  pop ds
+  ; enable interrupts
+  sti
+
+running_in_quote_unquote_unreal_mode:
+  ; sigma
+  putchar 0xe4
 
 try_enabling_a20:
   call enable_a20_or_die
@@ -59,6 +92,13 @@ load_next_stage:
 
   mov si, next_stage
   call find_and_load_file
+  ; and beyond!
+  putchar 0xec
+
+load_and_parse_elf:
+  call dispatch_elf_sections
+  ; delta
+  putchar 0xeb
 
 bye_real_mode:
   ; a lovely heart
@@ -72,7 +112,7 @@ enter_protected_mode:
   mov cr0, eax
   jmp 0x08:protected_mode
 
-BITS 32
+bits 32
 protected_mode:
   mov eax, 0x10
   mov ds, eax
@@ -84,7 +124,7 @@ protected_mode:
   mov esp, 0x5c00
 
   ; farewell!
-  jmp 0x8000
+  jmp [0x8000 + 0x18]
 
 hang:
   cli
