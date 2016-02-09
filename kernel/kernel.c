@@ -179,6 +179,7 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 
 void kmain(struct kern_bootinfo *bootinfo)
 {
+  for (;;);
   adjust_the_memory_map(bootinfo);
   /* set up the printing utilities */
   vga_init();

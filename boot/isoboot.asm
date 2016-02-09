@@ -14,14 +14,17 @@ start:
   BIT_Reserved        times 40 db 0 ; reserved 'for future standardization'
 
 %macro putchar 1
-  push eax
+  pusha
   mov ax, 0xe00+%1
   int 10h
-  pop eax
+  popa
 %endmacro
 
 %macro error 0
   putchar '!'
+  mov ebx, __LINE__
+  mov ecx, __LINE__
+  mov edx, __LINE__
   jmp $
 %endmacro
 
@@ -124,7 +127,8 @@ protected_mode:
   mov esp, 0x5c00
 
   ; farewell!
-  jmp [0x8000 + 0x18]
+  mov edx, [0x10000 + 0x18]
+  jmp edx
 
 hang:
   cli
@@ -132,8 +136,8 @@ hang:
 
 ; the device's number from which we've booted
 bootdrv: db 0
-; name/location of the bootloader's next stage
-next_stage: db "/BOOT/LOADER/MAIN.BIN", 0
+; name/location of the kernel
+next_stage: db "/BOOT/KERNEL/KERNEL.BIN", 0
 
 ;
 ; The Global Descriptor Table

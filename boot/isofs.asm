@@ -1,12 +1,16 @@
 ; load a number of sectors from the CD
 ; param: cx - the sector's number
-;        dx - number of sectors to read
-;        di - destination where to load them
+;        dx - number of sectors to read (one sector is 2KiB)
+;        edi - destination where to load them
 load_sectors:
   pusha
-  mov word [disk_address_packet.sector_num], dx
+.continue:
+  mov word [disk_address_packet.sector_num], 1
   mov word [disk_address_packet.sector], cx
-  mov word [disk_address_packet.membuf], di
+  mov dword [disk_address_packet.membuf], 0x2000
+  push edx
+  push ecx
+  push edi
   xor ax, ax
   xor dx, dx
   xor bx, bx
@@ -19,19 +23,39 @@ load_sectors:
   error
 .ok:
   test ah, ah
-  jz .done
+  jz .relocate
   error
+.relocate:
+putchar 0xf9
+  mov ecx, 512 ; 512 * sizeof dword = 2KiB
+  mov esi, 0x2000
+  pop edi
+.1:
+  mov edx, dword [esi]
+  mov dword [edi], edx
+
+  add edi, 4
+  add esi, 4
+  loop .1
+
+  pop ecx
+  pop edx
+
+  ; increase the ID of the sector we're about to load next
+  inc cx
+  ; decrease the number of sectors to load
+  dec dx
+  jnz .continue
 .done:
   popa
-
   ret
 
 ; param: cx - the LBA at which the directory might be found
 load_directory:
-  ; FIXME see if loading 4 sectors (2KiB) is actually sufficient
-  mov dx, 0x4
+  ; FIXME see if loading 1 sector (2KiB) is actually sufficient
+  mov dx, 0x1
   ; the location where to load the directory is fixed
-  mov di, 0xe800
+  mov edi, 0xe800
   call load_sectors
 
   ret
@@ -39,7 +63,7 @@ load_directory:
 ; param: cx - the LBA at which the file's contents might be found
 ;        dx - number of sectors to load
 load_file:
-  mov di, 0x8000
+  mov edi, 0x10000
   call load_sectors
 
   ret
@@ -49,13 +73,16 @@ rootdir_extent_size: dd 0
 initialize_isofs_utilities:
   ; load the Primary Volume Descriptor into 0x8000-0x8800
   mov cx, 0x10
-  mov dx, 0x4
-  mov di, 0x8000
+  mov dx, 0x1
+  mov edi, 0x8000
   call load_sectors
+
+  ; spade
+  putchar 0x06
 
   ; load the root directory '/'
   ; at offset 156(into the PVD)+2(into the directory structure) is the LBA of
-  ; the root's directory extent - load it into 0x8800-0x9000
+  ; the root's directory extent - load it into 0xe800-0xf000
   mov cx, word [0x8000+156+2]
   mov eax, dword [0x8000+156+10]
   mov [rootdir_extent_size], eax
@@ -135,14 +162,15 @@ find_and_load_file:
   jmp .checkout_file_in_directory
 
 .found_the_file:
+  ; peseta
+  putchar 0x9e
   ; fetch the file's length and then divide by sector's length to get the number
   ; of sectors to load
   xor dx, dx
   mov ax, [di+10]
-  mov cx, 512
+  mov cx, 512 ; 512 or 2048 goddammit
   div cx ; is the sector size fixed?
   mov dx, ax
-  inc dx
   mov cx, [di+2]
   call load_file
   ret

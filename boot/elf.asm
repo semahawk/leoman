@@ -1,6 +1,6 @@
 dispatch_elf_sections:
-  ; 0x8000 is where files are loaded
-  mov ebx, dword 0x8000
+  ; 0x10000 is where files are loaded
+  mov ebx, dword 0x10000
   ; load phnum (number of program headers)
   mov cx, [ebx + 0x2c]
   ; update the si to point at the first program header
@@ -12,9 +12,7 @@ dispatch_elf_sections:
   cmp dword [ebx], 1 ; 1 = PT_LOAD
   jne .load_next_program_header
 
-  putchar 0xf9
-
-  mov esi, 0x8000
+  mov esi, 0x10000
   add esi, dword [ebx + 0x04] ; source: offset 0x04 is p_offset
   mov edi, dword [ebx + 0x0c] ; destination: offset 0x0c is p_paddr
   mov ecx, dword [ebx + 0x10] ; offset 0x10 is p_filesz (so number of bytes)
@@ -62,7 +60,7 @@ dispatch_elf_sections:
   ; point esi at the next program header
   ; (offset 0x2a contains program header's size)
   xor edx, edx
-  mov dx, word [0x8000 + 0x2a]
+  mov dx, word [0x10000 + 0x2a]
   add ebx, edx
   ; no 'loop' because the jump address is too far away
   dec cx
