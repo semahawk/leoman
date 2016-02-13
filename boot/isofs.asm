@@ -1,3 +1,11 @@
+; the DAP used when issuing int 13h, ah=42h
+disk_address_packet:
+  .size: db 0x10
+  .zero: db 0x00
+  .sector_num: dw 0x0001
+  .membuf: dd 0x00000000
+  .sector: dq 0x10
+
 ; load a number of sectors from the CD
 ; param: cx - the sector's number
 ;        dx - number of sectors to read (one sector is 2KiB)
@@ -26,7 +34,6 @@ load_sectors:
   jz .relocate
   error
 .relocate:
-putchar 0xf9
   mov ecx, 512 ; 512 * sizeof dword = 2KiB
   mov esi, 0x2000
   pop edi
@@ -55,7 +62,7 @@ load_directory:
   ; FIXME see if loading 1 sector (2KiB) is actually sufficient
   mov dx, 0x1
   ; the location where to load the directory is fixed
-  mov edi, 0xe800
+  mov edi, 0x8c00
   call load_sectors
 
   ret
@@ -71,10 +78,11 @@ load_file:
 rootdir_extent_size: dd 0
 
 initialize_isofs_utilities:
-  ; load the Primary Volume Descriptor into 0x8000-0x8800
+  ; load the Primary Volume Descriptor into 0x8400-0x8c00 (just above the ISO
+  ; bootsector)
   mov cx, 0x10
   mov dx, 0x1
-  mov edi, 0x8000
+  mov edi, 0x8400
   call load_sectors
 
   ; spade
@@ -82,9 +90,9 @@ initialize_isofs_utilities:
 
   ; load the root directory '/'
   ; at offset 156(into the PVD)+2(into the directory structure) is the LBA of
-  ; the root's directory extent - load it into 0xe800-0xf000
-  mov cx, word [0x8000+156+2]
-  mov eax, dword [0x8000+156+10]
+  ; the root's directory extent - load it into 0x8c00-0xf000
+  mov cx, word [0x8400+156+2]
+  mov eax, dword [0x8400+156+10]
   mov [rootdir_extent_size], eax
   call load_directory
 
@@ -102,7 +110,7 @@ find_and_load_file:
 .dont_skip_leading_slash:
 
   ; di points to the base of the directory's entry
-  mov di, 0xe800
+  mov di, 0x8c00
 .checkout_file_in_directory:
   ; store the directory's extent length
   mov dx, [di+10]

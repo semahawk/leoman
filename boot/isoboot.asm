@@ -169,14 +169,6 @@ gdt:
   dd gdt_data
 ; }}}
 
-; the DAP used when issuing int 13h, ah=42h
-disk_address_packet:
-  .size: db 0x10
-  .zero: db 0x00
-  .sector_num: dw 0x0001
-  .membuf: dd 0x00000000
-  .sector: dq 0x10
-
 ; padding so the bootsector is exactly 2048 bytes long
 times 2048-($-$$) db 0
 
