@@ -14,10 +14,10 @@ start:
   BIT_Reserved        times 40 db 0 ; reserved 'for future standardization'
 
 %macro putchar 1
-  pusha
+  push ax
   mov ax, 0xe00+%1
   int 10h
-  popa
+  pop ax
 %endmacro
 
 %macro error 0
@@ -31,6 +31,7 @@ start:
 %include "isofs.asm"
 %include "a20.asm"
 %include "elf.asm"
+%include "memory.asm"
 
 boot:
   ; update the segment register
@@ -43,43 +44,20 @@ boot:
   mov sp, 0x7bff
   sti
 
+  ; remember the device's number
+  mov [bootdrv], dl
+
 clear_the_screen:
   mov ah, 0
   mov al, 3
   int 10h
-
-  ; remember the device's number
-  mov [bootdrv], dl
 
   ; a dwarf
   putchar 0x01
 
 ; 'enter' unreal mode
 go_unreal:
-  ; disable interrupts
-  cli
-  ; save the data segment
-  push ds
-  ; load the GDT
-  lgdt [gdt]
-  ; set the PE bit
-  mov eax, cr0
-  or  al, 1
-  mov cr0, eax
-  ; tell 386/486 not to crash
-  jmp $+2
-  ; select the code descriptor
-  mov bx, 0x08
-  mov ds, bx
-  ; unset the PE bit, back to real mode
-  and al, 0xfe
-  mov cr0, eax
-  ; restore the data segment
-  pop ds
-  ; enable interrupts
-  sti
-
-running_in_quote_unquote_unreal_mode:
+  call enter_unreal_mode
   ; sigma
   putchar 0xe4
 
@@ -88,13 +66,18 @@ try_enabling_a20:
   ; ae
   putchar 0x91
 
-load_next_stage:
+load_the_kernel:
   call initialize_isofs_utilities
   ; a half
   putchar 0xab
 
-  mov si, next_stage
+  mov si, kernel_path
   call find_and_load_file
+
+  mov esi, 0x10000
+  mov edx, dword [esi+0x18]
+  mov dword [kernel_entry], edx
+
   ; and beyond!
   putchar 0xec
 
@@ -102,6 +85,21 @@ load_and_parse_elf:
   call dispatch_elf_sections
   ; delta
   putchar 0xeb
+
+  call detect_memory
+  ; alpha
+  putchar 0xe0
+
+load_initrd:
+  mov si, initrd_path
+  call find_and_load_file
+  ; phi!
+  putchar 0xe8
+
+initrd_loaded:
+  ; set the `bootinfo' field
+  mov dword [initrd_addr], 0x10000
+  mov dword [initrd_size], eax
 
 bye_real_mode:
   ; a lovely heart
@@ -126,8 +124,12 @@ protected_mode:
   ; is that necessary?
   mov esp, 0x5c00
 
+  ; the parameter for the kernel's C function
+  mov eax, bootinfo
+  push eax
+
   ; farewell!
-  mov edx, [0x10000 + 0x18]
+  mov edx, dword [kernel_entry]
   jmp edx
 
 hang:
@@ -137,7 +139,25 @@ hang:
 ; the device's number from which we've booted
 bootdrv: db 0
 ; name/location of the kernel
-next_stage: db "/BOOT/KERNEL/KERNEL.BIN", 0
+kernel_path: db "/BOOT/KERNEL/KERNEL.BIN", 0
+; kernel's entry point
+kernel_entry: dd 0xdeadbeef
+; and of the initrd
+initrd_path: db "/BOOT/KERNEL/INITRD.BIN", 0
+
+;
+; the `struct bootinfo' definition
+; the field order and sizes must match with those in the declaration
+; of `struct bootinfo' (found in kernel/common.h)
+;
+bootinfo:
+; {{{
+initrd_addr: dd 0xffffffff
+initrd_size: dd 0xffffffff
+mem_avail: dd 0x0
+; meh..
+memory_map: times 24 * 16 db 0 ; max 16 entries (is it enough?)
+; }}}
 
 ;
 ; The Global Descriptor Table

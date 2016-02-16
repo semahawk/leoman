@@ -179,7 +179,6 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 
 void kmain(struct kern_bootinfo *bootinfo)
 {
-  for (;;);
   adjust_the_memory_map(bootinfo);
   /* set up the printing utilities */
   vga_init();
@@ -218,26 +217,13 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf(" physical memory:           0x%x\n", pm);
   vga_printf(" initrd loaded to:          0x%x\n", bootinfo->initrd_addr);
   vga_printf(" initrd's size:             0x%x\n", bootinfo->initrd_size);
-  /*vga_printf(" memory map:\n");*/
-  /*vga_printf(" base address         length              type\n");*/
-  /*vga_printf(" ---------------------------------------------\n");*/
-
-  /*for (int i = 0; i < 64; i++){*/
-    /*struct memory_map_entry *e = &bootinfo->memory_map[i];*/
-    /*if ((e->len_low | e->len_high) == 0) continue;*/
-    /*vga_printf(" 0x%x%x - 0x%x%x     %d\n", e->base_high, e->base_low, e->len_high, e->len_low, e->type);*/
-  /*}*/
 
   vga_printf("\n");
 
-  /*struct sar_file *initrdtestfile = sar_lookup(bootinfo->initrd_addr, "initrdtestfile");*/
-  /*unsigned size = initrdtestfile->size;*/
-  void *initrdtestfile_cont = sar_get_contents(bootinfo->initrd_addr, "initrdtestfile");
+  void *initrdtestfile = sar_get_contents(bootinfo->initrd_addr, "initrd.o");
 
-  /*vga_printf(" initrdtestfile's contents' address: 0x%x\n", initrdtestfile_cont);*/
-  /*vga_printf(" initrdtestfile's size:              0x%x\n", size);*/
-
-  elf_execute(initrdtestfile_cont);
+  if (initrdtestfile)
+    elf_execute(initrdtestfile);
 
   /* processes will start running right now */
   proc_schedule_without_irq();

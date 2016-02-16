@@ -45,7 +45,7 @@ struct kern_bootinfo {
     uint32_t len_high;
     uint32_t type;
     uint32_t acpi_ext;
-  } __PACKED memory_map[64];
+  } __PACKED memory_map[16];
 } __PACKED;
 
 /* preserved processor's state

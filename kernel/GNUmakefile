@@ -32,7 +32,7 @@ OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 INITRD_SRCS = \
 	initrd.c \
 
-INITRD_OBJS = ${INITRD_SRCS:.c=}
+INITRD_OBJS = ${INITRD_SRCS:.c=.o}
 
 all: kernel initrd
 

@@ -57,10 +57,11 @@ dispatch_elf_sections:
 
 .load_next_program_header:
   pop cx
-  ; point esi at the next program header
+  ; point ebx at the next program header
   ; (offset 0x2a contains program header's size)
   xor edx, edx
-  mov dx, word [0x10000 + 0x2a]
+  mov esi, 0x10000
+  mov dx, word [esi + 0x2a]
   add ebx, edx
   ; no 'loop' because the jump address is too far away
   dec cx

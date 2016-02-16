@@ -54,7 +54,6 @@ page_table_897:
   times 512 dq 0
 
 _start:
-jmp $
   ; set up the #896 page table
   mov eax, 0x0 ; counter
   mov ebx, 0x0 ; address

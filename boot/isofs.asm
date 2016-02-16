@@ -88,6 +88,7 @@ initialize_isofs_utilities:
   ; spade
   putchar 0x06
 
+load_root_directory:
   ; load the root directory '/'
   ; at offset 156(into the PVD)+2(into the directory structure) is the LBA of
   ; the root's directory extent - load it into 0x8c00-0xf000
@@ -103,6 +104,8 @@ initialize_isofs_utilities:
 fname_ptr: dd 0
 
 find_and_load_file:
+  call load_root_directory
+
   mov [fname_ptr], si
   cmp byte [si], '/'
   jne .dont_skip_leading_slash
@@ -180,6 +183,7 @@ find_and_load_file:
   div cx ; is the sector size fixed?
   mov dx, ax
   mov cx, [di+2]
+  mov ax, [di+10]
   call load_file
   ret
 
