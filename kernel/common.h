@@ -59,7 +59,9 @@ struct intregs {
   /* interrupt number and error code */
   uint32_t num, err;
   /* pushed by the processor automatically */
-  uint32_t eip, cs, eflags, useresp, ss, meh;
+  uint32_t eip, cs, eflags;
+  /*   only when crossing rings (eg. user to kernel) */
+  uint32_t useresp, ss;
 };
 
 /* provided by the linker */

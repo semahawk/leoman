@@ -1,11 +1,11 @@
 OUTPUT_FORMAT("elf32-i386")
-ENTRY(_start)
+ENTRY(main)
 
 SECTIONS
 {
   . = 0x30000000;
 
-  .text : 
+  .text : AT(ADDR(.text))
   {
     text = .;
     *(.text)
@@ -13,14 +13,14 @@ SECTIONS
     . = ALIGN(4K);
   }
 
-  .data :
+  .data : AT(ADDR(.data))
   {
     data = .;
     *(.data)
     . = ALIGN(4K);
   }
 
-  .bss :
+  .bss : AT(ADDR(.bss))
   {
     bss = .;
     *(COMMON)

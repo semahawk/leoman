@@ -44,10 +44,10 @@ irq_common_stub:
   mov fs, ax
   mov gs, ax
 
-  mov ecx, esp
-  push ecx
-  mov ecx, irq_handler
-  call ecx
+  mov eax, esp
+  push eax
+  mov eax, irq_handler
+  call eax ; a special call, preserves the 'eip' register
   pop ecx
 
   pop gs ; restore the data segments
@@ -72,12 +72,11 @@ int_common_stub:
   mov fs, ax
   mov gs, ax
 
-  mov ecx, esp
-  push ecx
-;hlt
-  mov ecx, int_handler
-  call ecx
-  pop ecx
+  mov eax, esp
+  push eax
+  mov eax, int_handler
+  call eax ; a special call, preserves the 'eip' register
+  pop eax
 
   pop gs ; restore the data segments
   pop fs
@@ -93,9 +92,8 @@ int_common_stub:
 %macro isr_noerr 1
   global isr%1
   isr%1:
-    cli
-    push byte 0 ; dummy error code
-    push byte %1
+    push dword 0xbadc0de ; dummy error code
+    push dword %1
     jmp isr_common_stub
 %endmacro
 
@@ -103,8 +101,7 @@ int_common_stub:
 %macro isr_err 1
   global isr%1
   isr%1:
-    cli
-    push byte %1
+    push dword %1
     jmp isr_common_stub
 %endmacro
 
@@ -113,9 +110,8 @@ int_common_stub:
 %macro irq 2
   global irq%1
   irq%1:
-    cli
-    push byte 0 ; dummy error code
-    push byte %2 ; num
+    push dword 0xbadc0de ; dummy error code
+    push dword %2 ; num
     jmp irq_common_stub
 %endmacro
 
@@ -124,8 +120,7 @@ int_common_stub:
 %macro swint 1
   global int%1
   int%1:
-    cli
-    push dword 0 ; dummy error code
+    push dword 0x0badc0de ; dummy error code
     push dword %1 ; num
     jmp int_common_stub
 %endmacro

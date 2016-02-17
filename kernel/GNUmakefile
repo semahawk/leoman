@@ -32,7 +32,7 @@ OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 INITRD_SRCS = \
 	initrd.c \
 
-INITRD_OBJS = ${INITRD_SRCS:.c=.o}
+INITRD_OBJS = ${INITRD_SRCS:.c=.initrd}
 
 all: kernel initrd
 
@@ -45,11 +45,10 @@ all: kernel initrd
 kernel: $(OBJS)
 	$(CC) $(CFLAGS) -T linker.ld -o $@ $(OBJS)
 
-# file.c -> file
+# file.c -> file.o
 # initrd stuff
-%: %.c
-	$(CC) -c $(CFLAGS) $< -o $@.o
-	$(CC) $(CFLAGS) -T initrd.ld -o $@ $@.o
+%.initrd: %.c
+	$(CC) $(CFLAGS) -T initrd.ld -o $@ $<
 
 initrd: tools $(INITRD_OBJS) initrd.ld
 	../tools/sar c $@ $(INITRD_OBJS)

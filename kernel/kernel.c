@@ -199,7 +199,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* part one of processes init */
   proc_earlyinit();
 
-  sti();
+  cli();
 
   /* map the initrd file */
   map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);
@@ -220,16 +220,17 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("\n");
 
-  void *initrdtestfile = sar_get_contents(bootinfo->initrd_addr, "initrd.o");
+  void *initrdtestfile = sar_get_contents(bootinfo->initrd_addr, "initrd.initrd");
 
   if (initrdtestfile)
     elf_execute(initrdtestfile);
 
   /* processes will start running right now */
-  proc_schedule_without_irq();
+  proc_lateinit();
 
   /* should never get here */
-  for (;;);
+  for (;;)
+    halt();
 }
 
 #ifdef __cplusplus

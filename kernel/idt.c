@@ -194,7 +194,7 @@ void isr_handler(struct intregs *regs)
       handler(regs);
     } else {
       /* if not found, display a upper case S on red background */
-      *((uint16_t *)0xb8000) = 0x0c53;
+      *((uint16_t *)0xb8000) = 0xc053;
     }
   }
 }
@@ -208,8 +208,8 @@ void irq_handler(struct intregs *regs)
     if (handler){
       handler(regs);
     } else {
-      /* if not found, display a upper case Q on red background */
-      *((uint16_t *)0xb8002) = 0x0c51;
+      /* if not found, display an upper case Q on red background */
+      *((uint16_t *)0xb8002) = 0xc051;
     }
   }
 
@@ -252,7 +252,7 @@ void int_handler(struct intregs *regs)
       handler(regs);
     } else {
       /* if not found, display a upper case N on red background */
-      *((uint16_t *)0xb8004) = 0x0c4e;
+      *((uint16_t *)0xb8004) = 0xc04e;
     }
   }
 }

@@ -54,9 +54,20 @@ static uint8_t layout[][2] =
   { 0x0, 0x0   }, { ' ', ' '   }, { 0x0, 0x0   }, { 0x0, 0x0   }
 };
 
+static inline uint8_t kbd_get_scancode(void)
+{
+  uint8_t c;
+
+  do {
+    c = inb(0x64);
+  } while ((c & 0x1) == 0);
+
+  return inb(0x60);
+}
+
 static void kbd_handler(struct intregs *regs)
 {
-  uint8_t scancode = inb(0x60);
+  uint8_t scancode = kbd_get_scancode();
   uint8_t mask = MASK_NORMAL;
 
   /* see if Shift was pressed */
@@ -72,11 +83,6 @@ static void kbd_handler(struct intregs *regs)
   /* don't bother with break codes */
   if (!(scancode & 0x80)){
     key_buffer = layout[scancode][mask];
-
-    /* halt the system upon clicking 'h', mwahah */
-    if (key_buffer == 'h'){
-      __asm volatile("cli\nhlt");
-    }
 
     vga_putch(key_buffer);
   }

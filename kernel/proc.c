@@ -45,13 +45,54 @@ static struct proc *find_next_proc(enum proc_state state)
   return idle;
 }
 
-void proc_idle(void)
+void proc_idle1(void)
 {
+  /*static int i;*/
+
   while (1){
-    vga_puts("i");
+    vga_putch('1');
 
     /* wait a bit not to flood the screen */
-    for (int i = 0; i < 2000000; i++)
+    for (int i = 0; i < 200000; i++)
+      ;
+  }
+}
+
+void proc_idle2(void)
+{
+  /*static int i;*/
+
+  while (1){
+    vga_puts("2");
+
+    /* wait a bit not to flood the screen */
+    for (int i = 0; i < 200000; i++)
+      ;
+  }
+}
+
+void proc_idle3(void)
+{
+  /*static int i;*/
+
+  while (1){
+    vga_puts("3");
+
+    /* wait a bit not to flood the screen */
+    for (int i = 0; i < 200000; i++)
+      ;
+  }
+}
+
+void proc_idle4(void)
+{
+  /*static int i;*/
+
+  while (1){
+    vga_puts("4");
+
+    /* wait a bit not to flood the screen */
+    for (int i = 0; i < 200000; i++)
       ;
   }
 }
@@ -65,10 +106,7 @@ void proc_idle(void)
  */
 void proc_schedule_without_irq(void)
 {
-  /*vga_printf("w/o: current_proc is %s (ss %x)\n", current_proc->name, current_proc->trapframe.ss);*/
-
   /* well that was simple */
-  /*halt();*/
   __asm volatile("int $0x7f");
 }
 
@@ -76,45 +114,15 @@ void proc_schedule_after_irq(struct intregs *cpu_state)
 {
   struct proc *next_proc;
 
-  /*cli();*/
   /* find a new process that could be run */
-  /*next_proc = find_next_proc(PROC_SLEEPING);*/
-  /*vga_printf("current: %x, next: %s\n", current_proc, next_proc->name);*/
-  /*vga_printf("cpu_state->ss: %x, eax: %x\n", cpu_state->meh, cpu_state->eax);*/
-
-  /*if (current_proc){*/
-    /*current_proc->trapframe = *cpu_state;*/
-  /*}*/
-  /*halt();*/
-
-#if 0
-
-  vga_printf("aft: current_proc is %s (ss %x)\n", current_proc->name, current_proc->trapframe.ss);
-
-  /*halt();*/
-
-  /*vga_printf("current %s, next %s\n", current_proc->name, next_proc->name);*/
+  next_proc = find_next_proc(PROC_SLEEPING);
 
   if (current_proc == next_proc)
     return;
 
-  /* save the current processor's state */
-  /*vga_printf("0x%x before ss: 0x%x\n", (uint32_t)current_proc, current_proc->trapframe.ss);*/
+  /* save processor's current state */
   current_proc->trapframe = *cpu_state;
-#if 0
-  vga_row = vga_col = 0;
-  vga_printf(" eax: %x   ds: %x\n", cpu_state->eax, cpu_state->ds);
-  vga_printf(" ebx: %x   es: %x\n", cpu_state->ebx, cpu_state->es);
-  vga_printf(" ecx: %x   fs: %x\n", cpu_state->ecx, cpu_state->fs);
-  vga_printf(" edx: %x   gs: %x\n", cpu_state->edx, cpu_state->gs);
-  vga_printf(" esi: %x   cs: %x\n", cpu_state->esi, cpu_state->cs);
-  vga_printf(" edi: %x   ss: %x\n", cpu_state->edi, cpu_state->ss);
-  vga_printf(" eip: %x  err: %x\n", cpu_state->eip, cpu_state->err);
-  vga_printf(" esp: %x  num: %x\n", cpu_state->esp, cpu_state->num);
-  vga_printf(" ebp: %x  flg: %x\n", cpu_state->ebp, cpu_state->eflags);
-  vga_printf("\n");
-#endif
-  vga_printf("%s: after ss: 0x%x\n", current_proc->name, current_proc->trapframe.ss);
+
   /* put it to sleep */
   current_proc->state = PROC_SLEEPING;
 
@@ -122,16 +130,22 @@ void proc_schedule_after_irq(struct intregs *cpu_state)
   current_proc = next_proc;
   current_proc->state = PROC_RUNNING;
 
-  /* TODO restore process' registers */
-  /*halt();*/
-  for (int i = 0; i < 700000000; i++)
-    ;
-
   __asm volatile("movw %[ss], %%ax\n"
                  "movw %%ax, %%ds\n"
                  "movw %%ax, %%es\n"
                  "movw %%ax, %%fs\n"
                  "movw %%ax, %%gs\n"
+
+                 "movl %[eax], %%eax\n"
+                 "movl %[ebx], %%ebx\n"
+                 "movl %[ecx], %%ecx\n"
+                 "movl %[edx], %%edx\n"
+                 "movl %[esi], %%esi\n"
+                 "movl %[edi], %%edi\n"
+
+                 /* send EOI to master PIC */
+                 "movb $0x20, %%al\n"
+                 "outb %%al, $0x20\n"
 
                  "pushl %[ss]\n"
                  "pushl %[ustack]\n"
@@ -139,24 +153,18 @@ void proc_schedule_after_irq(struct intregs *cpu_state)
                  "pushl %[cs]\n"
                  "pushl %[eip]\n"
 
-                 /* send EOI to master PIC */
-                 "movb $0x20, %%al\n"
-                 "outb %%al, $0x20\n"
-#if 0
-                 "cli\n"
-                 "hlt\n"
-#endif
                  "iretl"
-              :: [ss]     "g"(current_proc->trapframe.ss),
+              :: [eax]    "g"(current_proc->trapframe.eax),
+                 [ebx]    "g"(current_proc->trapframe.ebx),
+                 [ecx]    "g"(current_proc->trapframe.ecx),
+                 [edx]    "g"(current_proc->trapframe.edx),
+                 [esi]    "g"(current_proc->trapframe.esi),
+                 [edi]    "g"(current_proc->trapframe.edi),
+                 [ss]     "g"(current_proc->trapframe.ss),
                  [ustack] "g"(current_proc->trapframe.esp),
                  [flags]  "g"(current_proc->trapframe.eflags),
                  [cs]     "g"(current_proc->trapframe.cs),
                  [eip]    "g"(current_proc->trapframe.eip));
-
-  /* send an EOI to the master PIC */
-  /*__asm volatile("movb %0, %%al" : : "N"(0x20));*/
-  /*__asm volatile("outb %%al, %0" : : "N"(0x20));*/
-#endif
 }
 
 struct proc *proc_new(const char *name, void *entry)
@@ -178,12 +186,17 @@ struct proc *proc_new(const char *name, void *entry)
   memset(&proc->trapframe, 0x0, sizeof(proc->trapframe));
 
   proc->trapframe.eip = (uint32_t)entry;
-  proc->trapframe.eflags = 0x200; /* interrupts enabled */
+  proc->trapframe.eflags = 0x202; /* interrupts enabled */
   proc->trapframe.esp = (uint32_t)stack;
   proc->trapframe.ds = SEG_UDATA;
   proc->trapframe.ss = SEG_UDATA;
   proc->trapframe.cs = SEG_UCODE;
   proc->trapframe.eax = 0xdeadbeef;
+  proc->trapframe.ebx = 0x0badc0de;
+  proc->trapframe.ecx = 0xfee1dead;
+  proc->trapframe.edx = 0xdee9c0de;
+  proc->trapframe.esi = 0xfacefeed;
+  proc->trapframe.edi = 0x00bada55;
 
   sti();
 
@@ -197,55 +210,41 @@ void proc_exec(void)
 
   current_proc->state = PROC_RUNNING;
 
-  /*vga_printf("current_proc %s\n", current_proc->name);*/
-  /*vga_printf(" ss: 0x%x\n", current_proc->trapframe.ss);*/
-  /*vga_printf("esp: 0x%x\n", current_proc->trapframe.esp);*/
-  /*vga_printf("flg: 0x%x\n", current_proc->trapframe.eflags);*/
-  /*vga_printf(" cs: 0x%x\n", current_proc->trapframe.cs);*/
-  /*vga_printf("eip: 0x%x\n", current_proc->trapframe.eip);*/
-
-  /*__asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe.esp));*/
-
   __asm volatile("movw %[ss], %%ax\n"
                  "movw %%ax, %%ds\n"
                  "movw %%ax, %%es\n"
                  "movw %%ax, %%fs\n"
                  "movw %%ax, %%gs\n"
 
+                 "movl %[eax], %%eax\n"
+                 "movl %[ebx], %%ebx\n"
+                 "movl %[ecx], %%ecx\n"
+                 "movl %[edx], %%edx\n"
+                 "movl %[esi], %%esi\n"
+                 "movl %[edi], %%edi\n"
+
+                 /* send EOI to master PIC */
+                 "movb $0x20, %%al\n"
+                 "outb %%al, $0x20\n"
+
                  "pushl %[ss]\n"
                  "pushl %[ustack]\n"
                  "pushl %[flags]\n"
                  "pushl %[cs]\n"
                  "pushl %[eip]\n"
-#if 0
-                 "cli\n"
-                 "hlt\n"
-#endif
+
                  "iretl"
-              :: [ss]     "g"(current_proc->trapframe.ss),
+              :: [eax]    "g"(current_proc->trapframe.eax),
+                 [ebx]    "g"(current_proc->trapframe.ebx),
+                 [ecx]    "g"(current_proc->trapframe.ecx),
+                 [edx]    "g"(current_proc->trapframe.edx),
+                 [esi]    "g"(current_proc->trapframe.esi),
+                 [edi]    "g"(current_proc->trapframe.edi),
+                 [ss]     "g"(current_proc->trapframe.ss),
                  [ustack] "g"(current_proc->trapframe.esp),
                  [flags]  "g"(current_proc->trapframe.eflags),
                  [cs]     "g"(current_proc->trapframe.cs),
                  [eip]    "g"(current_proc->trapframe.eip));
-
-  /*halt();*/
-
-#if 0
-  /* pop the current process's data segment registers back to the CPU */
-  __asm volatile("pop %gs");
-  __asm volatile("pop %fs");
-  __asm volatile("pop %es");
-  __asm volatile("pop %ds");
-
-  /* all the general registers */
-  __asm volatile("popa");
-
-  /* skip over the `err' and `num' */
-  __asm volatile("add $8, %esp");
-
-  /* hello current process :) */
-  __asm volatile("iret");
-#endif
   /* }}} */
 }
 
@@ -261,9 +260,12 @@ void proc_earlyinit(void)
     procs[i].trapframe.esp = 0x0;
   }
 
-  idle = proc_new("idle", proc_idle);
+  current_proc = idle = proc_new("idle1", proc_idle1);
+  proc_new("idle2", proc_idle2);
+  proc_new("idle3", proc_idle3);
+  proc_new("idle4", proc_idle4);
 
-  idt_set_gate(0x7f, int127, 0x8, 0x8e);
+  idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
   sti();
@@ -271,7 +273,7 @@ void proc_earlyinit(void)
 
 void proc_lateinit(void)
 {
-  /*proc_schedule_without_irq();*/
+  proc_exec();
 }
 
 /*
