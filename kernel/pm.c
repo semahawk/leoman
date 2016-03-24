@@ -11,30 +11,33 @@
  */
 
 #include "common.h"
+#include "pm.h"
 #include "vm.h"
+#include "vga.h"
 
-/* the byte map */
-static  uint8_t *page_bmap;
-static uint32_t  page_bmap_num;
-static uint32_t  page_bmap_size;
-static  uint8_t *page_bmap_end;
+/* the bitmap */
+static uint32_t pm_bitmap[PM_BITMAP_NMEMB];
+/* the physical memory manager will start handing out pages starting from this
+ * address */
+static uint32_t *pm_page_pool;
 
-void *palloc(void)
+void *pm_alloc(void)
 {
   void *page;
-  int i;
 
-  /* traverse the byte map */
-  for (i = 0; i < page_bmap_num; i++){
-    /* see which byte is 'free', indicating a free, unused page */
-    if (page_bmap[i] == 0){
-      /* found a free page */
-      /* calculate it's address */
-      page = page_bmap_end + i * PAGE_SIZE;
-      /* map it */
-      map_page((void *)v2p(page), page, PTE_W);
-      /* mark it 'used' */
-      page_bmap[i] = 1;
+  /* traverse the bitmap */
+  for (unsigned idx = 0; idx < sizeof(pm_bitmap) / sizeof(*pm_bitmap); idx++){
+    /* if it's not all ones then at least one bit is zero */
+    if (pm_bitmap[idx] != (uint32_t)-1){
+      for (unsigned bit = 0; bit < sizeof(*pm_bitmap) * 8; bit++){
+        if (!(pm_bitmap[idx] & (1 << bit))){
+          /* calculate the page's address */
+          page = (void *)((uint32_t)pm_page_pool + ((uint32_t)((idx * sizeof(*pm_bitmap) * 8) + bit) * PAGE_SIZE));
+          /* set the bit - mark the page used */
+          pm_bitmap[idx] |= 1 << bit;
+          break;
+        }
+      }
 
       return page;
     }
@@ -43,45 +46,40 @@ void *palloc(void)
   return NULL;
 }
 
-void pfree(void *addr)
+void pm_free(void *addr)
 {
-  /* page's index in `page_bmap' */
-  size_t idx = ((uint32_t)addr - (uint32_t)page_bmap_end) / PAGE_SIZE;
+  addr = PALIGNDOWN(addr);
 
-  unmap_page(addr);
-  /* mark it 'free' / 'unused' */
-  page_bmap[idx] = 0;
+  size_t idx = ((uint32_t)addr - (uint32_t)pm_page_pool) / PAGE_SIZE / (sizeof(*pm_bitmap) * 8);
+  size_t bit = ((uint32_t)addr - (uint32_t)pm_page_pool) / PAGE_SIZE % (sizeof(*pm_bitmap) * 8);
+
+  /* unset the bit - mark the page free */
+  pm_bitmap[idx] &= ~(1 << bit);
 }
 
 /*
- * the virtual memory manager will use a bytemap
- * the bytemap will be stored at the beginning of the biggest free memory hole
- * it's size is dependent on the available memory
+ * the physical memory manager will use a bitmap
+ * the pmm will start handing out pages at the beginning of the biggest free memory hole
  *
- * assumming 4GiB of available memory, the bytemap would be only 1MiB, which is
- * nice
+ * assumming 4GiB of available memory, the bitmap would be only 128KiB, which is
+ * fairly nice
  */
 void *pm_init(struct kern_bootinfo *bootinfo)
 {
   uint32_t max_size = 0;
 
   /* find the biggest available memory area */
-  for (int i = 0; i < 64; i++){
+  for (int i = 0; i < 16; i++){
     if (bootinfo->memory_map[i].len_low >= max_size){
       max_size = bootinfo->memory_map[i].len_low;
-      page_bmap = (uint8_t *)PALIGNUP(p2v((uint32_t)bootinfo->memory_map[i].base_low));
+      pm_page_pool = (uint32_t *)PALIGNUP(p2v((uint32_t)bootinfo->memory_map[i].base_low));
     }
   }
 
-  page_bmap_num = max_size / PAGE_SIZE;
-  page_bmap_size = (uint32_t)PALIGNUP(page_bmap_num);
-  page_bmap_end = page_bmap + page_bmap_size;
+  /* zero-out the bitmap */
+  memset(pm_bitmap, 0x0, sizeof(pm_bitmap));
 
-  map_pages((void *)v2p(page_bmap), page_bmap, PTE_W, page_bmap_size);
-  /* zero-out the bytemap */
-  memset(page_bmap, 0x0, page_bmap_size);
-
-  return (void *)v2p(page_bmap);
+  return (void *)v2p(pm_page_pool);
 }
 
 /*

@@ -15,8 +15,12 @@
 
 #include "common.h"
 
-void *palloc(void);
-void  pfree(void *);
+/* 32K of uint32_t's because 1 bit stands for one page; 32 bits in a uint32_t
+ * times the page size of 4096, times 32K gives 4GiB */
+#define PM_BITMAP_NMEMB 32 * 1024
+
+void *pm_alloc(void);
+void  pm_free(void *);
 void *pm_init(struct kern_bootinfo *);
 
 #endif /* PM_H */

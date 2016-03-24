@@ -172,7 +172,7 @@ struct proc *proc_new(const char *name, void *entry)
   cli();
 
   struct proc *proc = find_next_proc(PROC_UNUSED);
-  uint32_t *stack = palloc() + PAGE_SIZE;
+  uint32_t *stack = pm_alloc() + PAGE_SIZE;
 
   proc->pid   = next_pid++;
   proc->state = PROC_SLEEPING;

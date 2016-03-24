@@ -23,7 +23,7 @@ static uint32_t *kernel_ptables_end;
 
 uint32_t *new_pdir(void)
 {
-  uint32_t *pdir = palloc();
+  uint32_t *pdir = pm_alloc();
 
   if (!pdir)
     return NULL;
