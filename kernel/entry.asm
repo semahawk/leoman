@@ -29,20 +29,21 @@ page_directory:
   dd page_table_896 + 3
   dd page_table_897 + 3
   ; fill the remainder of PDEs
-  times (1024 - 896 - 2) dd 0
+  times (1024 - 896 - 3) dd 0
+  dd page_table_1023 + 3
 
 ; the first page table is also computable at compile time
-; it will identity-map the first 1MiB+20KiB of memory
+; it will identity-map the first 1MiB+24KiB of memory
 ; (BIOS stuff plus the .preamble section)
 page_table_0:
 %assign addr 0x0
-%rep 261
+%rep 262
   ; attributes: supervisor level, read + write, present
   dd addr | 3
   %assign addr addr + 4096
 %endrep
   ; fill the remainder of the PTEs
-  times (1024 - 261) dd 0
+  times (1024 - 262) dd 0
 
 ; this, sadly, can't be computed at compile time (or can it?)
 page_table_896:
@@ -51,6 +52,9 @@ page_table_896:
 
 page_table_897:
   ; that's also 4KiB
+  times 512 dq 0
+
+page_table_1023:
   times 512 dq 0
 
 _start:
@@ -84,6 +88,11 @@ _start:
     je .end_897
     jmp .fill_table_897
   .end_897:
+
+  ; map the page directory onto itself at 0xfffff000
+  mov eax, page_directory
+  or  eax, 3
+  mov dword [page_table_1023 + 1023 * 4], eax
 
   ; enable paging
   mov eax, page_directory
