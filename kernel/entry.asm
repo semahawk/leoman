@@ -89,6 +89,16 @@ _start:
     jmp .fill_table_897
   .end_897:
 
+  ; map the page tables onto themselves starting at 0xffc00000
+  mov eax, page_table_0
+  or  eax, 3
+  mov dword [page_table_1023 + 0 * 4], eax
+  mov eax, page_table_896
+  or  eax, 3
+  mov dword [page_table_1023 + 896 * 4], eax
+  mov eax, page_table_897
+  or  eax, 3
+  mov dword [page_table_1023 + 897 * 4], eax
   ; map the page directory onto itself at 0xfffff000
   mov eax, page_directory
   or  eax, 3
