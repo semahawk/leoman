@@ -39,7 +39,7 @@ void *pm_alloc(void)
         }
       }
 
-      return page;
+      return (void *)v2p(page);
     }
   }
 

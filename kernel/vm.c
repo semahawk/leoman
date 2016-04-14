@@ -17,9 +17,8 @@
 #include "vm.h"
 
 /* kernel page directory */
-       uint32_t *kernel_pdir;
-static uint32_t *kernel_pdir_end;
-static uint32_t *kernel_ptables_end;
+uint32_t *kernel_pdir  = KERN_PDIR_ADDR;
+uint32_t *kernel_ptabs = KERN_PTABS_ADDR;
 
 uint32_t *new_pdir(void)
 {
@@ -41,15 +40,26 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
   paddr = PALIGNDOWN(paddr);
   vaddr = PALIGNDOWN(vaddr);
 
-  uint32_t pdir_idx = (uint32_t)vaddr >> 22;
-  uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
+  uint32_t *pdir = KERN_PDIR_ADDR;
+  uint32_t *ptab = ((uint32_t *)KERN_PTABS_ADDR) + (0x400 * vm_pdir_idx(vaddr));
 
-  uint32_t *pdir = kernel_pdir;
-  uint32_t *ptab = kernel_pdir_end + pdir_idx * KiB(1);
+  if (pdir[vm_pdir_idx(vaddr)] & PDE_P){
+    /* the corresponding page table exists */
+    if (ptab[vm_ptab_idx(vaddr)] & PTE_P){
+      /* page is already mapped */
+      return;
+    } else {
+      /* page isn't mapped */
+      ptab[vm_ptab_idx(vaddr)] = (uint32_t)paddr | PTE_P | PTE_W | flags;
+    }
+  } else {
+    /* the page table doesn't exist */
+    uint32_t *new_ptab = pm_alloc();
 
-  pdir[pdir_idx] |= PDE_P;
-  ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTE_P
-    /* TEMPORARY MEASURE */ | PTE_U;
+    pdir[vm_pdir_idx(vaddr)] = (uint32_t)new_ptab | PDE_P | PDE_W | flags;
+    vm_flush_page(&pdir[vm_pdir_idx(vaddr)]);
+    ptab[vm_ptab_idx(vaddr)] = (uint32_t)paddr | PTE_P | PTE_W | flags;
+  }
 }
 
 /*
@@ -59,12 +69,10 @@ void unmap_page(void *vaddr)
 {
   vaddr = PALIGNDOWN(vaddr);
 
-  uint32_t pdir_idx = (uint32_t)vaddr >> 22;
-  uint32_t ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
+  uint32_t *pdir = KERN_PDIR_ADDR;
+  uint32_t *ptab = ((uint32_t *)KERN_PTABS_ADDR) + (0x400 * vm_pdir_idx(vaddr));
 
-  uint32_t *ptab = kernel_pdir_end + pdir_idx * KiB(1);
-
-  ptab[ptab_idx] = 0x0;
+  ptab[vm_ptab_idx(vaddr)] = 0x0;
 }
 
 /*
@@ -78,22 +86,11 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
   paddr = PALIGNDOWN(paddr);
   vaddr = PALIGNDOWN(vaddr);
 
-  uint32_t pdir_idx;
-  uint32_t ptab_idx;
-
-  uint32_t *pdir = kernel_pdir;
-  uint32_t *ptab;
-
+  /* the last bit is to map a sufficent number of pages */
   unsigned npages = sz / PAGE_SIZE + (sz % PAGE_SIZE > 0);
 
   for (int i = 0; i < npages; i++){
-    pdir_idx = (uint32_t)vaddr >> 22;
-    ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
-
-    ptab = kernel_pdir_end + pdir_idx * KiB(1);
-
-    pdir[pdir_idx] |= PDE_P;
-    ptab[ptab_idx] = ((uint32_t)paddr) | (flags & 0xfff) | PTE_P;
+    map_page(paddr, vaddr, flags);
 
     paddr += PAGE_SIZE;
     vaddr += PAGE_SIZE;
@@ -105,49 +102,24 @@ void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
  */
 void unmap_pages(void *vaddr, unsigned sz)
 {
+  if (sz == 0)
+    return;
+
   vaddr = PALIGNDOWN(vaddr);
 
-  uint32_t pdir_idx;
-  uint32_t ptab_idx;
-
-  uint32_t *pdir = kernel_pdir;
-  uint32_t *ptab;
-
-  unsigned npages = sz / PAGE_SIZE;
+  /* the last bit is to map a sufficent number of pages */
+  unsigned npages = sz / PAGE_SIZE + (sz % PAGE_SIZE > 0);
 
   for (int i = 0; i < npages; i++){
-    pdir_idx = (uint32_t)vaddr >> 22;
-    ptab_idx = (uint32_t)vaddr >> 12 & 0x03ff;
+    unmap_page(vaddr);
 
-    ptab = kernel_pdir_end + pdir_idx * KiB(1);
-    ptab[ptab_idx] = 0x0;
     vaddr += PAGE_SIZE;
   }
 }
 
 void *vm_init(struct kern_bootinfo *bootinfo)
 {
-  /* the page directory is right after the kernel */
-  kernel_pdir = PALIGNUP((uint32_t)&kernel_start + (uint32_t)&kernel_size);
-  /* the page tables are right after the page directory */
-  /* so yeah, whole 4MiB+4KiB are reserved for kernel's paging stuff */
-  kernel_pdir_end = kernel_pdir + KiB(4);
-  kernel_ptables_end = kernel_pdir_end + MiB(4);
-
-  /* zero-out the page directory and the page tables */
-  memset(kernel_pdir, 0x0, KiB(4) + MiB(4));
-
-  for (int i = 0; i < 1024; i++)
-    kernel_pdir[i] = v2p(kernel_pdir_end + i * KiB(1)) | PDE_W
-      /* TODO FIXME that's just temporary */ | PDE_U;
-
-  /* TODO FIXME fix the user's access to the pages */
-  /* identity map the first 1 MiB of memory */
-  map_pages(0x0, 0x0, PTE_W | PTE_U, MiB(1));
-  /* map the kernel intestines to the higher half */
-  map_pages(0x0, &kernel_off, PTE_W | PTE_U, ((uint32_t)&kernel_start - (uint32_t)&kernel_off) + ((uint32_t)&kernel_size) + MiB(4) + KiB(4));
-
-  set_cr3(v2p(kernel_pdir));
+  /* TODO: map stuff */
 
   return kernel_pdir;
 }

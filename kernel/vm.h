@@ -18,6 +18,7 @@
 #include "common.h"
 
 typedef uint32_t pde_t;
+typedef uint32_t pte_t;
 
 /* the physical start of kernel's guts */
 /* note that .text might not begin exactly right here */
@@ -30,6 +31,9 @@ typedef uint32_t pde_t;
 /* shockingly, this magic works.. */
 #define PALIGNUP(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
 #define PALIGNDOWN(addr) (void *)(((uint32_t)(addr)) & ~(PAGE_SIZE - 1))
+
+#define KERN_PDIR_ADDR  ((void *)0xfffff000)
+#define KERN_PTABS_ADDR ((void *)0xffc00000)
 
 /* page directory entry attribute masks */
 #define PDE_IGNORE   (1 << 8) /* ignoreeeed */
@@ -53,13 +57,12 @@ typedef uint32_t pde_t;
 #define PTE_W        (1 << 1) /* writeable */
 #define PTE_P        (1 << 0) /* present */
 
+#define vm_pdir_idx(vaddr) ((((uint32_t)vaddr) >> 22))
+#define vm_ptab_idx(vaddr) ((((uint32_t)vaddr) >> 12) & 0x3ff)
+
 uint32_t *new_pdir(void);
 void *vm_init(struct kern_bootinfo *);
 
-/*void map_page(pde_t *, void *, void *, unsigned);*/
-/*void unmap_page(pde_t *, void *);*/
-/*void map_pages(pde_t *, void *, void *, unsigned, unsigned);*/
-/*void unmap_pages(pde_t *, void *, unsigned);*/
 void map_page(void *, void *, unsigned);
 void unmap_page(void *);
 void map_pages(void *, void *, unsigned, unsigned);
@@ -74,6 +77,11 @@ static inline void *p2v(uint32_t addr)
 static inline uint32_t v2p(void *addr)
 {
   return (uint32_t)addr - KERN_VOFF;
+}
+
+static inline void vm_flush_page(void *vaddr)
+{
+  __asm volatile("invlpg (%0)" :: "a" ((uint32_t)vaddr & 0xfffff000));
 }
 
 static inline void set_cr3(uint32_t pdir)

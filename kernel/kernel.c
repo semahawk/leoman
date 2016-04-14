@@ -182,6 +182,11 @@ void kmain(struct kern_bootinfo *bootinfo)
   adjust_the_memory_map(bootinfo);
   /* set up the printing utilities */
   vga_init();
+  /* set up the segments, kernel code and data, &c */
+  gdt_init();
+  /* install the IDT (ISRs and IRQs) */
+  idt_install();
+
   /* set up the physical memory manager thingies */
   void *pm = pm_init(bootinfo);
 
@@ -190,17 +195,12 @@ void kmain(struct kern_bootinfo *bootinfo)
     pm_alloc();
   void *meh = pm_alloc();
   vga_printf("meh: 0x%x\n", meh);
+  /* set up the virtual memory manager thingies */
+  void *vm = vm_init(bootinfo);
 
   for (;;)
     halt();
 
-  /* set up the virtual memory manager thingies */
-  void *vm = vm_init(bootinfo);
-
-  /* set up the segments, kernel code and data, &c */
-  gdt_init();
-  /* install the IDT (ISRs and IRQs) */
-  idt_install();
   /* install the keyboard */
   kbd_install();
   /* install the timer */
