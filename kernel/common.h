@@ -13,6 +13,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifndef __ASSEMBLY__
 #include <stddef.h>
 #include <stdint.h>
 
@@ -72,6 +73,7 @@ extern uint32_t kernel_phys;
 extern uint32_t kernel_off;
 
 extern uint32_t kernel_stack_top;
+#endif /* !__ASSEMBLY__ */
 
 #endif /* COMMON_H */
 

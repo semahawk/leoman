@@ -1,5 +1,7 @@
 bits 32
 
+#include <vm.h>
+
 global kernel_stack_top
 
 extern kmain
@@ -10,8 +12,6 @@ extern kernel_phys
 extern kernel_start
 extern kernel_end
 extern kernel_size
-
-%define KERNEL_VIRT_OFFSET 0xe0000000
 
 ; the stack is 16KiB
 section .stack
@@ -55,7 +55,7 @@ kernel_page_table:
 _start:
   ; insert kernel's page table into the page directory
   ; eax will hold the PDE's index
-  mov eax, KERNEL_VIRT_OFFSET
+  mov eax, KERN_VOFF
   shr eax, 22
   ; ebx will hold the page table's address
   mov ebx, kernel_page_table

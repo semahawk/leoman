@@ -13,20 +13,27 @@
 #ifndef VM_H
 #define VM_H
 
-#include <stdint.h>
-
 #include "common.h"
+
+/* the physical start of kernel's guts */
+/* note that .text might not begin exactly right here */
+#define KERN_PHYS 0x00100000
+/* the virtual offset (ie. where the kernel will be offset to in the virtual
+ * memory */
+/* this is the variable which determines it all!
+ * ...I mean, the flippin' linker uses it */
+/* NOTE: only the highest 10 bits can be set */
+/*                  shit! */
+#define KERN_VOFF 0xcac00000
+
+#define PAGE_SIZE KiB(4)
+
+#ifndef __ASSEMBLY__
+#include <stdint.h>
 
 typedef uint32_t pde_t;
 typedef uint32_t pte_t;
 
-/* the physical start of kernel's guts */
-/* note that .text might not begin exactly right here */
-#define KERN_PHYS (0x00100000)
-/* the virtual offset */
-#define KERN_VOFF (0xe0000000)
-
-#define PAGE_SIZE KiB(4)
 /* page-align the given address */
 /* shockingly, this magic works.. */
 #define PALIGNUP(addr) (void *)((((uint32_t)(addr)) + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1))
@@ -91,6 +98,7 @@ static inline void set_cr3(uint32_t pdir)
 
 /* defined in paging.c */
 extern uint32_t *page_directory;
+#endif /* !__ASSEMBLY__ */
 
 #endif /* VM_H */
 

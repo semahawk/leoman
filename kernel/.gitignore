@@ -1,6 +1,8 @@
 kernel
 initrd
 
+*.initrd
+*.cpped
 *.o
 *.i
 *.s

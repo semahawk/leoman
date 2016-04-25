@@ -37,17 +37,21 @@ INITRD_OBJS = ${INITRD_SRCS:.c=.initrd}
 all: kernel initrd
 
 %.asm.o: %.asm
-	$(AS) $(ASFLAGS) $< -o $@
+	$(CC) -Wno-invalid-pp-token -I. -D__ASSEMBLY__ -E - < $< > $<.cpped
+	$(AS) $(ASFLAGS) $<.cpped -o $@
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $<
 
-kernel: $(OBJS)
-	$(CC) $(CFLAGS) -T linker.ld -o $@ $(OBJS)
+kernel: $(OBJS) linker.ld
+	$(CC) -D__ASSEMBLY__ -I. -E - < linker.ld > linker.ld.cpped
+	@# dear kittens... get rid of the preprocessor stuff
+	sed -i 's/^#.*$$//' linker.ld.cpped
+	$(CC) $(CFLAGS) -T linker.ld.cpped -o $@ $(OBJS)
 
 # file.c -> file.o
 # initrd stuff
-%.initrd: %.c
+%.initrd: %.c initrd.ld
 	$(CC) $(CFLAGS) -T initrd.ld -o $@ $<
 
 initrd: tools $(INITRD_OBJS) initrd.ld
@@ -64,6 +68,8 @@ clean:
 	rm -f *.o
 	rm -f *.i
 	rm -f *.s
+	rm -f *.initrd
+	rm -f *.cpped
 
 distclean: clean
 	rm -f initrd
