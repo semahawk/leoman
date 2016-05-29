@@ -23,8 +23,7 @@
 /* this is the variable which determines it all!
  * ...I mean, the flippin' linker uses it */
 /* NOTE: only the highest 10 bits can be set */
-/*                  shit! */
-#define KERN_VOFF 0xcac00000
+#define KERN_VOFF 0xe0000000
 
 #define PAGE_SIZE KiB(4)
 
