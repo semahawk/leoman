@@ -176,7 +176,7 @@ struct proc *proc_new(const char *name, void *entry)
 
   proc->pid   = next_pid++;
   proc->state = PROC_SLEEPING;
-  proc->pdir  = (uint32_t *)v2p(new_pdir());
+  proc->pdir  = NULL;
   proc->memsz = PAGE_SIZE;
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
