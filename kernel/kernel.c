@@ -202,9 +202,9 @@ void kmain(struct kern_bootinfo *bootinfo)
   cli();
 
   /* map the initrd file */
-  map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);
+  /*map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);*/
   /* update the initrd's address to be the virtual one */
-  bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);
+  /*bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);*/
 
   vga_printf("\n Leoman\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
@@ -220,10 +220,10 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("\n");
 
-  void *initrdtestfile = sar_get_contents(bootinfo->initrd_addr, "initrd.initrd");
+  /*void *initrdtestfile = sar_get_contents(bootinfo->initrd_addr, "initrd.initrd");*/
 
-  if (initrdtestfile)
-    elf_execute(initrdtestfile);
+  /*if (initrdtestfile)*/
+    /*elf_execute(initrdtestfile);*/
 
   /* processes will start running right now */
   proc_lateinit();

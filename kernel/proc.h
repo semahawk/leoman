@@ -38,7 +38,7 @@ struct proc {
   uint32_t memsz;  /* memory size the process has */
 };
 
-struct proc *proc_new(const char *name, void *entry_point);
+struct proc *proc_new(const char *name, void *entry_point, bool user);
 void proc_earlyinit(void);
 void proc_lateinit(void);
 void proc_exec(void);

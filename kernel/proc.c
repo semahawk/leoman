@@ -167,7 +167,7 @@ void proc_schedule_after_irq(struct intregs *cpu_state)
                  [eip]    "g"(current_proc->trapframe.eip));
 }
 
-struct proc *proc_new(const char *name, void *entry)
+struct proc *proc_new(const char *name, void *entry, bool user)
 {
   cli();
 
@@ -188,9 +188,9 @@ struct proc *proc_new(const char *name, void *entry)
   proc->trapframe.eip = (uint32_t)entry;
   proc->trapframe.eflags = 0x202; /* interrupts enabled */
   proc->trapframe.esp = (uint32_t)stack;
-  proc->trapframe.ds = SEG_UDATA;
-  proc->trapframe.ss = SEG_UDATA;
-  proc->trapframe.cs = SEG_UCODE;
+  proc->trapframe.ds = user ? SEG_UDATA : SEG_KDATA;
+  proc->trapframe.ss = user ? SEG_UDATA : SEG_KDATA;
+  proc->trapframe.cs = user ? SEG_UDATA : SEG_KCODE;
   proc->trapframe.eax = 0xdeadbeef;
   proc->trapframe.ebx = 0x0badc0de;
   proc->trapframe.ecx = 0xfee1dead;
@@ -260,10 +260,10 @@ void proc_earlyinit(void)
     procs[i].trapframe.esp = 0x0;
   }
 
-  current_proc = idle = proc_new("idle1", proc_idle1);
-  proc_new("idle2", proc_idle2);
-  proc_new("idle3", proc_idle3);
-  proc_new("idle4", proc_idle4);
+  current_proc = idle = proc_new("idle1", proc_idle1, false);
+  proc_new("idle2", proc_idle2, false);
+  proc_new("idle3", proc_idle3, false);
+  proc_new("idle4", proc_idle4, false);
 
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);

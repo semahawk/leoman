@@ -35,7 +35,7 @@ void elf_execute(const void *file)
     }
   }
 
-  proc_new("[elf_exe]", (void *)hdr->e_entry);
+  proc_new("[elf_exe]", (void *)hdr->e_entry, true);
 }
 
 /*
