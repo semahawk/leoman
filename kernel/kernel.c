@@ -186,21 +186,10 @@ void kmain(struct kern_bootinfo *bootinfo)
   gdt_init();
   /* install the IDT (ISRs and IRQs) */
   idt_install();
-
   /* set up the physical memory manager thingies */
   void *pm = pm_init(bootinfo);
-
-  vga_printf("pmm page pool: 0x%x\n", pm);
-  for (unsigned i = 0; i < 1024; i++)
-    pm_alloc();
-  void *meh = pm_alloc();
-  vga_printf("meh: 0x%x\n", meh);
   /* set up the virtual memory manager thingies */
   void *vm = vm_init(bootinfo);
-
-  for (;;)
-    halt();
-
   /* install the keyboard */
   kbd_install();
   /* install the timer */
