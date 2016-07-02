@@ -220,12 +220,14 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("\n");
 
-  /*void *initrdtestfile = sar_get_contents(bootinfo->initrd_addr, "initrd.initrd");*/
+  void *idle_executable = sar_get_contents(bootinfo->initrd_addr, "idle.initrd");
 
-  /*if (initrdtestfile)*/
-    /*elf_execute(initrdtestfile);*/
+  if (idle_executable){
+    current_proc = idle = elf_execute(idle_executable);
+  }
 
   /* processes will start running right now */
+  /* well, not really just yet - shit's broken */
   proc_lateinit();
 
   /* should never get here */

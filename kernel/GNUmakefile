@@ -31,6 +31,7 @@ OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
 INITRD_SRCS = \
 	initrd.c \
+	idle.c
 
 INITRD_OBJS = ${INITRD_SRCS:.c=.initrd}
 

@@ -24,7 +24,8 @@
 
 static struct proc procs[NPROCS];
 static uint32_t next_pid = 0;
-static struct proc *idle = NULL;
+
+struct proc *idle = NULL;
 volatile struct proc *current_proc = NULL;
 
 static struct proc *find_next_proc(enum proc_state state)
@@ -43,58 +44,6 @@ static struct proc *find_next_proc(enum proc_state state)
 
   /* default to the idle process */
   return idle;
-}
-
-void proc_idle1(void)
-{
-  /*static int i;*/
-
-  while (1){
-    vga_putch('1');
-
-    /* wait a bit not to flood the screen */
-    for (int i = 0; i < 200000; i++)
-      ;
-  }
-}
-
-void proc_idle2(void)
-{
-  /*static int i;*/
-
-  while (1){
-    vga_puts("2");
-
-    /* wait a bit not to flood the screen */
-    for (int i = 0; i < 200000; i++)
-      ;
-  }
-}
-
-void proc_idle3(void)
-{
-  /*static int i;*/
-
-  while (1){
-    vga_puts("3");
-
-    /* wait a bit not to flood the screen */
-    for (int i = 0; i < 200000; i++)
-      ;
-  }
-}
-
-void proc_idle4(void)
-{
-  /*static int i;*/
-
-  while (1){
-    vga_puts("4");
-
-    /* wait a bit not to flood the screen */
-    for (int i = 0; i < 200000; i++)
-      ;
-  }
 }
 
 /*
@@ -260,11 +209,6 @@ void proc_earlyinit(void)
     procs[i].trapframe.esp = 0x0;
   }
 
-  current_proc = idle = proc_new("idle1", proc_idle1, false);
-  proc_new("idle2", proc_idle2, false);
-  proc_new("idle3", proc_idle3, false);
-  proc_new("idle4", proc_idle4, false);
-
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
@@ -273,7 +217,8 @@ void proc_earlyinit(void)
 
 void proc_lateinit(void)
 {
-  proc_exec();
+  /*proc_exec();*/
+  vga_printf("supposed to start executng processes with %s at 0x%x\n", current_proc->name, current_proc->trapframe.eip);
 }
 
 /*

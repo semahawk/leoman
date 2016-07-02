@@ -47,6 +47,7 @@ void proc_schedule_without_irq(void);
 void proc_schedule_after_irq(struct intregs *);
 
 /* defined in proc.c */
+extern struct proc *idle;
 extern volatile struct proc *current_proc;
 
 #endif /* PROC_H */
