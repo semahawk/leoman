@@ -30,18 +30,22 @@ struct proc {
   enum proc_state state;
   char name[MAX_PROC_NAME_LEN + 1];
 
-  /* the process' context (ie. all it's registers &c.) */
-  struct intregs trapframe;
+  struct intregs *trapframe;
+  uint32_t *kstack;
+  uint32_t *entry;
 
   /* these are not really used yet */
   uint32_t *pdir;  /* the page directory */
   uint32_t memsz;  /* memory size the process has */
+
+  /* without this padding of at least 13 bytes the VGA driver stops printing to
+   * screen */
+  unsigned char pad[13];
 };
 
 struct proc *proc_new(const char *name, void *entry_point, bool user);
 void proc_earlyinit(void);
-void proc_lateinit(void);
-void proc_exec(void);
+void proc_kickoff_first_process(void);
 
 void proc_schedule_without_irq(void);
 void proc_schedule_after_irq(struct intregs *);

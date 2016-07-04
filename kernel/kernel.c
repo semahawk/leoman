@@ -223,13 +223,15 @@ void kmain(struct kern_bootinfo *bootinfo)
   void *idle_executable = sar_get_contents(bootinfo->initrd_addr, "idle.initrd");
 
   if (idle_executable){
+    vga_printf("loading the idle process from 0x%x\n", idle_executable);
     current_proc = idle = elf_execute(idle_executable);
   }
 
   /* processes will start running right now */
   /* well, not really just yet - shit's broken */
-  proc_lateinit();
+  proc_kickoff_first_process();
 
+  vga_printf("Putting kmain into an endless loop.\n");
   /* should never get here */
   for (;;)
     halt();

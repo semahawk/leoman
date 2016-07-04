@@ -30,7 +30,7 @@ struct proc *elf_execute(const void *file)
 
       case PT_LOAD:
         /* FIXME fix user access (PTE_U) */
-        map_pages((void *)v2p((void *)file + phdr->p_offset), (void *)phdr->p_vaddr, PTE_W | PTE_U, phdr->p_memsz);
+        map_pages((void *)file + phdr->p_offset, (void *)phdr->p_vaddr, PTE_W | PTE_U, phdr->p_memsz);
         break;
     }
   }

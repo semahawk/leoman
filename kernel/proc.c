@@ -66,54 +66,9 @@ void proc_schedule_after_irq(struct intregs *cpu_state)
   /* find a new process that could be run */
   next_proc = find_next_proc(PROC_SLEEPING);
 
-  if (current_proc == next_proc)
-    return;
+  /*tss_set_esp((uint32_t)next_proc->kstack);*/
 
-  /* save processor's current state */
-  current_proc->trapframe = *cpu_state;
-
-  /* put it to sleep */
-  current_proc->state = PROC_SLEEPING;
-
-  /* 'switch' to the next process in line */
-  current_proc = next_proc;
-  current_proc->state = PROC_RUNNING;
-
-  __asm volatile("movw %[ss], %%ax\n"
-                 "movw %%ax, %%ds\n"
-                 "movw %%ax, %%es\n"
-                 "movw %%ax, %%fs\n"
-                 "movw %%ax, %%gs\n"
-
-                 "movl %[eax], %%eax\n"
-                 "movl %[ebx], %%ebx\n"
-                 "movl %[ecx], %%ecx\n"
-                 "movl %[edx], %%edx\n"
-                 "movl %[esi], %%esi\n"
-                 "movl %[edi], %%edi\n"
-
-                 /* send EOI to master PIC */
-                 "movb $0x20, %%al\n"
-                 "outb %%al, $0x20\n"
-
-                 "pushl %[ss]\n"
-                 "pushl %[ustack]\n"
-                 "pushl %[flags]\n"
-                 "pushl %[cs]\n"
-                 "pushl %[eip]\n"
-
-                 "iretl"
-              :: [eax]    "g"(current_proc->trapframe.eax),
-                 [ebx]    "g"(current_proc->trapframe.ebx),
-                 [ecx]    "g"(current_proc->trapframe.ecx),
-                 [edx]    "g"(current_proc->trapframe.edx),
-                 [esi]    "g"(current_proc->trapframe.esi),
-                 [edi]    "g"(current_proc->trapframe.edi),
-                 [ss]     "g"(current_proc->trapframe.ss),
-                 [ustack] "g"(current_proc->trapframe.esp),
-                 [flags]  "g"(current_proc->trapframe.eflags),
-                 [cs]     "g"(current_proc->trapframe.cs),
-                 [eip]    "g"(current_proc->trapframe.eip));
+  return;
 }
 
 struct proc *proc_new(const char *name, void *entry, bool user)
@@ -121,80 +76,62 @@ struct proc *proc_new(const char *name, void *entry, bool user)
   cli();
 
   struct proc *proc = find_next_proc(PROC_UNUSED);
-  uint32_t *stack = pm_alloc() + PAGE_SIZE;
+  uint32_t *stack = pm_alloc();
+
+  map_page(stack, stack, PTE_W | (user ? PTE_U : 0));
 
   proc->pid   = next_pid++;
   proc->state = PROC_SLEEPING;
   proc->pdir  = NULL;
   proc->memsz = PAGE_SIZE;
+  proc->entry = entry;
+  proc->kstack = stack;
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
   memcpy(proc->name, (char *)name, MAX_PROC_NAME_LEN);
 
-  /* clear out the trapframe */
-  memset(&proc->trapframe, 0x0, sizeof(proc->trapframe));
+  stack = (uint32_t *)((uint8_t *)(stack) + PAGE_SIZE);
 
-  proc->trapframe.eip = (uint32_t)entry;
-  proc->trapframe.eflags = 0x202; /* interrupts enabled */
-  proc->trapframe.esp = (uint32_t)stack;
-  proc->trapframe.ds = user ? SEG_UDATA : SEG_KDATA;
-  proc->trapframe.ss = user ? SEG_UDATA : SEG_KDATA;
-  proc->trapframe.cs = user ? SEG_UDATA : SEG_KCODE;
-  proc->trapframe.eax = 0xdeadbeef;
-  proc->trapframe.ebx = 0x0badc0de;
-  proc->trapframe.ecx = 0xfee1dead;
-  proc->trapframe.edx = 0xdee9c0de;
-  proc->trapframe.esi = 0xfacefeed;
-  proc->trapframe.edi = 0x00bada55;
+  *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
+  *--stack = (void *)proc->kstack + PAGE_SIZE; /* useresp */
+  *--stack = 0x202; /* eflags - interrupts enabled */
+  *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
+  *--stack = (uint32_t)entry; /* eip */
+
+  *--stack = 0xdeadbeef; /* err */
+  *--stack = 0xfeedbabe; /* num */
+
+  *--stack = 0x0; /* eax */
+  *--stack = 0x0; /* ecx */
+  *--stack = 0x0; /* edx */
+  *--stack = 0x0; /* ebx */
+  *--stack = 0x0; /* esp */
+  *--stack = 0x0; /* ebp */
+  *--stack = 0x0; /* esi */
+  *--stack = 0x0; /* edi */
+
+  *--stack = user ? SEG_UDATA : SEG_KDATA; /* ds */
+  *--stack = user ? SEG_UDATA : SEG_KDATA; /* es */
+  *--stack = user ? SEG_UDATA : SEG_KDATA; /* fs */
+  *--stack = user ? SEG_UDATA : SEG_KDATA; /* gs */
+
+  proc->trapframe = (struct intregs *)stack;
 
   sti();
 
   return proc;
 }
 
-void proc_exec(void)
+void proc_kickoff_first_process(void)
 {
-  /* {{{ */
-  cli();
-
-  current_proc->state = PROC_RUNNING;
-
-  __asm volatile("movw %[ss], %%ax\n"
-                 "movw %%ax, %%ds\n"
-                 "movw %%ax, %%es\n"
-                 "movw %%ax, %%fs\n"
-                 "movw %%ax, %%gs\n"
-
-                 "movl %[eax], %%eax\n"
-                 "movl %[ebx], %%ebx\n"
-                 "movl %[ecx], %%ecx\n"
-                 "movl %[edx], %%edx\n"
-                 "movl %[esi], %%esi\n"
-                 "movl %[edi], %%edi\n"
-
-                 /* send EOI to master PIC */
-                 "movb $0x20, %%al\n"
-                 "outb %%al, $0x20\n"
-
-                 "pushl %[ss]\n"
-                 "pushl %[ustack]\n"
-                 "pushl %[flags]\n"
-                 "pushl %[cs]\n"
-                 "pushl %[eip]\n"
-
-                 "iretl"
-              :: [eax]    "g"(current_proc->trapframe.eax),
-                 [ebx]    "g"(current_proc->trapframe.ebx),
-                 [ecx]    "g"(current_proc->trapframe.ecx),
-                 [edx]    "g"(current_proc->trapframe.edx),
-                 [esi]    "g"(current_proc->trapframe.esi),
-                 [edi]    "g"(current_proc->trapframe.edi),
-                 [ss]     "g"(current_proc->trapframe.ss),
-                 [ustack] "g"(current_proc->trapframe.esp),
-                 [flags]  "g"(current_proc->trapframe.eflags),
-                 [cs]     "g"(current_proc->trapframe.cs),
-                 [eip]    "g"(current_proc->trapframe.eip));
-  /* }}} */
+  __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
+  __asm volatile("popl %gs");
+  __asm volatile("popl %fs");
+  __asm volatile("popl %es");
+  __asm volatile("popl %ds");
+  __asm volatile("popa");
+  __asm volatile("addl $8, %esp");
+  __asm volatile("iretl");
 }
 
 void proc_earlyinit(void)
@@ -205,20 +142,12 @@ void proc_earlyinit(void)
   for (int i = 0; i < NPROCS; i++){
     procs[i].pid = -1;
     procs[i].state = PROC_UNUSED;
-    procs[i].trapframe.eip = 0x0;
-    procs[i].trapframe.esp = 0x0;
   }
 
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
   sti();
-}
-
-void proc_lateinit(void)
-{
-  /*proc_exec();*/
-  vga_printf("supposed to start executng processes with %s at 0x%x\n", current_proc->name, current_proc->trapframe.eip);
 }
 
 /*
