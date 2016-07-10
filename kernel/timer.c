@@ -22,11 +22,15 @@ static volatile int timer_ticks = 0;
 
 /* this is actually very simple: we increment the tick counter every time the
  * timer fires (by default the timer fires 18.222 times per second) */
-void timer_handler(struct intregs *r)
+struct intregs *timer_handler(struct intregs *regs)
 {
+  struct intregs *ret;
+
   timer_ticks++;
 
-  proc_schedule_after_irq(r);
+  ret = proc_schedule_after_irq(regs);
+
+  return ret;
 }
 
 void timer_wait(int ticks)

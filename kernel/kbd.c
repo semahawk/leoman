@@ -65,7 +65,7 @@ static inline uint8_t kbd_get_scancode(void)
   return inb(0x60);
 }
 
-static void kbd_handler(struct intregs *regs)
+static struct intregs *kbd_handler(struct intregs *regs)
 {
   uint8_t scancode = kbd_get_scancode();
   uint8_t mask = MASK_NORMAL;
@@ -86,6 +86,8 @@ static void kbd_handler(struct intregs *regs)
 
     vga_putch(key_buffer);
   }
+
+  return regs;
 }
 
 void kbd_install(void)

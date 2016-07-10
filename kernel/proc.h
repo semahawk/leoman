@@ -48,7 +48,7 @@ void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
 
 void proc_schedule_without_irq(void);
-void proc_schedule_after_irq(struct intregs *);
+struct intregs *proc_schedule_after_irq(struct intregs *);
 
 /* defined in proc.c */
 extern struct proc *idle;

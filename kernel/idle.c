@@ -15,7 +15,23 @@
 
 int main(void)
 {
-  for (;;);
+  static int i;
+
+  /* feel the power of nolibc! */
+  while (1){
+    char *msg = "\1";
+    int len = 1;
+
+    /* call syscall #4 (write) */
+    __asm volatile("movl %0, %%edx"::"r"(len));
+    __asm volatile("movl %0, %%ecx"::"r"(msg));
+    __asm volatile("movl $0, %%ebx":::"ebx");
+    __asm volatile("movl $4, %%eax":::"eax");
+    __asm volatile("int $0x80");
+
+    for (i = 0; i < 20000000; i++)
+      /* wait a bit */;
+  }
 }
 
 /*

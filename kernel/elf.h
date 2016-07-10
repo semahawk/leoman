@@ -61,7 +61,7 @@ struct elf_sheader {
 #define PT_NULL 0
 #define PT_LOAD 1
 
-struct proc *elf_execute(const void *);
+struct proc *elf_execute(const char *, const void *);
 
 #endif /* ELF_H */
 

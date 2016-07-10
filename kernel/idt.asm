@@ -20,7 +20,7 @@ isr_common_stub:
   push eax
   mov eax, isr_handler
   call eax
-  pop eax
+  mov esp, eax
 
   pop gs
   pop fs
@@ -48,7 +48,7 @@ irq_common_stub:
   push eax
   mov eax, irq_handler
   call eax ; a special call, preserves the 'eip' register
-  pop ecx
+  mov esp, eax
 
   pop gs ; restore the data segments
   pop fs
@@ -76,7 +76,7 @@ int_common_stub:
   push eax
   mov eax, int_handler
   call eax ; a special call, preserves the 'eip' register
-  pop eax
+  mov esp, eax
 
   pop gs ; restore the data segments
   pop fs

@@ -19,7 +19,7 @@
 #include "syscall.h"
 #include "vga.h"
 
-void syscall_handler(struct intregs *regs)
+struct intregs *syscall_handler(struct intregs *regs)
 {
   syscall_t syscall = regs->eax;
 
@@ -43,6 +43,8 @@ void syscall_handler(struct intregs *regs)
       regs->eax = 0x0badc0de;
       break;
   }
+
+  return regs;
 }
 
 void syscall_install(void)

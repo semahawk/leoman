@@ -17,7 +17,7 @@
 #include "vm.h"
 #include "proc.h"
 
-struct proc *elf_execute(const void *file)
+struct proc *elf_execute(const char *name, const void *file)
 {
   struct elf_header *hdr = (struct elf_header *)file;
   struct elf_pheader *phdr = (struct elf_pheader *)(file + hdr->e_phoff);
@@ -35,7 +35,7 @@ struct proc *elf_execute(const void *file)
     }
   }
 
-  return proc_new("[elf_exe]", (void *)hdr->e_entry, true);
+  return proc_new(name, (void *)hdr->e_entry, true);
 }
 
 /*

@@ -199,14 +199,16 @@ void isr_handler(struct intregs *regs)
   }
 }
 
-void irq_handler(struct intregs *regs)
+struct intregs *irq_handler(struct intregs *regs)
 {
+  struct intregs *ret;
+
   if (regs->num >= 32 && regs->num < 48){
     irq_handler_t handler = irq_handlers[regs->num - 32];
 
     /* launch the handler if there is any associated with the IRQ being fired */
     if (handler){
-      handler(regs);
+      ret = handler(regs);
     } else {
       /* if not found, display an upper case Q on red background */
       *((uint16_t *)0xb8002) = 0xc051;
@@ -221,6 +223,8 @@ void irq_handler(struct intregs *regs)
   /* in either case, we need to send an EOI to the master interrupt controller
    * too */
   outb(0x20, 0x20);
+
+  return ret;
 }
 
 /*

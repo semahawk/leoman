@@ -179,6 +179,8 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 
 void kmain(struct kern_bootinfo *bootinfo)
 {
+  cli();
+
   adjust_the_memory_map(bootinfo);
   /* set up the printing utilities */
   vga_init();
@@ -199,13 +201,6 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* part one of processes init */
   proc_earlyinit();
 
-  cli();
-
-  /* map the initrd file */
-  /*map_pages(bootinfo->initrd_addr, p2v((uint32_t)bootinfo->initrd_addr), PTE_W, bootinfo->initrd_size);*/
-  /* update the initrd's address to be the virtual one */
-  /*bootinfo->initrd_addr = p2v((uint32_t)bootinfo->initrd_addr);*/
-
   vga_printf("\n Leoman\n\n");
   vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
   vga_puts(" ------------------------------------------\n\n");
@@ -224,14 +219,15 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   if (idle_executable){
     vga_printf("loading the idle process from 0x%x\n", idle_executable);
-    current_proc = idle = elf_execute(idle_executable);
+    current_proc = idle = elf_execute("idle1", idle_executable);
+    current_proc = idle = elf_execute("idle2", idle_executable);
   }
 
   /* processes will start running right now */
   /* well, not really just yet - shit's broken */
   proc_kickoff_first_process();
 
-  vga_printf("Putting kmain into an endless loop.\n");
+  vga_printf("putting kmain into an endless loop (if you can see me we have a bug).\n");
   /* should never get here */
   for (;;)
     halt();

@@ -59,22 +59,29 @@ void proc_schedule_without_irq(void)
   __asm volatile("int $0x7f");
 }
 
-void proc_schedule_after_irq(struct intregs *cpu_state)
+struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
 {
+  cli();
+
   struct proc *next_proc;
+
+  if (!current_proc)
+    return cpu_state;
 
   /* find a new process that could be run */
   next_proc = find_next_proc(PROC_SLEEPING);
 
-  /*tss_set_esp((uint32_t)next_proc->kstack);*/
+  current_proc->state = PROC_SLEEPING;
 
-  return;
+  current_proc = next_proc;
+
+  vga_printf("supposedly switching to %s (eip %x, flg %x, ss %x); ", current_proc->name, current_proc->trapframe->eip, current_proc->trapframe->eflags, current_proc->trapframe->ss);
+
+  return current_proc->trapframe;
 }
 
 struct proc *proc_new(const char *name, void *entry, bool user)
 {
-  cli();
-
   struct proc *proc = find_next_proc(PROC_UNUSED);
   uint32_t *stack = pm_alloc();
 
@@ -93,7 +100,7 @@ struct proc *proc_new(const char *name, void *entry, bool user)
   stack = (uint32_t *)((uint8_t *)(stack) + PAGE_SIZE);
 
   *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
-  *--stack = (void *)proc->kstack + PAGE_SIZE; /* useresp */
+  *--stack = (uint32_t)proc->kstack + PAGE_SIZE; /* useresp */
   *--stack = 0x202; /* eflags - interrupts enabled */
   *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
   *--stack = (uint32_t)entry; /* eip */
@@ -117,13 +124,17 @@ struct proc *proc_new(const char *name, void *entry, bool user)
 
   proc->trapframe = (struct intregs *)stack;
 
-  sti();
+  vga_printf("created new proc %s (entry 0x%x, kstack 0x%x, tf 0x%x)\n", proc->name, proc->entry, proc->kstack, proc->trapframe);
 
   return proc;
 }
 
 void proc_kickoff_first_process(void)
 {
+  vga_printf("kicking off the first process (%s)\n", current_proc->name);
+
+  current_proc->state = PROC_RUNNING;
+
   __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
   __asm volatile("popl %gs");
   __asm volatile("popl %fs");
@@ -136,8 +147,6 @@ void proc_kickoff_first_process(void)
 
 void proc_earlyinit(void)
 {
-  cli();
-
   /* initialize the whole processes table to a "zero" state */
   for (int i = 0; i < NPROCS; i++){
     procs[i].pid = -1;
@@ -146,8 +155,6 @@ void proc_earlyinit(void)
 
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
-
-  sti();
 }
 
 /*
