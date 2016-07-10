@@ -30,7 +30,7 @@ S_SRC =     \
 OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
 INITRD_SRCS = \
-	initrd.c \
+	idle_other.c \
 	idle.c
 
 INITRD_OBJS = ${INITRD_SRCS:.c=.initrd}
@@ -50,10 +50,10 @@ kernel: $(OBJS) linker.ld
 	sed -i 's/^#.*$$//' linker.ld.cpped
 	$(CC) $(CFLAGS) -T linker.ld.cpped -o $@ $(OBJS)
 
-# file.c -> file.o
+# file.c -> file.initrd
 # initrd stuff
-%.initrd: %.c initrd.ld
-	$(CC) $(CFLAGS) -T initrd.ld -o $@ $<
+%.initrd: %.c %.c.ld
+	$(CC) $(CFLAGS) -T $<.ld -o $@ $<
 
 initrd: tools $(INITRD_OBJS) initrd.ld
 	../tools/sar c $@ $(INITRD_OBJS)

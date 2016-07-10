@@ -219,8 +219,14 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   if (idle_executable){
     vga_printf("loading the idle process from 0x%x\n", idle_executable);
-    current_proc = idle = elf_execute("idle1", idle_executable);
-    current_proc = idle = elf_execute("idle2", idle_executable);
+    current_proc = idle = elf_execute("idle", idle_executable);
+  }
+
+  void *idle_other_executable = sar_get_contents(bootinfo->initrd_addr, "idle_other.initrd");
+
+  if (idle_other_executable){
+    vga_printf("loading the idle_other process from 0x%x\n", idle_other_executable);
+    elf_execute("idle_other", idle_other_executable);
   }
 
   /* processes will start running right now */

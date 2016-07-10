@@ -19,7 +19,7 @@ int main(void)
 
   /* feel the power of nolibc! */
   while (1){
-    char *msg = "\1";
+    char *msg = "\2";
     int len = 1;
 
     /* call syscall #4 (write) */

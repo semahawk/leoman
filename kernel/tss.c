@@ -16,6 +16,11 @@
 
 static struct tss_entry tss;
 
+void tss_set_ss(uint32_t ss)
+{
+  tss.ss0 = ss;
+}
+
 void tss_set_esp(uint32_t esp)
 {
   tss.esp0 = esp;

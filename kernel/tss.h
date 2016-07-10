@@ -47,6 +47,7 @@ struct tss_entry {
   uint16_t iomap_base;
 } __PACKED;
 
+void tss_set_ss(uint32_t);
 void tss_set_esp(uint32_t);
 void tss_init(uint32_t, uint32_t);
 /* defined in x86.asm */

@@ -71,11 +71,13 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
   /* find a new process that could be run */
   next_proc = find_next_proc(PROC_SLEEPING);
 
+  current_proc->trapframe = cpu_state;
   current_proc->state = PROC_SLEEPING;
 
   current_proc = next_proc;
 
-  vga_printf("supposedly switching to %s (eip %x, flg %x, ss %x); ", current_proc->name, current_proc->trapframe->eip, current_proc->trapframe->eflags, current_proc->trapframe->ss);
+  tss_set_ss(SEG_KDATA);
+  tss_set_esp(current_proc->kstack);
 
   return current_proc->trapframe;
 }
@@ -101,7 +103,7 @@ struct proc *proc_new(const char *name, void *entry, bool user)
 
   *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
   *--stack = (uint32_t)proc->kstack + PAGE_SIZE; /* useresp */
-  *--stack = 0x202; /* eflags - interrupts enabled */
+  *--stack = 0x200; /* eflags - interrupts enabled */
   *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
   *--stack = (uint32_t)entry; /* eip */
 
@@ -134,6 +136,9 @@ void proc_kickoff_first_process(void)
   vga_printf("kicking off the first process (%s)\n", current_proc->name);
 
   current_proc->state = PROC_RUNNING;
+
+  tss_set_ss(SEG_KDATA);
+  tss_set_esp(current_proc->kstack);
 
   __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
   __asm volatile("popl %gs");
