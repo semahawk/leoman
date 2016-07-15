@@ -35,7 +35,7 @@ struct proc *elf_execute(const char *name, const void *file)
     }
   }
 
-  return proc_new(name, (void *)hdr->e_entry, false);
+  return proc_new(name, (void *)hdr->e_entry, true);
 }
 
 /*

@@ -94,7 +94,7 @@ struct proc *proc_new(const char *name, void *entry, bool user)
   proc->pdir  = NULL;
   proc->memsz = PAGE_SIZE;
   proc->entry = entry;
-  proc->kstack = stack;
+  proc->kstack = (uint32_t)stack + PAGE_SIZE;
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
   memcpy(proc->name, (char *)name, MAX_PROC_NAME_LEN);
@@ -102,7 +102,7 @@ struct proc *proc_new(const char *name, void *entry, bool user)
   stack = (uint32_t *)((uint8_t *)(stack) + PAGE_SIZE);
 
   *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
-  *--stack = (uint32_t)proc->kstack + PAGE_SIZE; /* useresp */
+  *--stack = (uint32_t)proc->kstack; /* useresp */
   *--stack = 0x200; /* eflags - interrupts enabled */
   *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
   *--stack = (uint32_t)entry; /* eip */
