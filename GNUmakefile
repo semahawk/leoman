@@ -2,6 +2,8 @@
 
 DISK_IMAGE = leoman.iso
 
+GDB = cgdb --
+
 SUBDIRS = boot kernel tools
 
 all: bootloader $(DISK_IMAGE)
@@ -14,6 +16,19 @@ kernel:
 
 run: $(DISK_IMAGE)
 	qemu-system-i386 -cdrom $(DISK_IMAGE) -monitor stdio
+
+gdb: .gdbcmds
+	$(GDB) -x $<
+
+# dependency on GNUmakefile so that the file gets updated on the offside
+# that this target also is changed
+.gdbcmds: GNUmakefile $(DISK_IMAGE)
+	@echo -n "" > $@
+	@# TODO meh those damn hardcodes
+	@echo "symbol-file kernel/kernel" >> $@
+	@echo "add-symbol-file kernel/idle.initrd 0x30000000" >> $@
+	@echo "add-symbol-file kernel/idle_other.initrd 0x40000000" >> $@
+	@echo "target remote | qemu-system-i386 -S -gdb stdio -cdrom $(DISK_IMAGE)" >> $@
 
 tools:
 	cd tools; $(MAKE)

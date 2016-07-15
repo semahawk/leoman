@@ -3,7 +3,7 @@
 AS = nasm
 ASFLAGS = -felf32
 CC = clang
-CFLAGS := -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
+CFLAGS := -g -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 
 C_SRC =     \
   elf.c     \
@@ -60,6 +60,9 @@ initrd: tools $(INITRD_OBJS) initrd.ld
 
 run:
 	cd ..; $(MAKE) run
+
+gdb:
+	cd ..; $(MAKE) gdb
 
 tools:
 	cd ..; $(MAKE) tools
