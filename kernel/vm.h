@@ -75,15 +75,10 @@ uint32_t *new_pdir(void);
 uint32_t *vm_copy_kernel_pdir(void);
 void *vm_init(struct kern_bootinfo *);
 
-void map_page_in_kernspace(void *, void *, unsigned);
-void unmap_page_from_kernspace(void *);
-void map_pages_in_kernspace(void *, void *, unsigned, unsigned);
-void unmap_pages_from_kernspace(void *, unsigned);
-
-void map_page_in_userspace(void *, void *, unsigned);
-void unmap_page_from_userspace(void *);
-void map_pages_in_userspace(void *, void *, unsigned, unsigned);
-void unmap_pages_from_userspace(void *, unsigned);
+void map_page(void *, void *, unsigned);
+void unmap_pagece(void *);
+void map_pages(void *, void *, unsigned, unsigned);
+void unmap_pages(void *, unsigned);
 
 /* convert between physical and virtual addresses */
 static inline void *p2v(uint32_t addr)

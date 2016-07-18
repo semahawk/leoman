@@ -97,7 +97,7 @@ struct proc *proc_new(const char *name, bool user)
   struct proc *proc = find_next_proc(PROC_UNUSED);
   uint32_t *stack = pm_alloc();
 
-  map_page_in_kernspace(stack, stack, PTE_W | (user ? PTE_U : 0));
+  map_page(stack, stack, PTE_W | (user ? PTE_U : 0));
 
   proc->pid   = next_pid++;
   proc->state = PROC_SLEEPING;
