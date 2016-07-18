@@ -47,10 +47,6 @@ struct proc {
 
     /* TODO: data for loading a file off of the disk */
   } location;
-
-  /* without this padding of at least 13 bytes the VGA driver stops printing to
-   * screen */
-  unsigned char pad[13];
 };
 
 struct proc *proc_new(const char *name, bool user);
