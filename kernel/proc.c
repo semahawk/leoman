@@ -92,6 +92,26 @@ void proc_load(void)
   for (;;);
 }
 
+void proc_kickoff_first_process(void)
+{
+  vga_printf("kicking off the first process (%s)\n", current_proc->name);
+
+  current_proc->state = PROC_RUNNING;
+
+  tss_set_ss(SEG_KDATA);
+  tss_set_esp((uint32_t)current_proc->kstack);
+  set_cr3((uint32_t)current_proc->pdir);
+
+  __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
+  __asm volatile("popl %gs");
+  __asm volatile("popl %fs");
+  __asm volatile("popl %es");
+  __asm volatile("popl %ds");
+  __asm volatile("popa");
+  __asm volatile("addl $8, %esp");
+  __asm volatile("iretl");
+}
+
 struct proc *proc_new(const char *name, bool user)
 {
   struct proc *proc = find_next_proc(PROC_UNUSED);
@@ -148,26 +168,6 @@ struct proc *proc_new_from_memory(const char *name, bool user, void *addr, uint3
   proc->location.memory.size    = size;
 
   return proc;
-}
-
-void proc_kickoff_first_process(void)
-{
-  vga_printf("kicking off the first process (%s)\n", current_proc->name);
-
-  current_proc->state = PROC_RUNNING;
-
-  tss_set_ss(SEG_KDATA);
-  tss_set_esp((uint32_t)current_proc->kstack);
-  set_cr3((uint32_t)current_proc->pdir);
-
-  __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
-  __asm volatile("popl %gs");
-  __asm volatile("popl %fs");
-  __asm volatile("popl %es");
-  __asm volatile("popl %ds");
-  __asm volatile("popa");
-  __asm volatile("addl $8, %esp");
-  __asm volatile("iretl");
 }
 
 void proc_earlyinit(void)
