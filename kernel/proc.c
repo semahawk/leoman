@@ -95,7 +95,6 @@ void proc_load(void)
 struct proc *proc_new(const char *name, bool user)
 {
   struct proc *proc = find_next_proc(PROC_UNUSED);
-
   uint32_t *stack = pm_alloc();
 
   map_page_in_kernspace(stack, stack, PTE_W | (user ? PTE_U : 0));
@@ -113,7 +112,7 @@ struct proc *proc_new(const char *name, bool user)
 
   *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
   *--stack = (uint32_t)proc->kstack; /* useresp */
-  *--stack = 0x200; /* eflags - interrupts enabled */
+  *--stack = 0x202; /* eflags - interrupts enabled */
   *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
   *--stack = (uint32_t)proc_load; /* eip */
 
