@@ -217,22 +217,18 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf("\n");
 #endif
 
-  void *idle_executable = sar_get_contents(bootinfo->initrd_addr, "idle.initrd");
+  struct sar_file *idle_executable = sar_lookup(bootinfo->initrd_addr, "idle.initrd");
 
   if (idle_executable){
-    vga_printf("loading the idle process from 0x%x\n", idle_executable);
-    current_proc = idle = proc_new("idle", false);
-    current_proc->location.memory.address = idle_executable;
-    current_proc->location.memory.size = sar_lookup(bootinfo->initrd_addr, "idle.initrd")->size;
+    vga_printf("loading the idle process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_executable->offset);
+    current_proc = idle = proc_new_from_memory("idle", false, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
   }
 
-  void *idle_other_executable = sar_get_contents(bootinfo->initrd_addr, "idle_other.initrd");
+  struct sar_file *idle_other_executable = sar_lookup(bootinfo->initrd_addr, "idle_other.initrd");
 
   if (idle_other_executable){
-    vga_printf("loading the idle_other process from 0x%x\n", idle_other_executable);
-    current_proc = idle = proc_new("idle_other", false);
-    current_proc->location.memory.address = idle_other_executable;
-    current_proc->location.memory.size = sar_lookup(bootinfo->initrd_addr, "idle_other.initrd")->size;
+    vga_printf("loading the idle_other process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_other_executable->offset);
+    current_proc = idle = proc_new_from_memory("idle_other", false, (void *)bootinfo->initrd_addr + idle_other_executable->offset, idle_other_executable->size);
   }
 
   /* processes will start running right now */

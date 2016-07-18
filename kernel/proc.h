@@ -54,6 +54,7 @@ struct proc {
 };
 
 struct proc *proc_new(const char *name, bool user);
+struct proc *proc_new_from_memory(const char *name, bool user, void *addr, uint32_t size);
 void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
 
