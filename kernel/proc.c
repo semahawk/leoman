@@ -77,24 +77,34 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
   current_proc = next_proc;
 
   tss_set_ss(SEG_KDATA);
-  tss_set_esp(current_proc->kstack);
+  tss_set_esp((uint32_t)current_proc->kstack);
+  set_cr3((uint32_t)current_proc->pdir);
 
   return current_proc->trapframe;
 }
 
-struct proc *proc_new(const char *name, void *entry, bool user)
+void proc_load(void)
+{
+  uint32_t *entry = elf_load(current_proc->location.memory.address);
+
+  vga_printf("proc_load says hi! (should jump to 0x%x though, pdir at %x)\n", entry, current_proc->pdir);
+
+  for (;;);
+}
+
+struct proc *proc_new(const char *name, bool user)
 {
   struct proc *proc = find_next_proc(PROC_UNUSED);
+
   uint32_t *stack = pm_alloc();
 
-  map_page(stack, stack, PTE_W | (user ? PTE_U : 0));
+  map_page_in_kernspace(stack, stack, PTE_W | (user ? PTE_U : 0));
 
   proc->pid   = next_pid++;
   proc->state = PROC_SLEEPING;
-  proc->pdir  = NULL;
+  proc->pdir  = vm_copy_kernel_pdir();
   proc->memsz = PAGE_SIZE;
-  proc->entry = entry;
-  proc->kstack = (uint32_t)stack + PAGE_SIZE;
+  proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
   memcpy(proc->name, (char *)name, MAX_PROC_NAME_LEN);
@@ -105,7 +115,7 @@ struct proc *proc_new(const char *name, void *entry, bool user)
   *--stack = (uint32_t)proc->kstack; /* useresp */
   *--stack = 0x200; /* eflags - interrupts enabled */
   *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
-  *--stack = (uint32_t)entry; /* eip */
+  *--stack = (uint32_t)proc_load; /* eip */
 
   *--stack = 0xdeadbeef; /* err */
   *--stack = 0xfeedbabe; /* num */
@@ -126,7 +136,7 @@ struct proc *proc_new(const char *name, void *entry, bool user)
 
   proc->trapframe = (struct intregs *)stack;
 
-  vga_printf("created new proc %s (entry 0x%x, kstack 0x%x, tf 0x%x)\n", proc->name, proc->entry, proc->kstack, proc->trapframe);
+  vga_printf("created new proc %s (kstack 0x%x, tf 0x%x, pdir 0x%x)\n", proc->name, proc->kstack, proc->trapframe, proc->pdir);
 
   return proc;
 }
@@ -138,7 +148,8 @@ void proc_kickoff_first_process(void)
   current_proc->state = PROC_RUNNING;
 
   tss_set_ss(SEG_KDATA);
-  tss_set_esp(current_proc->kstack);
+  tss_set_esp((uint32_t)current_proc->kstack);
+  set_cr3((uint32_t)current_proc->pdir);
 
   __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
   __asm volatile("popl %gs");

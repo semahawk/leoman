@@ -3,7 +3,7 @@ ENTRY(main)
 
 SECTIONS
 {
-  . = 0x40000000;
+  . = 0x30000000;
 
   .text : AT(ADDR(.text))
   {

@@ -40,6 +40,11 @@ typedef uint32_t pte_t;
 
 #define KERN_PDIR_ADDR  ((void *)0xfffff000)
 #define KERN_PTABS_ADDR ((void *)0xffc00000)
+#define KERN_PDE_IDX    1023
+
+#define USER_PDIR_ADDR  ((void *)0xffbff000)
+#define USER_PTABS_ADDR ((void *)0xff800000)
+#define USER_PDE_IDX    1022
 
 /* page directory entry attribute masks */
 #define PDE_IGNORE   (1 << 8) /* ignoreeeed */
@@ -67,12 +72,18 @@ typedef uint32_t pte_t;
 #define vm_ptab_idx(vaddr) ((((uint32_t)vaddr) >> 12) & 0x3ff)
 
 uint32_t *new_pdir(void);
+uint32_t *vm_copy_kernel_pdir(void);
 void *vm_init(struct kern_bootinfo *);
 
-void map_page(void *, void *, unsigned);
-void unmap_page(void *);
-void map_pages(void *, void *, unsigned, unsigned);
-void unmap_pages(void *, unsigned);
+void map_page_in_kernspace(void *, void *, unsigned);
+void unmap_page_from_kernspace(void *);
+void map_pages_in_kernspace(void *, void *, unsigned, unsigned);
+void unmap_pages_from_kernspace(void *, unsigned);
+
+void map_page_in_userspace(void *, void *, unsigned);
+void unmap_page_from_userspace(void *);
+void map_pages_in_userspace(void *, void *, unsigned, unsigned);
+void unmap_pages_from_userspace(void *, unsigned);
 
 /* convert between physical and virtual addresses */
 static inline void *p2v(uint32_t addr)
@@ -93,6 +104,15 @@ static inline void vm_flush_page(void *vaddr)
 static inline void set_cr3(uint32_t pdir)
 {
   __asm volatile("movl %0, %%cr3" : : "r"(pdir));
+}
+
+static inline uint32_t get_cr3(void)
+{
+  uint32_t ret;
+
+  __asm volatile("movl %%cr3, %0" : "=a"(ret));
+
+  return ret;
 }
 
 /* defined in paging.c */

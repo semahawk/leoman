@@ -16,8 +16,9 @@
 #include "elf.h"
 #include "vm.h"
 #include "proc.h"
+#include "vga.h"
 
-struct proc *elf_execute(const char *name, const void *file)
+uint32_t *elf_load(const void *file)
 {
   struct elf_header *hdr = (struct elf_header *)file;
   struct elf_pheader *phdr = (struct elf_pheader *)(file + hdr->e_phoff);
@@ -29,13 +30,12 @@ struct proc *elf_execute(const char *name, const void *file)
         break;
 
       case PT_LOAD:
-        /* FIXME fix user access (PTE_U) */
-        map_pages((void *)file + phdr->p_offset, (void *)phdr->p_vaddr, PTE_W | PTE_U, phdr->p_memsz);
+        map_pages_in_kernspace((void *)file + phdr->p_offset, (void *)phdr->p_vaddr, PTE_W | PTE_U, phdr->p_memsz);
         break;
     }
   }
 
-  return proc_new(name, (void *)hdr->e_entry, true);
+  return (uint32_t *)hdr->e_entry;
 }
 
 /*

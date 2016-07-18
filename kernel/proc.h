@@ -32,18 +32,28 @@ struct proc {
 
   struct intregs *trapframe;
   uint32_t *kstack;
-  uint32_t *entry;
 
-  /* these are not really used yet */
   uint32_t *pdir;  /* the page directory */
   uint32_t memsz;  /* memory size the process has */
+
+  /* this struct tells where to load the processes guts from */
+  struct {
+    struct {
+      /* where to load from memory */
+      void *address;
+      /* how much to load from memory */
+      uint32_t size;
+    } memory;
+
+    /* TODO: data for loading a file off of the disk */
+  } location;
 
   /* without this padding of at least 13 bytes the VGA driver stops printing to
    * screen */
   unsigned char pad[13];
 };
 
-struct proc *proc_new(const char *name, void *entry_point, bool user);
+struct proc *proc_new(const char *name, bool user);
 void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
 
