@@ -32,6 +32,7 @@ struct proc {
 
   struct intregs *trapframe;
   uint32_t *kstack;
+  uint32_t *ustack;
 
   uint32_t *pdir;  /* the page directory */
   uint32_t memsz;  /* memory size the process has */

@@ -85,11 +85,21 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
 
 void proc_load(void)
 {
-  uint32_t *entry = elf_load(current_proc->location.memory.address);
+  void *entry = elf_load(current_proc->location.memory.address);
+  void *stack = pm_alloc();
 
-  vga_printf("proc_load says hi! (should jump to 0x%x though, pdir at %x)\n", entry, current_proc->pdir);
+  current_proc->ustack = stack + PAGE_SIZE;
 
-  for (;;);
+  map_pages(stack, stack, PTE_W | PTE_U, PAGE_SIZE);
+
+  vga_printf("proc_load says hi! blasting off to 0x%x though\n", entry);
+
+  __asm volatile("pushl $0x23");
+  __asm volatile("pushl %0" :: "g"(current_proc->ustack));
+  __asm volatile("pushl $0x202");
+  __asm volatile("pushl $0x1b");
+  __asm volatile("pushl %0" :: "g"(entry));
+  __asm volatile("iretl");
 }
 
 void proc_kickoff_first_process(void)
@@ -132,7 +142,7 @@ struct proc *proc_new(const char *name, bool user)
 
   *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
   *--stack = (uint32_t)proc->kstack; /* useresp */
-  *--stack = 0x202; /* eflags - interrupts enabled */
+  *--stack = 0x002; /* eflags - interrupts enabled */
   *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
   *--stack = (uint32_t)proc_load; /* eip */
 

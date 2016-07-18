@@ -78,7 +78,8 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
       return;
     } else {
       /* page isn't mapped */
-      ptab[vm_ptab_idx(vaddr)] = (uint32_t)paddr | PTE_P | PTE_W | flags;
+      pdir[vm_pdir_idx(vaddr)] |= flags;
+      ptab[vm_ptab_idx(vaddr)]  = (uint32_t)paddr | PTE_P | PTE_W | flags;
     }
   } else {
     /* the page table doesn't exist */
