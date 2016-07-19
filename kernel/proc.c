@@ -12,6 +12,7 @@
 
 #include "config.h"
 #include "common.h"
+#include "elf.h"
 #include "gdt.h"
 #include "idt.h"
 #include "pm.h"
