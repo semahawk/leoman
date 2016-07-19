@@ -24,7 +24,6 @@ S_SRC =     \
   entry.asm \
   gdt.asm   \
   idt.asm   \
-  proc.asm  \
   x86.asm   \
 
 OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
