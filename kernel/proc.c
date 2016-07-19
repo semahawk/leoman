@@ -88,14 +88,12 @@ void proc_load(void)
   void *entry = elf_load(current_proc->location.memory.address);
   void *stack = pm_alloc();
 
-  current_proc->ustack = stack + PAGE_SIZE;
-
-  map_pages(stack, stack, PTE_W | PTE_U, PAGE_SIZE);
+  map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE, PTE_W | PTE_U, PAGE_SIZE);
 
   vga_printf("proc_load says hi! blasting off to 0x%x though\n", entry);
 
   __asm volatile("pushl $0x23");
-  __asm volatile("pushl %0" :: "g"(current_proc->ustack));
+  __asm volatile("pushl %0" :: "Nd"(VM_USER_STACK_ADDR));
   __asm volatile("pushl $0x202");
   __asm volatile("pushl $0x1b");
   __asm volatile("pushl %0" :: "g"(entry));

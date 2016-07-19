@@ -27,6 +27,8 @@
 
 #define PAGE_SIZE KiB(4)
 
+#define VM_USER_STACK_ADDR 0xd0000000
+
 #ifndef __ASSEMBLY__
 #include <stdint.h>
 
