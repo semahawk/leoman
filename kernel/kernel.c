@@ -221,7 +221,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   if (idle_executable){
     vga_printf("loading the idle process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_executable->offset);
-    current_proc = idle = proc_new_from_memory("idle", false, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
+    current_proc = idle = proc_new_from_memory("idle", true, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
   }
 
   struct sar_file *idle_other_executable = sar_lookup(bootinfo->initrd_addr, "idle_other.initrd");

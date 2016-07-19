@@ -86,17 +86,37 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
 
 void proc_load(void)
 {
+  /* NOTE: current_proc->trapframe isn't valid here */
+  /*       the contents of the trapframe have been popped during irq_common_stub
+   *       before the iret */
   void *entry = elf_load(current_proc->location.memory.address);
   void *stack = pm_alloc();
+
+  uint16_t code_seg = current_proc->privileged ? SEG_KCODE : SEG_UCODE;
+  uint16_t data_seg = current_proc->privileged ? SEG_KDATA : SEG_UDATA;
 
   map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE, PTE_W | PTE_U, PAGE_SIZE);
 
   vga_printf("proc_load says hi! blasting off to 0x%x though\n", entry);
 
-  __asm volatile("pushl $0x23");
+  /* this is kind of ugly.. */
+  __asm volatile("movw   %0, %%ax\n"
+                 "movw %%ax, %%ds\n"
+                 "movw %%ax, %%es\n"
+                 "movw %%ax, %%fs\n"
+                 "movw %%ax, %%gs\n" :: "Nd"(data_seg) : "%ax");
+
+  __asm volatile("movl $0xfeedbabe, %eax\n"
+                 "movl $0xfeedbabe, %ebx\n"
+                 "movl $0xfeedbabe, %ecx\n"
+                 "movl $0xfeedbabe, %edx\n"
+                 "movl $0xfeedbabe, %esi\n"
+                 "movl $0xfeedbabe, %edi\n");
+
+  __asm volatile("pushl %0" :: "g"(data_seg));
   __asm volatile("pushl %0" :: "Nd"(VM_USER_STACK_ADDR));
-  __asm volatile("pushl $0x202");
-  __asm volatile("pushl $0x1b");
+  __asm volatile("pushl $0x200"); /* flags, interrupts enabled */
+  __asm volatile("pushl %0" :: "g"(code_seg));
   __asm volatile("pushl %0" :: "g"(entry));
   __asm volatile("iretl");
 }
@@ -111,27 +131,21 @@ void proc_kickoff_first_process(void)
   tss_set_esp((uint32_t)current_proc->kstack);
   set_cr3((uint32_t)current_proc->pdir);
 
-  __asm volatile("movl %0, %%esp" :: "g"(current_proc->trapframe));
-  __asm volatile("popl %gs");
-  __asm volatile("popl %fs");
-  __asm volatile("popl %es");
-  __asm volatile("popl %ds");
-  __asm volatile("popa");
-  __asm volatile("addl $8, %esp");
-  __asm volatile("iretl");
+  proc_load();
 }
 
-struct proc *proc_new(const char *name, bool user)
+struct proc *proc_new(const char *name, bool privileged)
 {
   struct proc *proc = find_next_proc(PROC_UNUSED);
   uint32_t *stack = pm_alloc();
 
-  map_page(stack, stack, PTE_W | (user ? PTE_U : 0));
+  map_page(stack, stack, PTE_W);
 
   proc->pid   = next_pid++;
   proc->state = PROC_SLEEPING;
   proc->pdir  = vm_copy_kernel_pdir();
   proc->memsz = PAGE_SIZE;
+  proc->privileged = privileged;
   proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
@@ -139,10 +153,12 @@ struct proc *proc_new(const char *name, bool user)
 
   stack = (uint32_t *)((uint8_t *)(stack) + PAGE_SIZE);
 
-  *--stack = user ? SEG_UDATA : SEG_KDATA; /* ss */
+  /* we're going to be jumping to proc_load anyway
+   * that's the reason for the hardcoded KDATA/KCODE stuff */
+  *--stack = SEG_KDATA; /* ss */
   *--stack = (uint32_t)proc->kstack; /* useresp */
-  *--stack = 0x002; /* eflags - interrupts enabled */
-  *--stack = user ? SEG_UCODE : SEG_KCODE; /* cs */
+  *--stack = 0x200; /* eflags - interrupts enabled */
+  *--stack = SEG_KCODE; /* cs */
   *--stack = (uint32_t)proc_load; /* eip */
 
   *--stack = 0xdeadbeef; /* err */
@@ -157,10 +173,10 @@ struct proc *proc_new(const char *name, bool user)
   *--stack = 0x0; /* esi */
   *--stack = 0x0; /* edi */
 
-  *--stack = user ? SEG_UDATA : SEG_KDATA; /* ds */
-  *--stack = user ? SEG_UDATA : SEG_KDATA; /* es */
-  *--stack = user ? SEG_UDATA : SEG_KDATA; /* fs */
-  *--stack = user ? SEG_UDATA : SEG_KDATA; /* gs */
+  *--stack = SEG_KDATA; /* ds */
+  *--stack = SEG_KDATA; /* es */
+  *--stack = SEG_KDATA; /* fs */
+  *--stack = SEG_KDATA; /* gs */
 
   proc->trapframe = (struct intregs *)stack;
 

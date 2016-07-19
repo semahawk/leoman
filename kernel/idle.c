@@ -29,8 +29,8 @@ int main(void)
     __asm volatile("movl $4, %%eax":::"eax");
     __asm volatile("int $0x80");
 
-    for (i = 0; i < 1000000; i++)
-      /* wait a bit */;
+    /* sleep a bit */
+    __asm volatile("sti\nhlt\ncli");
   }
 }
 

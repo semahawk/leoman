@@ -29,6 +29,7 @@ struct proc {
   unsigned pid;
   enum proc_state state;
   char name[MAX_PROC_NAME_LEN + 1];
+  bool privileged; /* whether it's running in ring 0 */
 
   struct intregs *trapframe;
   uint32_t *kstack;
@@ -50,8 +51,8 @@ struct proc {
   } location;
 };
 
-struct proc *proc_new(const char *name, bool user);
-struct proc *proc_new_from_memory(const char *name, bool user, void *addr, uint32_t size);
+struct proc *proc_new(const char *name, bool privileged);
+struct proc *proc_new_from_memory(const char *name, bool privileged, void *addr, uint32_t size);
 void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
 
