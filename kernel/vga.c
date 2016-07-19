@@ -24,6 +24,19 @@ static uint16_t *const VGA_MEM = (uint16_t *)0xb8000;
 size_t vga_col, vga_row;
 uint8_t vga_color;
 
+void vga_scrollup(void)
+{
+  for (unsigned y = 1; y < VGA_HEIGHT; y++){
+    for (unsigned x = 0; x < VGA_WIDTH; x++){
+      *(VGA_MEM + ((y - 1) * VGA_WIDTH + x)) = *(VGA_MEM + (y * VGA_WIDTH + x));
+    }
+  }
+
+  for (unsigned x = 0; x < VGA_WIDTH; x++){
+    *(VGA_MEM + ((VGA_HEIGHT - 1) * VGA_WIDTH + x)) = ' ';
+  }
+}
+
 uint8_t vga_make_color(enum vga_color fg, enum vga_color bg)
 {
   return fg | bg << 4;
@@ -60,7 +73,8 @@ void vga_putch(char ch)
     vga_col = 0;
 
     if (++vga_row == VGA_HEIGHT){
-      vga_row = 0;
+      vga_scrollup();
+      vga_row = VGA_HEIGHT - 1;
     }
   }
 }
