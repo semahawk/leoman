@@ -184,6 +184,19 @@ void kmain(struct kern_bootinfo *bootinfo)
   adjust_the_memory_map(bootinfo);
   /* set up the printing utilities */
   vga_init();
+
+  vga_printf("\n");
+  /* credit: http://patorjk.com/software/taag/#p=display&f=Bloody&t=Leoman */
+  vga_printf("  \xdb\xdb\xb2    \xb2\xdb\xdb\xdb\xdb\xdb  \xb1\xdb\xdb\xdb\xdb\xdb   \xdb\xdb\xdb\xdc \xdc\xdb\xdb\xdb\xb2 \xdc\xdc\xdc       \xdb\xdb\xdb\xdc    \xdb \n");
+  vga_printf(" \xb2\xdb\xdb\xb1    \xb2\xdb   \xdf \xb1\xdb\xdb\xb1  \xdb\xdb\xb1\xb2\xdb\xdb\xb1\xdf\xdb\xdf \xdb\xdb\xb1\xb1\xdb\xdb\xdb\xdb\xdc     \xdb\xdb \xdf\xdb   \xdb \n");
+  vga_printf(" \xb1\xdb\xdb\xb0    \xb1\xdb\xdb\xdb   \xb1\xdb\xdb\xb0  \xdb\xdb\xb1\xb2\xdb\xdb    \xb2\xdb\xdb\xb0\xb1\xdb\xdb  \xdf\xdb\xdc  \xb2\xdb\xdb  \xdf\xdb \xdb\xdb\xb1\n");
+  vga_printf(" \xb1\xdb\xdb\xb0    \xb1\xb2\xdb  \xdc \xb1\xdb\xdb   \xdb\xdb\xb0\xb1\xdb\xdb    \xb1\xdb\xdb \xb0\xdb\xdb\xdc\xdc\xdc\xdc\xdb\xdb \xb2\xdb\xdb\xb1  \xde\xdd\xdb\xdb\xb1\n");
+  vga_printf(" \xb0\xdb\xdb\xdb\xdb\xdb\xdb\xb1\xb0\xb1\xdb\xdb\xdb\xdb\xb1\xb0 \xdb\xdb\xdb\xdb\xb2\xb1\xb0\xb1\xdb\xdb\xb1   \xb0\xdb\xdb\xb1 \xb2\xdb   \xb2\xdb\xdb\xb1\xb1\xdb\xdb\xb0   \xb2\xdb\xdb\xb0\n");
+  vga_printf(" \xb0 \xb1\xb0\xb2  \xb0\xb0\xb0 \xb1\xb0 \xb0\xb0 \xb1\xb0\xb1\xb0\xb1\xb0 \xb0 \xb1\xb0   \xb0  \xb0 \xb1\xb1   \xb2\xb1\xdb\xb0\xb0 \xb1\xb0   \xb1 \xb1 \n");
+  vga_printf(" \xb0 \xb0 \xb1  \xb0 \xb0 \xb0  \xb0  \xb0 \xb1 \xb1\xb0 \xb0  \xb0      \xb0  \xb1   \xb1\xb1 \xb0\xb0 \xb0\xb0   \xb0 \xb1\xb0\n");
+  vga_printf("   \xb0 \xb0      \xb0   \xb0 \xb0 \xb0 \xb1  \xb0      \xb0     \xb0   \xb1      \xb0   \xb0 \xb0 \n");
+  vga_printf("     \xb0  \xb0   \xb0  \xb0    \xb0 \xb0         \xb0         \xb0  \xb0         \xb0 \n");
+
   /* set up the segments, kernel code and data, &c */
   gdt_init();
   /* install the IDT (ISRs and IRQs) */
@@ -201,21 +214,17 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* part one of processes init */
   proc_earlyinit();
 
-#if 0
-  vga_printf("\n Leoman\n\n");
-  vga_puts(" Tha mo bhata-foluaimein loma-lan easgannan\n");
-  vga_puts(" ------------------------------------------\n\n");
-  vga_printf(" available memory detected: 0x%x (%d MiB)\n\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
-  vga_printf(" kernel's physical address: 0x%x\n", &kernel_phys);
-  vga_printf(" kernel's  virtual address: 0x%x\n", &kernel_start);
-  vga_printf(" kernel's size:             0x%x\n", &kernel_size);
-  vga_printf(" virtual memory:            0x%x\n", vm);
-  vga_printf(" physical memory:           0x%x\n", pm);
-  vga_printf(" initrd loaded to:          0x%x\n", bootinfo->initrd_addr);
-  vga_printf(" initrd's size:             0x%x\n", bootinfo->initrd_size);
-
   vga_printf("\n");
-#endif
+  vga_printf("available memory detected: 0x%x (%d MiB)\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
+  vga_printf("\n");
+  vga_printf("kernel's physical address: 0x%x\n", &kernel_phys);
+  vga_printf("kernel's  virtual address: 0x%x\n", &kernel_start);
+  vga_printf("kernel's size:             0x%x\n", &kernel_size);
+  vga_printf("virtual memory:            0x%x\n", vm);
+  vga_printf("physical memory:           0x%x\n", pm);
+  vga_printf("initrd loaded to:          0x%x\n", bootinfo->initrd_addr);
+  vga_printf("initrd's size:             0x%x\n", bootinfo->initrd_size);
+  vga_printf("\n");
 
   struct sar_file *idle_executable = sar_lookup(bootinfo->initrd_addr, "idle.initrd");
 
