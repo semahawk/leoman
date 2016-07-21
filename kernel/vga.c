@@ -18,7 +18,7 @@
 #include "vga.h"
 
 const size_t VGA_WIDTH  = 80;
-const size_t VGA_HEIGHT = 24;
+const size_t VGA_HEIGHT = 25;
 static uint16_t *const VGA_MEM = (uint16_t *)0xb8000;
 
 size_t vga_col, vga_row;
@@ -59,24 +59,21 @@ void vga_putchat(char ch, uint8_t color, size_t x, size_t y)
 
 void vga_putch(char ch)
 {
-  switch (ch){
-    case 0xa: /* newline */
-      vga_row++;
-      vga_col = -1; /* it's gonna be ++'d few lines ahead anyway */
-      break;
-    default:
-      vga_putchat(ch, vga_color, vga_col, vga_row);
-      break;
-  }
-
-  if (++vga_col == VGA_WIDTH){
+  if (vga_col >= VGA_WIDTH || ch == '\n'){
     vga_col = 0;
-
-    if (++vga_row == VGA_HEIGHT){
-      vga_scrollup();
-      vga_row = VGA_HEIGHT - 1;
-    }
+    vga_row++;
   }
+
+  if (vga_row >= VGA_HEIGHT){
+    vga_scrollup();
+    vga_row--;
+  }
+
+  if (ch == '\n')
+    return;
+
+  vga_putchat(ch, vga_color, vga_col, vga_row);
+  vga_col++;
 }
 
 void vga_init(void)
