@@ -241,7 +241,6 @@ void kmain(struct kern_bootinfo *bootinfo)
   }
 
   /* processes will start running right now */
-  /* well, not really just yet - shit's broken */
   proc_kickoff_first_process();
 
   vga_printf("putting kmain into an endless loop (if you can see me we have a bug).\n");
