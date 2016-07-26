@@ -47,6 +47,15 @@ static struct proc *find_next_proc(enum proc_state state)
   return idle;
 }
 
+void proc_idle(void)
+{
+  for (;;){
+    vga_printf("i");
+    for (unsigned i = 0; i < 1000000; i++)
+      ;
+  }
+}
+
 /*
  * This function pretty much just calls `proc_schedule_after_irq` (this is the
  * handler for software interrupt no. 127)
@@ -217,6 +226,8 @@ void proc_earlyinit(void)
 
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
+
+  current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
 }
 
 /*

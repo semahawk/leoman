@@ -1,6 +1,6 @@
 /*
  *
- * idle.c
+ * process.c
  *
  * Created at:  02 Jul 2016 21:50:50 +0200 (CEST)
  *
@@ -30,7 +30,7 @@ int main(void)
     __asm volatile("int $0x80");
 
     /* sleep a bit */
-    __asm volatile("sti\nhlt\ncli");
+    for (unsigned i = 0; i < 1000000; i++);
   }
 }
 

@@ -226,18 +226,11 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf("initrd's size:             0x%x\n", bootinfo->initrd_size);
   vga_printf("\n");
 
-  struct sar_file *idle_executable = sar_lookup(bootinfo->initrd_addr, "idle.initrd");
+  struct sar_file *idle_executable = sar_lookup(bootinfo->initrd_addr, "process.initrd");
 
   if (idle_executable){
     vga_printf("loading the idle process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_executable->offset);
-    current_proc = idle = proc_new_from_memory("idle", true, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
-  }
-
-  struct sar_file *idle_other_executable = sar_lookup(bootinfo->initrd_addr, "idle_other.initrd");
-
-  if (idle_other_executable){
-    vga_printf("loading the idle_other process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_other_executable->offset);
-    current_proc = idle = proc_new_from_memory("idle_other", false, (void *)bootinfo->initrd_addr + idle_other_executable->offset, idle_other_executable->size);
+    current_proc = idle = proc_new_from_memory("process", false, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
   }
 
   /* processes will start running right now */
