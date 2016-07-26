@@ -89,12 +89,24 @@ void proc_load(void)
   /* NOTE: current_proc->trapframe isn't valid here */
   /*       the contents of the trapframe have been popped during irq_common_stub
    *       before the iret */
-  void *entry = elf_load(current_proc->location.memory.address);
+
+  uint32_t *entry = NULL;
+  uint32_t *addr = current_proc->location.memory.address;
+
+  if (*addr == 0x464c457f){
+    /* the contents at that memory location is an ELF */
+    entry = elf_load(current_proc->location.memory.address);
+  } else {
+    /* assume it's straight-forward binary data */
+    entry = addr;
+  }
+
   void *stack = pm_alloc();
 
   uint16_t code_seg = current_proc->privileged ? SEG_KCODE : SEG_UCODE;
   uint16_t data_seg = current_proc->privileged ? SEG_KDATA : SEG_UDATA;
 
+  /* fix stack page permissions for privileged processes */
   map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE, PTE_W | PTE_U, PAGE_SIZE);
 
   vga_printf("proc_load says hi! blasting off to 0x%x though\n", entry);
