@@ -1,6 +1,6 @@
 /*
  *
- * process.c
+ * shades.c
  *
  * Created at:  02 Jul 2016 21:50:50 +0200 (CEST)
  *
@@ -19,7 +19,7 @@ int main(void)
 
   /* feel the power of nolibc! */
   while (1){
-    char *msg = "\1";
+    char *msg = "\2";
     int len = 1;
 
     /* call syscall #4 (write) */

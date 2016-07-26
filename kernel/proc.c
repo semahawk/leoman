@@ -39,12 +39,16 @@ static struct proc *find_next_proc(enum proc_state state)
       /* we've visited every slot */
       break;
 
+    /* don't take the idle process into account */
+    /* the scheduling bit takes care to use idle if there's no process to run */
+    if (&procs[i] == idle)
+      continue;
+
     if (procs[i].state == state)
       return &procs[i++];
   }
 
-  /* default to the idle process */
-  return idle;
+  return NULL;
 }
 
 void proc_idle(void)
@@ -78,11 +82,14 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
   if (!current_proc)
     return cpu_state;
 
-  /* find a new process that could be run */
-  next_proc = find_next_proc(PROC_SLEEPING);
-
   current_proc->trapframe = cpu_state;
   current_proc->state = PROC_SLEEPING;
+
+  /* find a new process that could be run */
+  if (NULL == (next_proc = find_next_proc(PROC_SLEEPING))){
+    /* if there's no process to switch to then default to idle */
+    next_proc = idle;
+  }
 
   current_proc = next_proc;
 

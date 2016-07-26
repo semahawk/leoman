@@ -29,7 +29,8 @@ S_SRC =     \
 OBJS  = ${S_SRC:.asm=.asm.o} ${C_SRC:.c=.o}
 
 INITRD_SRCS = \
-	process.c
+	angle.c \
+	shades.c
 
 INITRD_OBJS = ${INITRD_SRCS:.c=.initrd}
 

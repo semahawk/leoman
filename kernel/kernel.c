@@ -226,11 +226,18 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf("initrd's size:             0x%x\n", bootinfo->initrd_size);
   vga_printf("\n");
 
-  struct sar_file *idle_executable = sar_lookup(bootinfo->initrd_addr, "process.initrd");
+  struct sar_file *executable = sar_lookup(bootinfo->initrd_addr, "angle.initrd");
 
-  if (idle_executable){
-    vga_printf("loading the idle process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_executable->offset);
-    proc_new_from_memory("process", false, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
+  if (executable){
+    vga_printf("loading the angle process from 0x%x\n", (void *)bootinfo->initrd_addr + executable->offset);
+    proc_new_from_memory("angle", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+  }
+
+  executable = sar_lookup(bootinfo->initrd_addr, "shades.initrd");
+
+  if (executable){
+    vga_printf("loading the shades process from 0x%x\n", (void *)bootinfo->initrd_addr + executable->offset);
+    proc_new_from_memory("shades", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
   }
 
   /* processes will start running right now */
