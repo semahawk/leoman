@@ -26,7 +26,7 @@
 static struct proc procs[NPROCS];
 static uint32_t next_pid = 0;
 
-struct proc *idle = NULL;
+static struct proc *idle = NULL;
 volatile struct proc *current_proc = NULL;
 
 static struct proc *find_next_proc(enum proc_state state)
@@ -202,6 +202,8 @@ struct proc *proc_new(const char *name, bool privileged)
   proc->trapframe = (struct intregs *)stack;
 
   vga_printf("created new proc %s (kstack 0x%x, tf 0x%x, pdir 0x%x)\n", proc->name, proc->kstack, proc->trapframe, proc->pdir);
+
+  current_proc = proc;
 
   return proc;
 }

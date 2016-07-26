@@ -230,7 +230,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   if (idle_executable){
     vga_printf("loading the idle process from 0x%x\n", (void *)bootinfo->initrd_addr + idle_executable->offset);
-    current_proc = idle = proc_new_from_memory("process", false, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
+    proc_new_from_memory("process", false, (void *)bootinfo->initrd_addr + idle_executable->offset, idle_executable->size);
   }
 
   /* processes will start running right now */
