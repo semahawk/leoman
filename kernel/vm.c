@@ -12,9 +12,9 @@
 
 #include <stdint.h>
 
-#include "common.h"
-#include "pm.h"
-#include "vm.h"
+#include <kernel/common.h>
+#include <kernel/pm.h>
+#include <kernel/vm.h>
 
 /* kernel page directory */
 uint32_t *kernel_pdir  = KERN_PDIR_ADDR;

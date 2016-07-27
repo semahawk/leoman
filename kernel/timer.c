@@ -10,11 +10,11 @@
  *
  */
 
-#include "common.h"
-#include "idt.h"
-#include "proc.h"
-#include "vga.h"
-#include "x86.h"
+#include <kernel/common.h>
+#include <kernel/idt.h>
+#include <kernel/proc.h>
+#include <kernel/vga.h>
+#include <kernel/x86.h>
 
 /* this counter will keep track of how many ticks the system has been
  * running for */

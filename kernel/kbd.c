@@ -10,10 +10,10 @@
  *
  */
 
-#include "common.h"
-#include "idt.h"
-#include "vga.h"
-#include "x86.h"
+#include <kernel/common.h>
+#include <kernel/idt.h>
+#include <kernel/vga.h>
+#include <kernel/x86.h>
 
 /* last key pressed */
 static uint8_t key_buffer;

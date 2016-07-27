@@ -19,7 +19,8 @@
 #include <libgen.h>
 #include <sys/stat.h>
 
-#include "../kernel/sar.h"
+/* this is flippin' hackish */
+#include "../include/kernel/sar.h"
 
 #define PALIGN(addr) ((((uint32_t)(addr)) + 4096 - 1) & ~(4096 - 1))
 

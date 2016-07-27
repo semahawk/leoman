@@ -10,9 +10,9 @@
  *
  */
 
-#include "common.h"
-#include "gdt.h"
-#include "tss.h"
+#include <kernel/common.h>
+#include <kernel/gdt.h>
+#include <kernel/tss.h>
 
 static struct tss_entry tss;
 

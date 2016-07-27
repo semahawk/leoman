@@ -10,18 +10,18 @@
  *
  */
 
-#include "config.h"
-#include "common.h"
-#include "elf.h"
-#include "gdt.h"
-#include "idt.h"
-#include "pm.h"
-#include "vm.h"
-#include "proc.h"
-#include "vga.h"
-#include "timer.h"
-#include "tss.h"
-#include "x86.h"
+#include <kernel/config.h>
+#include <kernel/common.h>
+#include <kernel/elf.h>
+#include <kernel/gdt.h>
+#include <kernel/idt.h>
+#include <kernel/pm.h>
+#include <kernel/vm.h>
+#include <kernel/proc.h>
+#include <kernel/vga.h>
+#include <kernel/timer.h>
+#include <kernel/tss.h>
+#include <kernel/x86.h>
 
 static struct proc procs[NPROCS];
 static uint32_t next_pid = 0;

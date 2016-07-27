@@ -1,6 +1,6 @@
 bits 32
 
-#include <vm.h>
+#include <kernel/vm.h>
 
 global kernel_stack_top
 

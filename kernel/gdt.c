@@ -13,11 +13,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "common.h"
-#include "gdt.h"
-#include "tss.h"
-#include "vga.h"
-#include "x86.h"
+#include <kernel/common.h>
+#include <kernel/gdt.h>
+#include <kernel/tss.h>
+#include <kernel/vga.h>
+#include <kernel/x86.h>
 
 /* THE mighty GDT */
 static struct gdt_entry gdt[SEGNUM];

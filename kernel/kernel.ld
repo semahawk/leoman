@@ -1,10 +1,10 @@
 OUTPUT_FORMAT("elf32-i386")
 ENTRY(_start)
 
-#include <vm.h>
-
-kernel_phys = KERN_PHYS;
-kernel_off  = KERN_VOFF;
+/* find a way to use the preprocessor to not hardcode those values
+ * in our new build system (CMake) */
+kernel_phys = 0x00100000;
+kernel_off  = 0xe0000000;
 
 SECTIONS
 {

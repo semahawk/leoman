@@ -12,12 +12,12 @@
 
 #include <stdint.h>
 
-#include "common.h"
-#include "idt.h"
-#include "pm.h"
-#include "proc.h"
-#include "syscall.h"
-#include "vga.h"
+#include <kernel/common.h>
+#include <kernel/idt.h>
+#include <kernel/pm.h>
+#include <kernel/proc.h>
+#include <kernel/syscall.h>
+#include <kernel/vga.h>
 
 struct intregs *syscall_handler(struct intregs *regs)
 {

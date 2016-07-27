@@ -10,10 +10,10 @@
  *
  */
 
-#include "common.h"
-#include "pm.h"
-#include "vm.h"
-#include "vga.h"
+#include <kernel/common.h>
+#include <kernel/pm.h>
+#include <kernel/vm.h>
+#include <kernel/vga.h>
 
 /* the bitmap */
 static uint32_t pm_bitmap[PM_BITMAP_NMEMB];

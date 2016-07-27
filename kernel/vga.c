@@ -14,8 +14,8 @@
 #include <stdint.h>
 #include <stdarg.h>
 
-#include "common.h"
-#include "vga.h"
+#include <kernel/common.h>
+#include <kernel/vga.h>
 
 const size_t VGA_WIDTH  = 80;
 const size_t VGA_HEIGHT = 25;

@@ -12,8 +12,8 @@
 
 #include <stdint.h>
 
-#include "common.h"
-#include "sar.h"
+#include <kernel/common.h>
+#include <kernel/sar.h>
 
 struct sar_file *sar_lookup(const void *file, const char *fname)
 {
@@ -26,6 +26,7 @@ struct sar_file *sar_lookup(const void *file, const char *fname)
     if (!strcmp(FHDR_FNAME(fhdr), fname))
       return fhdr;
 
+  /*vga_printf("file %s not found\n", fname);*/
   return NULL;
 }
 

@@ -13,10 +13,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "common.h"
-#include "idt.h"
-#include "vga.h"
-#include "x86.h"
+#include <kernel/common.h>
+#include <kernel/idt.h>
+#include <kernel/vga.h>
+#include <kernel/x86.h>
 
 /* THE mighty IDT */
 static struct idt_entry idt[256];

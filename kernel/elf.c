@@ -12,11 +12,11 @@
 
 #include <stdint.h>
 
-#include "common.h"
-#include "elf.h"
-#include "vm.h"
-#include "proc.h"
-#include "vga.h"
+#include <kernel/common.h>
+#include <kernel/elf.h>
+#include <kernel/vm.h>
+#include <kernel/proc.h>
+#include <kernel/vga.h>
 
 uint32_t *elf_load(const void *file)
 {

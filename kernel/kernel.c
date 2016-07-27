@@ -13,20 +13,20 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "common.h"
-#include "elf.h"
-#include "vm.h"
-#include "pm.h"
-#include "gdt.h"
-#include "idt.h"
-#include "kbd.h"
-#include "vga.h"
-#include "proc.h"
-#include "sar.h"
-#include "syscall.h"
-#include "timer.h"
-#include "tss.h"
-#include "x86.h"
+#include <kernel/common.h>
+#include <kernel/elf.h>
+#include <kernel/vm.h>
+#include <kernel/pm.h>
+#include <kernel/gdt.h>
+#include <kernel/idt.h>
+#include <kernel/kbd.h>
+#include <kernel/vga.h>
+#include <kernel/proc.h>
+#include <kernel/sar.h>
+#include <kernel/syscall.h>
+#include <kernel/timer.h>
+#include <kernel/tss.h>
+#include <kernel/x86.h>
 
 #ifndef __i386__
 #error "the only supported architecture is i386"
@@ -226,14 +226,14 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf("initrd's size:             0x%x\n", bootinfo->initrd_size);
   vga_printf("\n");
 
-  struct sar_file *executable = sar_lookup(bootinfo->initrd_addr, "angle.initrd");
+  struct sar_file *executable = sar_lookup(bootinfo->initrd_addr, "angle");
 
   if (executable){
     vga_printf("loading the angle process from 0x%x\n", (void *)bootinfo->initrd_addr + executable->offset);
     proc_new_from_memory("angle", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
   }
 
-  executable = sar_lookup(bootinfo->initrd_addr, "shades.initrd");
+  executable = sar_lookup(bootinfo->initrd_addr, "shades");
 
   if (executable){
     vga_printf("loading the shades process from 0x%x\n", (void *)bootinfo->initrd_addr + executable->offset);

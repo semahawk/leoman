@@ -5,4 +5,14 @@ iso_root
 *.bin
 *.core
 *.fs
+*.a
+*.so
 .gdbcmds
+
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Makefile
+cmake_install.cmake
+install_manifest.txt
+CTestTestfile.cmake
