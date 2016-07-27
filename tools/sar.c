@@ -16,6 +16,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <libgen.h>
 #include <sys/stat.h>
 
 #include "../kernel/sar.h"
@@ -83,7 +84,7 @@ static int create(int argc, char *argv[], const struct cmd *cmd)
   /* calculate the archive's header total size */
   for (i = 0; i < argc; i++){
     total_hdr_size += sizeof(struct sar_file);
-    total_hdr_size += strlen(argv[i]) + 1 /* nul byte */;
+    total_hdr_size += strlen(basename(argv[i])) + 1 /* nul byte */;
   }
 
   /* make account for the archive's header */
@@ -118,7 +119,7 @@ static int create(int argc, char *argv[], const struct cmd *cmd)
     /* fill in the header */
     fhdr.size    = st.st_size;
     fhdr.offset  = last_file_offset;
-    fhdr.namelen = strlen(argv[i]) + 1;
+    fhdr.namelen = strlen(basename(argv[i])) + 1;
 
     last_fhdr_addr += sizeof(fhdr) + fhdr.namelen;
 
@@ -139,7 +140,7 @@ static int create(int argc, char *argv[], const struct cmd *cmd)
     /* write the header out to the archive */
     write(archive, &fhdr, sizeof(fhdr));
     /* write the filename right after the header */
-    write(archive, argv[i], fhdr.namelen);
+    write(archive, basename(argv[i]), fhdr.namelen);
     /* write out the file's contents, at it's offset */
     pwrite(archive, buf, PALIGN(fhdr.size), last_file_offset);
 
