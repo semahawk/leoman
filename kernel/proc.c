@@ -51,6 +51,15 @@ static struct proc *find_next_proc(enum proc_state state)
   return NULL;
 }
 
+static struct proc *find_proc_by_pid(int pid)
+{
+  for (struct proc *proc = procs; proc < &procs[NPROCS]; proc++)
+    if (proc->pid == pid)
+      return proc;
+
+  return NULL;
+}
+
 void proc_idle(void)
 {
   for (;;){
@@ -83,7 +92,11 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
     return cpu_state;
 
   current_proc->trapframe = cpu_state;
-  current_proc->state = PROC_SLEEPING;
+
+  /* don't put blocked processes to sleep (they'd get scheduled then) */
+  /* TODO: try passing the proc structure directly, not just the pid */
+  if (!proc_is_blocked(current_proc->pid))
+    current_proc->state = PROC_SLEEPING;
 
   /* find a new process that could be run */
   if (NULL == (next_proc = find_next_proc(PROC_SLEEPING))){
@@ -237,6 +250,36 @@ void proc_earlyinit(void)
   int_install_handler(0x7f, proc_schedule_after_irq);
 
   current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
+}
+
+/* TODO: have a variant of those 'blocking' functions which would take the
+ *       struct proc directly, and not have to traverse the process list */
+void proc_block(int pid)
+{
+  struct proc *proc = find_proc_by_pid(pid);
+
+  proc->state = PROC_BLOCKED;
+}
+
+void proc_awake(int pid)
+{
+  struct proc *proc = find_proc_by_pid(pid);
+
+  /*
+   * Awaken, awaken, awaken, awaken,
+   * Take the land that must be taken.
+   * Awaken, awaken, awaken, awaken,
+   * Devour worlds, smite, forsaken.
+   *
+   */
+  proc->state = PROC_SLEEPING;
+}
+
+int proc_is_blocked(int pid)
+{
+  struct proc *proc = find_proc_by_pid(pid);
+
+  return proc->state == PROC_BLOCKED;
 }
 
 /*

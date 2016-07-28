@@ -23,6 +23,7 @@ enum proc_state {
   PROC_UNUSED,
   PROC_RUNNING,
   PROC_SLEEPING,
+  PROC_BLOCKED,
 };
 
 struct proc {
@@ -55,6 +56,10 @@ struct proc *proc_new(const char *name, bool privileged);
 struct proc *proc_new_from_memory(const char *name, bool privileged, void *addr, uint32_t size);
 void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
+
+void proc_block(int pid);
+void proc_awake(int pid);
+int  proc_is_blocked(int pid);
 
 void proc_schedule_without_irq(void);
 struct intregs *proc_schedule_after_irq(struct intregs *);
