@@ -7,3 +7,5 @@ build_job:
       - leoman.iso
     when: on_success
     expire_in: 3 weeks
+  tags:
+    - linux
