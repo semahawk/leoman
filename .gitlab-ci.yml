@@ -1,0 +1,9 @@
+build_job:
+  script:
+    - CC=clang cmake .
+    - make
+  artifacts:
+    paths:
+      - leoman.iso
+    when: on_success
+    expire_in: 3 weeks
