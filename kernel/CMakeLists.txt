@@ -7,7 +7,7 @@ include_directories ("${INCLUDE_DIR}")
 # fix this crap
 set (CMAKE_ASM_NASM_COMPILE_OBJECT "<CMAKE_C_COMPILER> -Wno-invalid-pp-token -D__ASSEMBLY__ -I${INCLUDE_DIR} -E - < <SOURCE> > <SOURCE>.cpped && <CMAKE_ASM_NASM_COMPILER> -f elf32 <SOURCE>.cpped -o <OBJECT>")
 set (CMAKE_C_FLAGS "-target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib ${CFLAGS}")
-set (LINKER_SCRIPT "kernel.ld")
+set (LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/kernel.ld")
 
 file (GLOB SOURCES . *.c *.asm)
 add_executable (kernel ${SOURCES})

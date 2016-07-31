@@ -7,7 +7,7 @@ add_custom_command (
   OUTPUT isoboot.bin
   DEPENDS isoboot.asm
   COMMAND ${CMAKE_ASM_NASM_COMPILER}
-  ARGS -f bin isoboot.asm -o isoboot.bin
+  ARGS -I${CMAKE_CURRENT_SOURCE_DIR}/ -f bin ${CMAKE_CURRENT_SOURCE_DIR}/isoboot.asm -o ${CMAKE_CURRENT_BINARY_DIR}/isoboot.bin
 )
 
 add_custom_target (boot ALL DEPENDS isoboot.bin)

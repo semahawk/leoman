@@ -4,7 +4,7 @@ project (drivers)
 include_directories ("${CMAKE_SOURCE_DIR}/include")
 
 set (CMAKE_C_FLAGS "-target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib ${CFLAGS}")
-set (LINKER_SCRIPT "process.ld")
+set (LINKER_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/process.ld")
 set (LIBS $<TARGET_FILE:c> $<TARGET_FILE:ipc>)
 
 # compile every .c file to an executable
