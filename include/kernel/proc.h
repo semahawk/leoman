@@ -14,10 +14,12 @@
 #define PROC_H
 
 #include <stdint.h>
+#include <ipc.h>
 
 #include "common.h"
 
 #define MAX_PROC_NAME_LEN 32
+#define MAX_PROC_MESSAGES 32
 
 enum proc_state {
   PROC_UNUSED,
@@ -50,6 +52,14 @@ struct proc {
 
     /* TODO: data for loading a file off of the disk */
   } location;
+
+  struct {
+    int head, tail;
+    int count;
+    /* TODO there is a chance this should be an array of structs, not struct
+     * pointers */
+    struct msg *buffer[MAX_PROC_MESSAGES];
+  } mailbox;
 };
 
 struct proc *proc_new(const char *name, bool privileged);
@@ -66,6 +76,10 @@ void proc_enable_scheduling(void);
 
 void proc_schedule_without_irq(void);
 struct intregs *proc_schedule_after_irq(struct intregs *);
+
+void proc_push_msg(int pid, struct msg *msg);
+struct msg *proc_pop_msg(int pid);
+bool proc_is_mailbox_full(int pid);
 
 /* defined in proc.c */
 extern volatile struct proc *current_proc;

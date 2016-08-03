@@ -15,28 +15,24 @@
 
 int main(void)
 {
-#if 0
-  for (ipc_dummy(); strlen("go go go"););
-#else
-  static int i;
-  /* feel the power of nolibc! */
+  /* TODO have the driver ask another driver for the permissions for the video
+   * memory, and probably the address too */
+  short *mem = (short *)0xb8000;
+  struct msg msg;
 
   while (1){
-    char *msg = "s";
-    int len = 1;
+    /* FIXME specifying the first argument doesn't change a thing and so any
+     * message from any other process get's fetched here */
+    if (ipc_recv(1, &msg)){
+      /* display the received data in the top-left corner */
+      *(mem + 0) = 0x3e00 | (msg.data % (1 << 8));
+    }
 
-    /* call syscall #4 (write) */
-    __asm volatile("movl %0, %%edx"::"r"(len));
-    __asm volatile("movl %0, %%ecx"::"r"(msg));
-    __asm volatile("movl $0, %%ebx":::"ebx");
-    __asm volatile("movl $4, %%eax":::"eax");
-    __asm volatile("int $0x80");
-
-    for (i = 0; i < 1000000; i++)
-      /* wait a bit */;
+    for (unsigned i = 0; i < 10000000; i++);
   }
-#endif
 
+  /* we have nowhere to return right know, actually */
+  /* but keep the compiler happy */
   return 0;
 }
 

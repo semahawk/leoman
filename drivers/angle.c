@@ -13,33 +13,22 @@
 #include <stdio.h>
 #include <ipc.h>
 
+/* admittedly - this isn't a real driver */
+/* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-#if 0
-  int len = strlen("fair roll");
-
-  for (;;)
-    ipc_dummy();
-#else
-  static int i;
-  /* feel the power of nolibc! */
+  struct msg msg;
+  int i = 'a';
 
   while (1){
-    char *msg = "\xa0";
-    int len = 1;
+    msg.data = i++;
+    ipc_send(2, &msg);
 
-    /* call syscall #4 (write) */
-    __asm volatile("movl %0, %%edx"::"r"(len));
-    __asm volatile("movl %0, %%ecx"::"r"(msg));
-    __asm volatile("movl $0, %%ebx":::"ebx");
-    __asm volatile("movl $4, %%eax":::"eax");
-    __asm volatile("int $0x80");
-
-    for (i = 0; i < 1000000; i++)
-      /* wait a bit */;
+    for (unsigned i = 0; i < 10000000; i++);
   }
-#endif
 
+  /* we have nowhere to return right know, actually */
+  /* but keep the compiler happy */
   return 0;
 }
 

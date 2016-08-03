@@ -168,8 +168,6 @@ void proc_load(void)
 
 void proc_kickoff_first_process(void)
 {
-  vga_printf("kicking off the first process (%s)\n", current_proc->name);
-
   current_proc->state = PROC_RUNNING;
 
   tss_set_ss(SEG_KDATA);
@@ -194,6 +192,11 @@ struct proc *proc_new(const char *name, bool privileged)
   proc->memsz = PAGE_SIZE;
   proc->privileged = privileged;
   proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
+
+  proc->mailbox.head  = 0;
+  proc->mailbox.tail  = 0;
+  proc->mailbox.count = 0;
+
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
   memcpy(proc->name, (char *)name, MAX_PROC_NAME_LEN);
@@ -226,8 +229,6 @@ struct proc *proc_new(const char *name, bool privileged)
   *--stack = SEG_KDATA; /* gs */
 
   proc->trapframe = (struct intregs *)stack;
-
-  vga_printf("created new proc %s (kstack 0x%x, tf 0x%x, pdir 0x%x)\n", proc->name, proc->kstack, proc->trapframe, proc->pdir);
 
   current_proc = proc;
 
@@ -297,6 +298,38 @@ void proc_enable_scheduling(void)
 {
   scheduling_enabled = true;
 }
+
+void proc_push_msg(int pid, struct msg *msg)
+{
+  struct proc *proc = find_proc_by_pid(pid);
+
+  if (++proc->mailbox.head >= MAX_PROC_MESSAGES)
+    proc->mailbox.head = 0;
+
+  proc->mailbox.buffer[proc->mailbox.head] = msg;
+  proc->mailbox.count++;
+}
+
+struct msg *proc_pop_msg(int pid)
+{
+  struct proc *proc = find_proc_by_pid(pid);
+
+  if (proc->mailbox.count == 0)
+    return NULL;
+
+  proc->mailbox.count--;
+
+  if (++proc->mailbox.tail >= MAX_PROC_MESSAGES)
+    proc->mailbox.tail = 0;
+
+  return proc->mailbox.buffer[proc->mailbox.tail];
+}
+
+bool proc_is_mailbox_full(int pid)
+{
+  struct proc *proc = find_proc_by_pid(pid);
+
+  return proc->mailbox.count >= MAX_PROC_MESSAGES;
 }
 
 /*

@@ -229,16 +229,17 @@ void kmain(struct kern_bootinfo *bootinfo)
   struct sar_file *executable = sar_lookup(bootinfo->initrd_addr, "angle");
 
   if (executable){
-    vga_printf("loading the angle process from 0x%x\n", (void *)bootinfo->initrd_addr + executable->offset);
-    proc_new_from_memory("angle", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+    proc_new_from_memory("angle", true /* FIXME */, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
   }
 
   executable = sar_lookup(bootinfo->initrd_addr, "shades");
 
   if (executable){
-    vga_printf("loading the shades process from 0x%x\n", (void *)bootinfo->initrd_addr + executable->offset);
-    proc_new_from_memory("shades", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+    proc_new_from_memory("shades", true /* FIXME */, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
   }
+
+  vga_printf("take note of the flipping stuff in the top-left corner\n");
+  vga_printf("that's processes talking to each other :3\n");
 
   /* processes will start running right now */
   proc_kickoff_first_process();

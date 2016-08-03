@@ -1,3 +1,5 @@
+#include <kernel/syscall.h>
+
 ; defined in idt.c
 extern isr_handler
 extern irq_handler
@@ -177,7 +179,8 @@ irq   15, 47
 
 ; hm, defines?
 swint 127 ; process scheduler
-swint 128 ; syscall
+swint SYSCALL_SEND_MSG_VECTOR ; syscall for sending messages
+swint SYSCALL_RECV_MSG_VECTOR ; syscall for receiving messages
 
 ; vi: ft=nasm:ts=2:sw=2 expandtab
 

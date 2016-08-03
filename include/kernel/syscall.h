@@ -13,15 +13,12 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
-/* one of this values is to be passed via eax */
-/* we're poor :D */
-typedef enum {
-  SYS_write  = 4,
-  SYS_getpid = 20,
-  SYS_NUM
-} syscall_t;
+#define SYSCALL_SEND_MSG_VECTOR 186 /* 0xba */
+#define SYSCALL_RECV_MSG_VECTOR 190 /* 0xbe */
 
+#ifndef __ASSEMBLY__
 void syscall_install();
+#endif /* __ASSEMBLY__ */
 
 #endif /* SYSCALL_H */
 

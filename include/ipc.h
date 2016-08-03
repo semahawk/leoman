@@ -13,7 +13,22 @@
 #ifndef IPC_H
 #define IPC_H
 
-void ipc_dummy(void);
+/* values to put into msg.type */
+/* this probably shouldn't be an enum, but a set of defines - if some processes
+ * wanted to 'add' 'fields' to the type */
+enum msg_type {
+  IPC_DUMMY_AND_NOT_USED,
+};
+
+struct msg {
+  int sender;
+  int receiver;
+  enum msg_type type;
+  int data;
+};
+
+int ipc_send(int receiver, struct msg *msg);
+int ipc_recv(int sender, struct msg *msg);
 
 #endif /* !IPC_H */
 

@@ -19,38 +19,56 @@
 #include <kernel/syscall.h>
 #include <kernel/vga.h>
 
-struct intregs *syscall_handler(struct intregs *regs)
+#include <ipc.h>
+
+struct intregs *syscall_send_msg(struct intregs *regs)
 {
-  syscall_t syscall = regs->eax;
+  proc_disable_scheduling();
 
-  switch (syscall){
-    case SYS_write: {
-      int fd = regs->ebx;
-      int len = regs->edx;
-      char *msg = (char *)regs->ecx;
+  struct msg *msg = (void *)regs->eax;
 
-      while (len-- > 0)
-        vga_putch(*msg++);
+  msg->sender = current_proc->pid;
 
-      /* return the length */
-      regs->eax = regs->edx;
-      break;
-    }
-    case SYS_getpid:
-      regs->eax = current_proc->pid;
-      break;
-    default:
-      regs->eax = 0x0badc0de;
-      break;
+  /* TODO do some sanity checking for when the receiver's mailbox is full */
+  proc_push_msg(msg->receiver, msg);
+
+  proc_enable_scheduling();
+
+  return regs;
+}
+
+struct intregs *syscall_recv_msg(struct intregs *regs)
+{
+  struct msg *dest_msg = (void *)regs->eax;
+  struct msg *msg_in_line = NULL;
+
+  proc_disable_scheduling();
+
+  if (NULL != (msg_in_line = proc_pop_msg(current_proc->pid))){
+    regs->eax = 1;
+
+    /* copy the message that's been waiting in the line over to the destination */
+    /* this here is the reason for the TODO note in the proc.mailbox struct
+     * definition */
+    memcpy(dest_msg, msg_in_line, sizeof(*dest_msg));
+  } else {
+    /* TODO if there's no messages in the process' mailbox then we probably
+     * should block it */
+    regs->eax = 0;
   }
+
+  proc_enable_scheduling();
 
   return regs;
 }
 
 void syscall_install(void)
 {
-  idt_set_gate(0x80, int128, 8, 0xee);
-  int_install_handler(0x80, syscall_handler);
+  idt_set_gate(SYSCALL_SEND_MSG_VECTOR, int186, 8, 0xee);
+  idt_set_gate(SYSCALL_RECV_MSG_VECTOR, int190, 8, 0xee);
+
+  int_install_handler(SYSCALL_SEND_MSG_VECTOR, syscall_send_msg);
+  int_install_handler(SYSCALL_RECV_MSG_VECTOR, syscall_recv_msg);
 }
 
 /*
