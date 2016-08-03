@@ -29,6 +29,8 @@ static uint32_t next_pid = 0;
 static struct proc *idle = NULL;
 volatile struct proc *current_proc = NULL;
 
+static int scheduling_enabled = false;
+
 static struct proc *find_next_proc(enum proc_state state)
 {
   static int i = 0;
@@ -87,6 +89,10 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
   cli();
 
   struct proc *next_proc;
+
+  if (!scheduling_enabled){
+    return cpu_state;
+  }
 
   if (!current_proc)
     return cpu_state;
@@ -171,6 +177,8 @@ void proc_kickoff_first_process(void)
   tss_set_ss(SEG_KDATA);
   tss_set_esp((uint32_t)current_proc->kstack);
   set_cr3((uint32_t)current_proc->pdir);
+
+  proc_enable_scheduling();
 
   proc_load();
 }
@@ -280,6 +288,17 @@ int proc_is_blocked(int pid)
   struct proc *proc = find_proc_by_pid(pid);
 
   return proc->state == PROC_BLOCKED;
+}
+
+void proc_disable_scheduling(void)
+{
+  scheduling_enabled = false;
+}
+
+void proc_enable_scheduling(void)
+{
+  scheduling_enabled = true;
+}
 }
 
 /*

@@ -61,6 +61,9 @@ void proc_block(int pid);
 void proc_awake(int pid);
 int  proc_is_blocked(int pid);
 
+void proc_disable_scheduling(void);
+void proc_enable_scheduling(void);
+
 void proc_schedule_without_irq(void);
 struct intregs *proc_schedule_after_irq(struct intregs *);
 
