@@ -30,7 +30,8 @@ uint32_t *elf_load(const void *file)
         break;
 
       case PT_LOAD:
-        map_pages((void *)file + phdr->p_offset, (void *)phdr->p_vaddr, PTE_W | PTE_U, phdr->p_memsz);
+        map_pages((void *)file + phdr->p_offset, (void *)phdr->p_vaddr,
+            PTE_W | (current_proc->privileged ? 0 : PTE_U), phdr->p_memsz);
         break;
     }
   }

@@ -141,10 +141,8 @@ void proc_load(void)
   uint16_t code_seg = current_proc->privileged ? SEG_KCODE : SEG_UCODE;
   uint16_t data_seg = current_proc->privileged ? SEG_KDATA : SEG_UDATA;
 
-  /* fix stack page permissions for privileged processes */
-  map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE, PTE_W | PTE_U, PAGE_SIZE);
-
-  vga_printf("proc_load says hi! blasting off to 0x%x though\n", entry);
+  map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE,
+      PTE_W | (current_proc->privileged ? 0 : PTE_U), PAGE_SIZE);
 
   /* this is kind of ugly.. */
   __asm volatile("movw   %0, %%ax\n"
