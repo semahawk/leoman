@@ -1,0 +1,33 @@
+Brief, technical, overview of how message passing works in Leoman
+
+Sending a message:
+
+- the process crafts a message (struct msg from include/ipc.h)
+- the process calls ipc_send (defined in lib/libipc/ipc.c)
+  - ipc_send calls the kernel via a syscall for sending messages, passing
+    it the message
+    - the kernel executes syscall_send_msg (the handler for the syscall)
+    - this function pushes (via proc_push_msg) the message to the receiver's
+      mailbox
+    - return to caller
+  - return to caller
+- the message is sent
+
+Receiving a message:
+
+- the process calls ipc_recv (defined in lib/libipc/ipc.c) with a message
+  pointer as one of the arguments
+  - ipc_recv calls the kernel via a syscall for receiving messages
+    - the kernel executes syscall_recv_msg (the handler for the syscall)
+    - this function checks (via proc_pop_msg) if there are any messages in the
+      process' mailbox
+    - if there is a message waiting for collection, this message is grabbed, and
+      it's contents are written into the message that was passed to ipc_recv and
+      one of the registers is set to 1 to indicate that a message is to be
+      processed (otherwise the register is set to 0)
+    - return to caller
+  - ipc_recv uses the information in the register, and uses it for it's return
+    value for the process that called it
+  - return to caller
+- the process can process (whaat) the message, if any was received
+
