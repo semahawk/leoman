@@ -13,6 +13,7 @@
 #include <kernel/config.h>
 #include <kernel/common.h>
 #include <kernel/elf.h>
+#include <kernel/fairy.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/pm.h>
@@ -53,7 +54,7 @@ static struct proc *find_next_proc(enum proc_state state)
   return NULL;
 }
 
-static struct proc *find_proc_by_pid(int pid)
+struct proc *proc_find_by_pid(int pid)
 {
   for (struct proc *proc = procs; proc < &procs[NPROCS]; proc++)
     if (proc->pid == pid)
@@ -256,21 +257,22 @@ void proc_earlyinit(void)
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
-  current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
+  idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
+  current_proc = proc_new_from_memory("fairy", true, (void *)proc_fairy, 0);
 }
 
 /* TODO: have a variant of those 'blocking' functions which would take the
  *       struct proc directly, and not have to traverse the process list */
 void proc_block(int pid)
 {
-  struct proc *proc = find_proc_by_pid(pid);
+  struct proc *proc = proc_find_by_pid(pid);
 
   proc->state = PROC_BLOCKED;
 }
 
 void proc_awake(int pid)
 {
-  struct proc *proc = find_proc_by_pid(pid);
+  struct proc *proc = proc_find_by_pid(pid);
 
   /*
    * Awaken, awaken, awaken, awaken,
@@ -284,7 +286,7 @@ void proc_awake(int pid)
 
 int proc_is_blocked(int pid)
 {
-  struct proc *proc = find_proc_by_pid(pid);
+  struct proc *proc = proc_find_by_pid(pid);
 
   return proc->state == PROC_BLOCKED;
 }
@@ -301,7 +303,7 @@ void proc_enable_scheduling(void)
 
 void proc_push_msg(int pid, struct msg *msg)
 {
-  struct proc *proc = find_proc_by_pid(pid);
+  struct proc *proc = proc_find_by_pid(pid);
 
   if (++proc->mailbox.head >= MAX_PROC_MESSAGES)
     proc->mailbox.head = 0;
@@ -312,7 +314,7 @@ void proc_push_msg(int pid, struct msg *msg)
 
 struct msg *proc_pop_msg(int pid)
 {
-  struct proc *proc = find_proc_by_pid(pid);
+  struct proc *proc = proc_find_by_pid(pid);
 
   if (proc->mailbox.count == 0)
     return NULL;
@@ -327,7 +329,7 @@ struct msg *proc_pop_msg(int pid)
 
 bool proc_is_mailbox_full(int pid)
 {
-  struct proc *proc = find_proc_by_pid(pid);
+  struct proc *proc = proc_find_by_pid(pid);
 
   return proc->mailbox.count >= MAX_PROC_MESSAGES;
 }

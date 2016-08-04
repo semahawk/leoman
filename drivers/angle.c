@@ -10,7 +10,8 @@
  *
  */
 
-#include <stdio.h>
+#include <kernel/fairy.h>
+
 #include <ipc.h>
 
 /* admittedly - this isn't a real driver */
@@ -22,7 +23,7 @@ int main(void)
 
   while (1){
     msg.data = i++;
-    ipc_send(2, &msg);
+    ipc_send(3, &msg);
 
     for (unsigned i = 0; i < 10000000; i++);
   }

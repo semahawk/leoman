@@ -10,19 +10,33 @@
  *
  */
 
-#include <stdio.h>
+#include <kernel/fairy.h>
+
+#include <stdint.h>
 #include <ipc.h>
 
 int main(void)
 {
-  /* TODO have the driver ask another driver for the permissions for the video
-   * memory, and probably the address too */
-  short *mem = (short *)0xb8000;
+  uint16_t *mem;
   struct msg msg;
+
+  msg.type = FAIRY_REQUEST_VIDEO_MEMORY;
+  ipc_send(1, &msg);
+
+  while (1){
+    /* block until we get the message with the video memory address back */
+    if (ipc_recv(1, &msg)){
+
+      if (msg.type == FAIRY_VIDEO_MEMORY_ADDRESS){
+        mem = (void *)msg.data;
+        break;
+      }
+    }
+  }
 
   while (1){
     /* FIXME specifying the first argument doesn't change a thing and so any
-     * message from any other process get's fetched here */
+     * message from any other process gets fetched here */
     if (ipc_recv(1, &msg)){
       /* display the received data in the top-left corner */
       *(mem + 0) = 0x3e00 | (msg.data % (1 << 8));
