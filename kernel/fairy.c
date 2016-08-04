@@ -47,6 +47,8 @@ void proc_fairy(void)
 
           break;
         default:
+          vga_printf("fairy: unknown message type %d\n", msg->type);
+
           response.sender = current_proc->pid;
           response.receiver = msg->sender;
           response.type = FAIRY_REQUEST_FAILED;

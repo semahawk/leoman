@@ -56,9 +56,7 @@ struct proc {
   struct {
     int head, tail;
     int count;
-    /* TODO there is a chance this should be an array of structs, not struct
-     * pointers */
-    struct msg *buffer[MAX_PROC_MESSAGES];
+    struct msg buffer[MAX_PROC_MESSAGES];
   } mailbox;
 };
 

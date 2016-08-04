@@ -229,13 +229,13 @@ void kmain(struct kern_bootinfo *bootinfo)
   struct sar_file *executable = sar_lookup(bootinfo->initrd_addr, "angle");
 
   if (executable){
-    proc_new_from_memory("angle", true /* FIXME */, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+    proc_new_from_memory("angle", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
   }
 
   executable = sar_lookup(bootinfo->initrd_addr, "shades");
 
   if (executable){
-    proc_new_from_memory("shades", true /* FIXME */, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+    proc_new_from_memory("shades", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
   }
 
   vga_printf("take note of the flipping stuff in the top-left corner\n");

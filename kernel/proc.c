@@ -308,7 +308,7 @@ void proc_push_msg(int pid, struct msg *msg)
   if (++proc->mailbox.head >= MAX_PROC_MESSAGES)
     proc->mailbox.head = 0;
 
-  proc->mailbox.buffer[proc->mailbox.head] = msg;
+  memcpy(&proc->mailbox.buffer[proc->mailbox.head], msg, sizeof(*msg));;
   proc->mailbox.count++;
 }
 
@@ -324,7 +324,7 @@ struct msg *proc_pop_msg(int pid)
   if (++proc->mailbox.tail >= MAX_PROC_MESSAGES)
     proc->mailbox.tail = 0;
 
-  return proc->mailbox.buffer[proc->mailbox.tail];
+  return &proc->mailbox.buffer[proc->mailbox.tail];
 }
 
 bool proc_is_mailbox_full(int pid)
