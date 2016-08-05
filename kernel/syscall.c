@@ -48,8 +48,6 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     regs->eax = 1;
 
     /* copy the message that's been waiting in the line over to the destination */
-    /* this here is the reason for the TODO note in the proc.mailbox struct
-     * definition */
     memcpy(dest_msg, msg_in_line, sizeof(*dest_msg));
   } else {
     /* TODO if there's no messages in the process' mailbox then we probably
