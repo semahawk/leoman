@@ -177,8 +177,17 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
   /* }}} */
 }
 
+/* processes that are considered to be essential and have to be found in the
+ * initrd */
+static const char *const essential_initrd_processes[] = {
+  "angle", "vga", NULL
+};
+
 void kmain(struct kern_bootinfo *bootinfo)
 {
+  /* whether all of the required process were loaded from the initrd */
+  bool all_processes_loaded = true;
+
   cli();
 
   adjust_the_memory_map(bootinfo);
@@ -226,21 +235,22 @@ void kmain(struct kern_bootinfo *bootinfo)
   vga_printf("initrd's size:             0x%x\n", bootinfo->initrd_size);
   vga_printf("\n");
 
-  struct sar_file *executable = sar_lookup(bootinfo->initrd_addr, "angle");
+  /* load the required processes off of the initrd */
+  /* hang if any of those was not found */
+  for (const char **initrd_proc_name = (const char **)essential_initrd_processes; *initrd_proc_name != NULL; initrd_proc_name++){
+    struct sar_file *initrd_proc_executable;
 
-  if (executable){
-    proc_new_from_memory("angle", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
-  } else {
-    vga_printf("failed to load process 'angle' from the initrd!\n");
+    if ((initrd_proc_executable = sar_lookup(bootinfo->initrd_addr, *initrd_proc_name))){
+      proc_new_from_memory(*initrd_proc_name, false,
+          (void *)bootinfo->initrd_addr + initrd_proc_executable->offset, initrd_proc_executable->size);
+    } else {
+      vga_printf("error: process '%s' was not found in the initrd!\n", *initrd_proc_name);
+      all_processes_loaded = false;
+    }
   }
 
-  executable = sar_lookup(bootinfo->initrd_addr, "vga");
-
-  if (executable){
-    proc_new_from_memory("vga", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
-  } else {
-    vga_printf("failed to load process 'vga' from the initrd!\n");
-  }
+  if (!all_processes_loaded)
+    for (;;) halt();
 
   vga_printf("take note of the flipping stuff in the top-left corner\n");
   vga_printf("that's processes talking to each other :3\n");
