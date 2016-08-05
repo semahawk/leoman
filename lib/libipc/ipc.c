@@ -31,6 +31,7 @@ int ipc_recv(int sender, struct msg *msg)
   int any_msg_received;
 
   /* call the kernel, and pass him the pointer to message to fill in */
+  __asm volatile("movl %0, %%ebx" :: "r"(sender) : "ebx");
   __asm volatile("movl %0, %%eax" :: "r"(msg) : "eax");
   __asm volatile("int %0" :: "Nd"(SYSCALL_RECV_MSG_VECTOR));
 

@@ -35,9 +35,7 @@ int main(void)
   }
 
   while (1){
-    /* FIXME specifying the first argument doesn't change a thing and so any
-     * message from any other process gets fetched here */
-    if (ipc_recv(1, &msg)){
+    if (ipc_recv(2, &msg)){
       /* display the received data in the top-left corner */
       *(mem + 0) = 0x3e00 | (msg.data % (1 << 8));
     }

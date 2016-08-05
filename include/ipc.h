@@ -20,7 +20,23 @@ struct msg {
   int data;
 };
 
+/*
+ * Send the <msg> to process <receiver>
+ *
+ * This call is non-blocking
+ */
 int ipc_send(int receiver, struct msg *msg);
+
+/*
+ * Check if any messages were sent to the current process
+ *
+ * If a message was in the current process' queue, it's filled into <msg>
+ *
+ * If <sender> is different than 0, then only messages from the
+ * specified <sender> are taken into account
+ *
+ * This call is non-blocking
+ */
 int ipc_recv(int sender, struct msg *msg);
 
 #endif /* !IPC_H */
