@@ -230,12 +230,16 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   if (executable){
     proc_new_from_memory("angle", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+  } else {
+    vga_printf("failed to load process 'angle' from the initrd!\n");
   }
 
-  executable = sar_lookup(bootinfo->initrd_addr, "shades");
+  executable = sar_lookup(bootinfo->initrd_addr, "vga");
 
   if (executable){
-    proc_new_from_memory("shades", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+    proc_new_from_memory("vga", false, (void *)bootinfo->initrd_addr + executable->offset, executable->size);
+  } else {
+    vga_printf("failed to load process 'vga' from the initrd!\n");
   }
 
   vga_printf("take note of the flipping stuff in the top-left corner\n");
