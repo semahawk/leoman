@@ -13,6 +13,8 @@
 #ifndef IPC_H
 #define IPC_H
 
+#include <kernel/common.h> /* for bool type */
+
 struct msg {
   int sender;
   int receiver;
@@ -25,7 +27,7 @@ struct msg {
  *
  * This call is non-blocking
  */
-int ipc_send(int receiver, struct msg *msg);
+bool ipc_send(int receiver, struct msg *msg);
 
 /*
  * Check if any messages were sent to the current process
@@ -37,7 +39,7 @@ int ipc_send(int receiver, struct msg *msg);
  *
  * This call is non-blocking
  */
-int ipc_recv(int sender, struct msg *msg);
+bool ipc_recv(int sender, struct msg *msg);
 
 #endif /* !IPC_H */
 

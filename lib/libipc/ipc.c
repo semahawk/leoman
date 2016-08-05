@@ -10,11 +10,11 @@
  *
  */
 
-#include <stdio.h>
+#include <kernel/common.h> /* for bool type */
 #include <kernel/syscall.h>
 #include <ipc.h>
 
-int ipc_send(int receiver, struct msg *msg)
+bool ipc_send(int receiver, struct msg *msg)
 {
   msg->receiver = receiver;
 
@@ -23,12 +23,12 @@ int ipc_send(int receiver, struct msg *msg)
   __asm volatile("int %0" :: "Nd"(SYSCALL_SEND_MSG_VECTOR));
 
   /* FIXME */
-  return 1;
+  return true;
 }
 
-int ipc_recv(int sender, struct msg *msg)
+bool ipc_recv(int sender, struct msg *msg)
 {
-  int any_msg_received;
+  bool any_msg_received;
 
   /* call the kernel, and pass him the pointer to message to fill in */
   __asm volatile("movl %0, %%ebx" :: "r"(sender) : "ebx");
