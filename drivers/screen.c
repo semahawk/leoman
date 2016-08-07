@@ -18,9 +18,9 @@
 
 static uint16_t *video_memory;
 /* current column / row */
-static int column = 0, row = 0;
+static int column, row;
 /* current foreground and background colors */
-static enum color fg_color = WHITE, bg_color = BLACK;
+static enum color fg_color, bg_color;
 /* screen's dimensions */
 static const int screen_columns = 80, screen_rows = 25;
 
@@ -77,7 +77,7 @@ int main(void)
   /* FIXME there's apparently still some problems with loading (ELF) executables
    *       properly - which is why the initialization here */
   column = 0, row = 0;
-  fg_color = LIGHT_BROWN, bg_color = CYAN;
+  fg_color = LIGHT_BROWN, bg_color = BLACK;
 
   msg.type = FAIRY_REQUEST_VIDEO_MEMORY;
   ipc_send(1, &msg);
@@ -96,11 +96,12 @@ int main(void)
   clear();
 
   while (1){
-    if (ipc_recv(2, &msg)){
+    /* TODO add some functionality to block a process which checked for any
+     * messages but didn't find any to avoid busy looping like we are here if
+     * nobody wants to print stuff */
+    if (ipc_recv(0, &msg)){
       put_char((char)((char)msg.data & 0xff));
     }
-
-    for (unsigned i = 0; i < 200000; i++);
   }
 
   /* we have nowhere to return right know, actually */

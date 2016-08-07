@@ -16,6 +16,7 @@
 #include <stddef.h>
 
 size_t strlen(const char *s);
+int puts(const char *s);
 
 #endif /* !STDIO_H */
 

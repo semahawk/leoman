@@ -180,7 +180,8 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
 /* processes that are considered to be essential and have to be found in the
  * initrd */
 static const char *const essential_initrd_processes[] = {
-  "angle", "screen", NULL
+  /* the order here is the order those processes will be loaded in */
+  "screen", "angle", NULL
 };
 
 void kmain(struct kern_bootinfo *bootinfo)

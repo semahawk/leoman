@@ -9,3 +9,5 @@ file (GLOB SOURCES *.c)
 
 add_library (c STATIC ${SOURCES})
 
+target_include_directories (c PUBLIC ${CMAKE_SOURCE_DIR}/include)
+

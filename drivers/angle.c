@@ -10,22 +10,19 @@
  *
  */
 
+#include <stdio.h>
 #include <ipc.h>
 
 /* admittedly - this isn't a real driver */
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  struct msg msg;
-  int i = 0, j = 0;
+  puts("hello, world!\n");
+  puts("this is coming from a userspace process!\n");
+  puts("powered by home-brewed IPC!\n");
+  puts("yay!\n");
 
-  while (1){
-    msg.data = (i++ * 13 + (++j % 10)) % 'z';
-    ipc_send(3, &msg);
-
-    for (unsigned i = 0; i < 200000; i++);
-  }
-
+  while (1);
   /* we have nowhere to return right know, actually */
   /* but keep the compiler happy */
   return 0;
