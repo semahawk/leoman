@@ -160,7 +160,7 @@ find_and_load_file:
 .checkout_next_file:
   ; see if we're above the extent's length limit
   cmp dx, 0
-  jle .file_not_found
+  jbe .file_not_found
 
   ; offset 0 contains the directory record's length
   xor eax, eax
