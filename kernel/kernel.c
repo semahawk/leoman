@@ -252,9 +252,6 @@ void kmain(struct kern_bootinfo *bootinfo)
   if (!all_processes_loaded)
     for (;;) halt();
 
-  vga_printf("take note of the flipping stuff in the top-left corner\n");
-  vga_printf("that's processes talking to each other :3\n");
-
   /* processes will start running right now */
   proc_kickoff_first_process();
 

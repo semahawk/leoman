@@ -10,8 +10,6 @@
  *
  */
 
-#include <kernel/fairy.h>
-
 #include <ipc.h>
 
 /* admittedly - this isn't a real driver */
@@ -19,13 +17,13 @@
 int main(void)
 {
   struct msg msg;
-  int i = 'a';
+  int i = 0, j = 0;
 
   while (1){
-    msg.data = i++;
+    msg.data = (i++ * 13 + (++j % 10)) % 'z';
     ipc_send(3, &msg);
 
-    for (unsigned i = 0; i < 10000000; i++);
+    for (unsigned i = 0; i < 200000; i++);
   }
 
   /* we have nowhere to return right know, actually */
