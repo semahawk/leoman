@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 project (initrd)
 
-set (INITRD_OBJS $<TARGET_FILE:angle> $<TARGET_FILE:vga>)
+set (INITRD_OBJS $<TARGET_FILE:angle> $<TARGET_FILE:screen>)
 
 find_program (sar NAMES sar PATHS ${CMAKE_SOURCE_DIR} PATH_SUFFIXES tools)
 
@@ -14,5 +14,5 @@ add_custom_command (
 
 add_custom_target (initrd ALL DEPENDS initrd.bin)
 
-add_dependencies (initrd sar angle vga)
+add_dependencies (initrd sar angle screen)
 

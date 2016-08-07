@@ -1,6 +1,6 @@
 /*
  *
- * vga.c
+ * screen.c
  *
  * Created at:  27 Jul 2016 13:55:59 +0200 (CEST)
  *
