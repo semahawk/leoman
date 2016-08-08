@@ -195,26 +195,16 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* set up the printing utilities */
   vga_init();
 
-  vga_printf("\n");
-  /* credit: http://patorjk.com/software/taag/#p=display&f=Bloody&t=Leoman */
-  vga_printf("  \xdb\xdb\xb2    \xb2\xdb\xdb\xdb\xdb\xdb  \xb1\xdb\xdb\xdb\xdb\xdb   \xdb\xdb\xdb\xdc \xdc\xdb\xdb\xdb\xb2 \xdc\xdc\xdc       \xdb\xdb\xdb\xdc    \xdb \n");
-  vga_printf(" \xb2\xdb\xdb\xb1    \xb2\xdb   \xdf \xb1\xdb\xdb\xb1  \xdb\xdb\xb1\xb2\xdb\xdb\xb1\xdf\xdb\xdf \xdb\xdb\xb1\xb1\xdb\xdb\xdb\xdb\xdc     \xdb\xdb \xdf\xdb   \xdb \n");
-  vga_printf(" \xb1\xdb\xdb\xb0    \xb1\xdb\xdb\xdb   \xb1\xdb\xdb\xb0  \xdb\xdb\xb1\xb2\xdb\xdb    \xb2\xdb\xdb\xb0\xb1\xdb\xdb  \xdf\xdb\xdc  \xb2\xdb\xdb  \xdf\xdb \xdb\xdb\xb1\n");
-  vga_printf(" \xb1\xdb\xdb\xb0    \xb1\xb2\xdb  \xdc \xb1\xdb\xdb   \xdb\xdb\xb0\xb1\xdb\xdb    \xb1\xdb\xdb \xb0\xdb\xdb\xdc\xdc\xdc\xdc\xdb\xdb \xb2\xdb\xdb\xb1  \xde\xdd\xdb\xdb\xb1\n");
-  vga_printf(" \xb0\xdb\xdb\xdb\xdb\xdb\xdb\xb1\xb0\xb1\xdb\xdb\xdb\xdb\xb1\xb0 \xdb\xdb\xdb\xdb\xb2\xb1\xb0\xb1\xdb\xdb\xb1   \xb0\xdb\xdb\xb1 \xb2\xdb   \xb2\xdb\xdb\xb1\xb1\xdb\xdb\xb0   \xb2\xdb\xdb\xb0\n");
-  vga_printf(" \xb0 \xb1\xb0\xb2  \xb0\xb0\xb0 \xb1\xb0 \xb0\xb0 \xb1\xb0\xb1\xb0\xb1\xb0 \xb0 \xb1\xb0   \xb0  \xb0 \xb1\xb1   \xb2\xb1\xdb\xb0\xb0 \xb1\xb0   \xb1 \xb1 \n");
-  vga_printf(" \xb0 \xb0 \xb1  \xb0 \xb0 \xb0  \xb0  \xb0 \xb1 \xb1\xb0 \xb0  \xb0      \xb0  \xb1   \xb1\xb1 \xb0\xb0 \xb0\xb0   \xb0 \xb1\xb0\n");
-  vga_printf("   \xb0 \xb0      \xb0   \xb0 \xb0 \xb0 \xb1  \xb0      \xb0     \xb0   \xb1      \xb0   \xb0 \xb0 \n");
-  vga_printf("     \xb0  \xb0   \xb0  \xb0    \xb0 \xb0         \xb0         \xb0  \xb0         \xb0 \n");
+  vga_printf("[kern] available memory detected %d MiB\n", bootinfo->mem_avail / 1024 / 1024);
 
   /* set up the segments, kernel code and data, &c */
   gdt_init();
   /* install the IDT (ISRs and IRQs) */
   idt_install();
   /* set up the physical memory manager thingies */
-  void *pm = pm_init(bootinfo);
+  pm_init(bootinfo);
   /* set up the virtual memory manager thingies */
-  void *vm = vm_init(bootinfo);
+  vm_init(bootinfo);
   /* install the keyboard */
   kbd_install();
   /* install the timer */
@@ -224,24 +214,13 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* part one of processes init */
   proc_earlyinit();
 
-  vga_printf("\n");
-  vga_printf("available memory detected: 0x%x (%d MiB)\n", bootinfo->mem_avail, bootinfo->mem_avail / 1024 / 1024);
-  vga_printf("\n");
-  vga_printf("kernel's physical address: 0x%x\n", &kernel_phys);
-  vga_printf("kernel's  virtual address: 0x%x\n", &kernel_start);
-  vga_printf("kernel's size:             0x%x\n", &kernel_size);
-  vga_printf("virtual memory:            0x%x\n", vm);
-  vga_printf("physical memory:           0x%x\n", pm);
-  vga_printf("initrd loaded to:          0x%x\n", bootinfo->initrd_addr);
-  vga_printf("initrd's size:             0x%x\n", bootinfo->initrd_size);
-  vga_printf("\n");
-
   /* load the required processes off of the initrd */
   /* hang if any of those was not found */
   for (const char **initrd_proc_name = (const char **)essential_initrd_processes; *initrd_proc_name != NULL; initrd_proc_name++){
     struct sar_file *initrd_proc_executable;
 
     if ((initrd_proc_executable = sar_lookup(bootinfo->initrd_addr, *initrd_proc_name))){
+      vga_printf("[initrd] loading process %s\n", *initrd_proc_name);
       proc_new_from_memory(*initrd_proc_name, false,
           (void *)bootinfo->initrd_addr + initrd_proc_executable->offset, initrd_proc_executable->size);
     } else {

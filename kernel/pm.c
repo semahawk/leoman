@@ -79,6 +79,8 @@ void *pm_init(struct kern_bootinfo *bootinfo)
   /* zero-out the bitmap */
   memset(pm_bitmap, 0x0, sizeof(pm_bitmap));
 
+  vga_printf("[pm] physical memory manager initialized\n");
+
   return (void *)v2p(pm_page_pool);
 }
 

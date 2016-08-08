@@ -47,6 +47,8 @@ void tss_init(uint32_t ss, uint32_t esp)
   tss.ds =
   tss.fs =
   tss.gs = SEG_KDATA | 3;
+
+  vga_printf("[tss] task state segment was initialized\n");
 }
 
 /*

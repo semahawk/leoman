@@ -68,6 +68,8 @@ void gdt_init(void)
   gdt_load(gdt, sizeof(gdt));
   gdt_flush();
 
+  vga_printf("[gdt] global descriptors were set up\n");
+
   tss_flush(SEG_TSS);
 }
 

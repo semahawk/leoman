@@ -288,6 +288,8 @@ static inline void irq_remap(void)
   outb(0xa1, 0x01);
   outb(0x21, 0x00);
   outb(0xa1, 0x00);
+
+  vga_printf("[idt] remapping irq 0-15 to int 32-47\n");
 }
 
 void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
@@ -377,6 +379,8 @@ void idt_install(void)
   for (int i = 0; i < 32; i++)
     if (isr_handlers[i] == 0)
       isr_handlers[i] = screen_of_death;
+
+  vga_printf("[idt] interrupt vectors were configured\n");
 }
 
 /*

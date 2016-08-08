@@ -149,6 +149,7 @@ void unmap_pages(void *vaddr, unsigned sz)
 void *vm_init(struct kern_bootinfo *bootinfo)
 {
   /* TODO: map stuff */
+  vga_printf("[vm] virtual memory manager was set up\n");
 
   return kernel_pdir;
 }

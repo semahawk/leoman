@@ -47,6 +47,8 @@ void timer_wait(int ticks)
 void timer_install(void)
 {
   irq_install_handler(0, timer_handler);
+
+  vga_printf("[timer] timer was set up (irq 0)\n");
 }
 
 void timer_uninstall(void)

@@ -74,6 +74,8 @@ void syscall_install(void)
 
   int_install_handler(SYSCALL_SEND_MSG_VECTOR, syscall_send_msg);
   int_install_handler(SYSCALL_RECV_MSG_VECTOR, syscall_recv_msg);
+
+  vga_printf("[syscall] system call gates configured (int 0x%x, 0x%x)\n", SYSCALL_SEND_MSG_VECTOR, SYSCALL_RECV_MSG_VECTOR);
 }
 
 /*

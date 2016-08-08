@@ -171,6 +171,8 @@ void proc_kickoff_first_process(void)
 {
   current_proc->state = PROC_RUNNING;
 
+  vga_printf("[proc] executing first process: %s\n", current_proc->name);
+
   tss_set_ss(SEG_KDATA);
   tss_set_esp((uint32_t)current_proc->kstack);
   set_cr3((uint32_t)current_proc->pdir);
@@ -259,6 +261,9 @@ void proc_earlyinit(void)
 
   idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
   current_proc = proc_new_from_memory("fairy", true, (void *)proc_fairy, 0);
+
+  vga_printf("[proc] early stage of processes done\n");
+  vga_printf("[proc] created processes idle and fairy\n");
 }
 
 /* TODO: have a variant of those 'blocking' functions which would take the
