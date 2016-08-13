@@ -21,6 +21,8 @@
 #define MAX_PROC_NAME_LEN 32
 #define MAX_PROC_MESSAGES 32
 
+#define MSG_GETPID 1
+
 enum proc_state {
   PROC_UNUSED,
   PROC_RUNNING,

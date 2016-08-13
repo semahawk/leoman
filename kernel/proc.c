@@ -24,6 +24,8 @@
 #include <kernel/tss.h>
 #include <kernel/x86.h>
 
+#include <ipc.h>
+
 static struct proc procs[NPROCS];
 static uint32_t next_pid = 0;
 
@@ -69,6 +71,31 @@ void proc_idle(void)
     vga_printf("i");
     for (unsigned i = 0; i < 1000000; i++)
       ;
+  }
+}
+
+void proc_manager(void)
+{
+  struct msg *msg, response;
+
+  while (1){
+    if (NULL != (msg = proc_pop_msg(current_proc->pid))){
+      switch (msg->type){
+        case MSG_GETPID:
+          response.receiver = msg->sender;
+          response.sender = current_proc->pid;
+          response.data = msg->sender;
+
+          vga_printf("[debug/procmgr] proc %d is asking for their id\n", msg->sender);
+          break;
+        default:
+          /* FIXME */
+          break;
+      }
+
+      /* send the reply */
+      proc_push_msg(msg->sender, &response);
+    }
   }
 }
 
@@ -235,6 +262,8 @@ struct proc *proc_new(const char *name, bool privileged)
 
   current_proc = proc;
 
+  vga_printf("[proc] new process: %s (pid %d)\n", proc->name, proc->pid);
+
   return proc;
 }
 
@@ -260,10 +289,10 @@ void proc_earlyinit(void)
   int_install_handler(0x7f, proc_schedule_after_irq);
 
   idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
-  current_proc = proc_new_from_memory("fairy", true, (void *)proc_fairy, 0);
+  proc_new_from_memory("fairy", true, (void *)proc_fairy, 0);
+  current_proc = proc_new_from_memory("procmgr", true, (void *)proc_manager, 0);
 
-  vga_printf("[proc] early stage of processes done\n");
-  vga_printf("[proc] created processes idle and fairy\n");
+  vga_printf("[proc] early stage initialized\n");
 }
 
 /* TODO: have a variant of those 'blocking' functions which would take the

@@ -18,7 +18,7 @@ int puts(const char *s)
 
   for (; *s; s++){
     msg.data = *s;
-    ipc_send(2, &msg);
+    ipc_send(3, &msg);
 
     /* FIXME lousy way of not-losing messages */
     for (unsigned i = 0; i < 200000; i++);

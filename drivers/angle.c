@@ -11,6 +11,7 @@
  */
 
 #include <stdio.h>
+#include <kernel/proc.h>
 #include <ipc.h>
 
 /* admittedly - this isn't a real driver */
@@ -21,6 +22,22 @@ int main(void)
   puts("this is coming from a userspace process!\n");
   puts("powered by home-brewed IPC!\n");
   puts("yay!\n");
+
+  for (unsigned i = 0; i < 1000000; i++);
+
+  struct msg msg;
+
+  msg.type = MSG_GETPID;
+
+  ipc_send(2, &msg);
+
+  while (1){
+    if (ipc_recv(2, &msg)){
+      puts("my (angle's) pid is: ");
+      char buf[2] = { msg.data + '0', '\0' };
+      puts(buf);
+    }
+  }
 
   while (1);
   /* we have nowhere to return right know, actually */
