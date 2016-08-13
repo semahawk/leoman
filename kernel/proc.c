@@ -335,6 +335,11 @@ void proc_enable_scheduling(void)
   scheduling_enabled = true;
 }
 
+bool proc_scheduling_enabled(void)
+{
+  return !!scheduling_enabled;
+}
+
 void proc_push_msg(int pid, struct msg *msg)
 {
   struct proc *proc = proc_find_by_pid(pid);
