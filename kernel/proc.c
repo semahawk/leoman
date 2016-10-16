@@ -130,10 +130,10 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
   /* don't put blocked processes to sleep (they'd get scheduled then) */
   /* TODO: try passing the proc structure directly, not just the pid */
   if (!proc_is_blocked(current_proc->pid))
-    current_proc->state = PROC_SLEEPING;
+    current_proc->state = PROC_READY;
 
   /* find a new process that could be run */
-  if (NULL == (next_proc = find_next_proc(PROC_SLEEPING))){
+  if (NULL == (next_proc = find_next_proc(PROC_READY))){
     /* if there's no process to switch to then default to idle */
     next_proc = idle;
   }
@@ -217,7 +217,7 @@ struct proc *proc_new(const char *name, bool privileged)
   map_page(stack, stack, PTE_W);
 
   proc->pid   = next_pid++;
-  proc->state = PROC_SLEEPING;
+  proc->state = PROC_READY;
   proc->pdir  = vm_copy_kernel_pdir();
   proc->memsz = PAGE_SIZE;
   proc->privileged = privileged;
@@ -301,7 +301,8 @@ void proc_block(int pid)
 {
   struct proc *proc = proc_find_by_pid(pid);
 
-  proc->state = PROC_BLOCKED;
+  /* what about other types of blocked? */
+  proc->state = PROC_SEND_BLOCKED;
 }
 
 void proc_awake(int pid)
@@ -315,14 +316,17 @@ void proc_awake(int pid)
    * Devour worlds, smite, forsaken.
    *
    */
-  proc->state = PROC_SLEEPING;
+  proc->state = PROC_READY;
 }
 
 int proc_is_blocked(int pid)
 {
   struct proc *proc = proc_find_by_pid(pid);
 
-  return proc->state == PROC_BLOCKED;
+  return (proc->state == PROC_SEND_BLOCKED)
+      || (proc->state == PROC_RECV_BLOCKED)
+      || (proc->state == PROC_REPLY_BLOCKED)
+    ;
 }
 
 void proc_disable_scheduling(void)

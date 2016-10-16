@@ -26,8 +26,11 @@
 enum proc_state {
   PROC_UNUSED,
   PROC_RUNNING,
-  PROC_SLEEPING,
-  PROC_BLOCKED,
+  PROC_READY,
+  PROC_SEND_BLOCKED,
+  PROC_RECV_BLOCKED,
+  PROC_REPLY_BLOCKED,
+  /* yes, I've been reading about QNX lately... */
 };
 
 struct proc {
