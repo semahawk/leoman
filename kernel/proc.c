@@ -297,12 +297,11 @@ void proc_earlyinit(void)
 
 /* TODO: have a variant of those 'blocking' functions which would take the
  *       struct proc directly, and not have to traverse the process list */
-void proc_block(int pid)
+void proc_set_state(int pid, enum proc_state state)
 {
   struct proc *proc = proc_find_by_pid(pid);
 
-  /* what about other types of blocked? */
-  proc->state = PROC_SEND_BLOCKED;
+  proc->state = state;
 }
 
 void proc_awake(int pid)

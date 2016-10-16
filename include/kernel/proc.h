@@ -70,7 +70,7 @@ struct proc *proc_new_from_memory(const char *name, bool privileged, void *addr,
 void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
 
-void proc_block(int pid);
+void proc_set_state(int pid, enum proc_state);
 void proc_awake(int pid);
 int  proc_is_blocked(int pid);
 
