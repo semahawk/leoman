@@ -1,0 +1,10 @@
+include_rules
+
+CC = clang
+CFLAGS += -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
+CFLAGS += -I../include
+
+LIBS = ../lib/libc/libc.a ../lib/libipc/libipc.a
+
+: foreach *.c |> $(CC) $(CFLAGS) -c %f -o %o |> %B.o
+: foreach *.o | process.ld $(LIBS) |> $(CC) $(CFLAGS) -Tprocess.ld %f -o %o $(LIBS) |> %B

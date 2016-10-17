@@ -1,0 +1,5 @@
+include_rules
+
+!as = |> nasm -f bin %f -o %o |>
+
+: isoboot.asm |> !as |> isoboot.bin

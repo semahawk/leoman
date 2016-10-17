@@ -1,0 +1,8 @@
+include_rules
+
+CC = clang
+CFLAGS = -Wall -Werror
+
+!cc = |> $(CC) $(CFLAGS) %f -o %o |>
+
+: sar.c |> !cc |> sar

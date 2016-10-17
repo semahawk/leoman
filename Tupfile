@@ -1,0 +1,18 @@
+include_rules
+
+INITRD_FILES = drivers/angle drivers/screen
+
+: $(INITRD_FILES) | tools/sar |> tools/sar c %o $(INITRD_FILES) |> initrd.bin
+
+MKISOFS = mkisofs
+
+!cp = |> cp %f %o |>
+
+: boot/isoboot.bin |> !cp |> iso_root/boot/loader/isoboot.bin
+: kernel/kernel |> !cp |> iso_root/boot/kernel/kernel.bin
+: initrd.bin |> !cp |> iso_root/boot/kernel/initrd.bin
+
+: iso_root/ | iso_root/boot/loader/isoboot.bin iso_root/boot/kernel/kernel.bin iso_root/boot/kernel/initrd.bin |> \
+  $(MKISOFS) -quiet -R -J -l -c boot/boot.cat \
+  -b boot/loader/isoboot.bin -no-emul-boot -boot-load-size 4 \
+  -o %o %f |> leoman.iso
