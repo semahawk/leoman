@@ -1,1 +1,22 @@
 .gitignore
+
+CC = clang
+CPP = $(CC) -E
+
+CFLAGS = -Wall
+CPPFLAGS = -I$(TUP_CWD)/include
+
+# abuse clang a bit
+LD = clang
+LDFLAGS =
+
+# which executable to use to create the ISO image
+MKISOFS = mkisofs
+
+!cc  = |> $(CC) $(CFLAGS) $(CPPFLAGS) -c %f -o %o |> %B.o
+!cpp = |> $(CPP) $(CPPFLAGS) - < %f > %o |> %B.cpped
+!ld  = |> $(LD) $(LDLAGS) -o %o %f |>
+!ar  = |> ar crs %o %f |>
+!as  = |> nasm -f bin %f -o %o |>
+!cp  = |> cp %f %o |>
+

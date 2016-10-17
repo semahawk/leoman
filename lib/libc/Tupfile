@@ -1,11 +1,6 @@
 include_rules
 
-CC = clang
 CFLAGS += -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
-CFLAGS += -I../../include
-
-!cc = |> $(CC) $(CFLAGS) -c %f -o %o |> %B.o
-!ar = |> ar crs %o %f |>
 
 : foreach *.c |> !cc |>
 : *.o |> !ar |> libc.a

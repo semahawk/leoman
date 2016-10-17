@@ -1,8 +1,9 @@
 include_rules
 
-CC = clang
-CFLAGS = -Wall -Werror
+# clear CPPFLAGS since they contain -Iinclude which contains stdio.h which makes
+# those host-level programs not compile because our stdio.h has a lot of stuff
+# missing
+CPPFLAGS =
 
-!cc = |> $(CC) $(CFLAGS) %f -o %o |>
-
-: sar.c |> !cc |> sar
+: sar.c |> !cc |> sar.o
+: sar.o |> !ld |> sar
