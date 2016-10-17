@@ -29,7 +29,7 @@ Features
   - Little to no POSIX compliance
   - Keep away from anything GNU
   - At least support for the ARM architecture
-  
+
 Dependencies
 ============
 
@@ -37,9 +37,9 @@ Dependencies
 
   - clang
   - nasm
-  - cmake
-  - make
+  - tup
   - mkisofs
+  - make (optional)
 
 #### Run time
 
@@ -48,16 +48,24 @@ Dependencies
 Building
 ========
 
-Thanks to CMake building is pretty easy. After you've cloned the repository:
+Leoman uses Tup as the build system. Please refer to http://gittup.org/tup/
+for instructions on how to build the build system.
 
-    CC=clang cmake .
-    make
+After making sure you have it in your $PATH, perform the following:
 
-(Building with GCC is not supported yet.)
+    tup init
+    tup
 
-This will create the `leoman.iso` file which contains the bootloadable ISO filesystem with the kernel and the initrd.
+Alternatively, a small Makefile is provided which does that for you. The make
+target for building the image is `build` (which is also the default):
 
-If you also wanted to try the system out (not that there is much to look at), there's the `run` target:
+    make [build]
+
+At this point you should have the `leoman.iso` file which contains the
+bootloadable ISO filesystem with the kernel and the initrd.
+
+If you also wanted to try the system out (not that there is much to look at),
+there's the `run` target:
 
     make run
 
