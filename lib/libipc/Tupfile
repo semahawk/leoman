@@ -1,0 +1,6 @@
+include_rules
+
+CFLAGS += -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
+
+: foreach *.c |> !cc |>
+: *.o |> !ar |> libipc.a
