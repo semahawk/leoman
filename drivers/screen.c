@@ -12,6 +12,7 @@
 
 #include <stdint.h>
 #include <ipc.h>
+#include <msg/io.h>
 
 #include "screen.h"
 
@@ -74,10 +75,14 @@ static void clear(void)
 
 int main(void)
 {
+  struct msg_io msg;
+  int reply;
+  int sender;
 
   while (1){
-    /* TODO */
-    /* actually receive messages */
+    sender = ipc_recv(&msg, sizeof msg);
+    reply = 0;
+    ipc_reply(sender, &reply, sizeof reply);
   }
 
   /* we have nowhere to return right know, actually */

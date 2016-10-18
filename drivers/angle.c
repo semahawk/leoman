@@ -19,9 +19,6 @@
 int main(void)
 {
   puts("hello, world!\n");
-  puts("this is coming from a userspace process!\n");
-  puts("powered by home-brewed IPC!\n");
-  puts("yay!\n");
 
   while (1);
   /* we have nowhere to return right know, actually */

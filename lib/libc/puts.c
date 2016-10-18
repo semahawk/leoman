@@ -11,14 +11,21 @@
  */
 
 #include <ipc.h>
+#include <msg/io.h>
 
 int puts(const char *s)
 {
-  for (; *s; s++){
-    /* TODO */
-  }
+  struct msg_io msg;
+  int result;
 
-  return 1;
+  msg.type = MSG_IO;
+
+  for (int i = 0; *s && i < MSG_IO_BUFSIZE; s++)
+    msg.chars[i++] = *s;
+
+  ipc_send(1, &msg, sizeof msg, &result, sizeof result);
+
+  return result;
 }
 
 /*
