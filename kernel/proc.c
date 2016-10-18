@@ -13,7 +13,6 @@
 #include <kernel/config.h>
 #include <kernel/common.h>
 #include <kernel/elf.h>
-#include <kernel/fairy.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/pm.h>
@@ -71,31 +70,6 @@ void proc_idle(void)
     vga_printf("i");
     for (unsigned i = 0; i < 1000000; i++)
       ;
-  }
-}
-
-void proc_manager(void)
-{
-  struct msg *msg, response;
-
-  while (1){
-    if (NULL != (msg = proc_pop_msg(current_proc->pid))){
-      switch (msg->type){
-        case MSG_GETPID:
-          response.receiver = msg->sender;
-          response.sender = current_proc->pid;
-          response.data = msg->sender;
-
-          vga_printf("[debug/procmgr] proc %d is asking for their id\n", msg->sender);
-          break;
-        default:
-          /* FIXME */
-          break;
-      }
-
-      /* send the reply */
-      proc_push_msg(msg->sender, &response);
-    }
   }
 }
 
@@ -288,9 +262,7 @@ void proc_earlyinit(void)
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
-  idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
-  proc_new_from_memory("fairy", true, (void *)proc_fairy, 0);
-  current_proc = proc_new_from_memory("procmgr", true, (void *)proc_manager, 0);
+  current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
 
   vga_printf("[proc] early stage initialized\n");
 }
@@ -341,39 +313,6 @@ void proc_enable_scheduling(void)
 bool proc_scheduling_enabled(void)
 {
   return !!scheduling_enabled;
-}
-
-void proc_push_msg(int pid, struct msg *msg)
-{
-  struct proc *proc = proc_find_by_pid(pid);
-
-  if (++proc->mailbox.head >= MAX_PROC_MESSAGES)
-    proc->mailbox.head = 0;
-
-  memcpy(&proc->mailbox.buffer[proc->mailbox.head], msg, sizeof(*msg));;
-  proc->mailbox.count++;
-}
-
-struct msg *proc_pop_msg(int pid)
-{
-  struct proc *proc = proc_find_by_pid(pid);
-
-  if (proc->mailbox.count == 0)
-    return NULL;
-
-  proc->mailbox.count--;
-
-  if (++proc->mailbox.tail >= MAX_PROC_MESSAGES)
-    proc->mailbox.tail = 0;
-
-  return &proc->mailbox.buffer[proc->mailbox.tail];
-}
-
-bool proc_is_mailbox_full(int pid)
-{
-  struct proc *proc = proc_find_by_pid(pid);
-
-  return proc->mailbox.count >= MAX_PROC_MESSAGES;
 }
 
 /*

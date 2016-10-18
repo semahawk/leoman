@@ -61,7 +61,7 @@ struct proc {
   struct {
     int head, tail;
     int count;
-    struct msg buffer[MAX_PROC_MESSAGES];
+    int buffer[MAX_PROC_MESSAGES]; /* process ids */
   } mailbox;
 };
 
@@ -82,10 +82,6 @@ void proc_schedule_without_irq(void);
 struct intregs *proc_schedule_after_irq(struct intregs *);
 
 struct proc *proc_find_by_pid(int pid);
-
-void proc_push_msg(int pid, struct msg *msg);
-struct msg *proc_pop_msg(int pid);
-bool proc_is_mailbox_full(int pid);
 
 /* defined in proc.c */
 extern volatile struct proc *current_proc;

@@ -15,19 +15,12 @@
 
 #include <kernel/common.h> /* for bool type */
 
-struct msg {
-  int sender;
-  int receiver;
-  int type;
-  int data;
-};
-
 /*
  * Send the <msg> to process <receiver>
  *
  * This call is non-blocking
  */
-bool ipc_send(int receiver, struct msg *msg);
+bool ipc_send(int receiver, void *msg);
 
 /*
  * Check if any messages were sent to the current process
@@ -39,7 +32,7 @@ bool ipc_send(int receiver, struct msg *msg);
  *
  * This call is non-blocking
  */
-bool ipc_recv(int sender, struct msg *msg);
+bool ipc_recv(int sender, void *msg);
 
 #endif /* !IPC_H */
 

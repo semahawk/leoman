@@ -23,47 +23,13 @@
 
 struct intregs *syscall_send_msg(struct intregs *regs)
 {
-  proc_disable_scheduling();
-
-  struct msg *msg = (void *)regs->eax;
-
-  msg->sender = current_proc->pid;
-
-  /* TODO do some sanity checking for when the receiver's mailbox is full */
-  proc_push_msg(msg->receiver, msg);
-
-  proc_enable_scheduling();
-
+  /* TODO */
   return regs;
 }
 
 struct intregs *syscall_recv_msg(struct intregs *regs)
 {
-  struct msg *dest_msg = (void *)regs->eax;
-  struct msg *msg_in_line = NULL;
-  int wanted_sender = regs->ebx;
-
-  proc_disable_scheduling();
-
-  if (NULL != (msg_in_line = proc_pop_msg(current_proc->pid))){
-    if (wanted_sender == 0 || msg_in_line->sender == wanted_sender){
-      regs->eax = 1;
-      /* copy the message that's been waiting in the line over to the destination */
-
-      memcpy(dest_msg, msg_in_line, sizeof(*dest_msg));
-    } else {
-      regs->eax = 0;
-
-      /* FIXME this might not be the most efficient way to handle messages
-       * from a different sender that we wanted */
-      proc_push_msg(current_proc->pid, msg_in_line);
-    }
-  } else {
-    regs->eax = 0;
-  }
-
-  proc_enable_scheduling();
-
+  /* TODO */
   return regs;
 }
 

@@ -14,32 +14,16 @@
 #include <kernel/syscall.h>
 #include <ipc.h>
 
-bool ipc_send(int receiver, struct msg *msg)
+bool ipc_send(int receiver, void *msg)
 {
-  msg->receiver = receiver;
-
-  /* call the kernel, and pass him the message */
-  __asm volatile("movl %0, %%eax" :: "r"(msg) : "eax");
-  __asm volatile("int %0" :: "Nd"(SYSCALL_SEND_MSG_VECTOR));
-
-  /* FIXME */
-  return true;
+  /* TODO */
+  return false;
 }
 
-bool ipc_recv(int sender, struct msg *msg)
+bool ipc_recv(int sender, void *msg)
 {
-  bool any_msg_received;
-
-  /* call the kernel, and pass him the pointer to message to fill in */
-  __asm volatile("movl %0, %%ebx" :: "r"(sender) : "ebx");
-  __asm volatile("movl %0, %%eax" :: "r"(msg) : "eax");
-  __asm volatile("int %0" :: "Nd"(SYSCALL_RECV_MSG_VECTOR));
-
-  /* the recv_msg syscall uses the eax register to indicate whether there was a
-   * message fetched from the process' mailbox */
-  __asm volatile("movl %%eax, %0" : "=a"(any_msg_received));
-
-  return any_msg_received;
+  /* TODO */
+  return false;
 }
 
 /*
