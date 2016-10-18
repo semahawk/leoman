@@ -14,13 +14,19 @@
 #include <kernel/syscall.h>
 #include <ipc.h>
 
-bool ipc_send(int receiver, void *msg)
+bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, size_t recv_len)
 {
   /* TODO */
   return false;
 }
 
-bool ipc_recv(int sender, void *msg)
+bool ipc_recv(void *msg, size_t len)
+{
+  /* TODO */
+  return false;
+}
+
+bool ipc_reply(int sender, void *msg, size_t len)
 {
   /* TODO */
   return false;
