@@ -16,6 +16,16 @@
 
 bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, size_t recv_len)
 {
+  /* call the kernel, and pass him the message */
+  __asm volatile("movl %0, %%edi" :: "r"(recv_buf) : "edi");
+  __asm volatile("movl %0, %%esi" :: "r"(send_buf) : "esi");
+
+  __asm volatile("movl %0, %%ecx" :: "r"(recv_len) : "ecx");
+  __asm volatile("movl %0, %%ebx" :: "r"(send_len) : "ebx");
+  __asm volatile("movl %0, %%eax" :: "r"(receiver) : "eax");
+
+  __asm volatile("int %0" :: "Nd"(SYSCALL_SEND_MSG_VECTOR));
+
   /* TODO */
   return false;
 }

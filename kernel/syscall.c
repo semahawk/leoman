@@ -23,12 +23,28 @@
 
 struct intregs *syscall_send_msg(struct intregs *regs)
 {
+  struct proc *receiver = proc_find_by_pid((int)regs->eax);
+
+  size_t send_len = (size_t)regs->ebx;
+  size_t recv_len = (size_t)regs->ecx;
+
+  void *send_buf = (void *)regs->esi;
+  void *recv_buf = (void *)regs->edi;
+
+  vga_printf("[ipc] process '%s' wants to send a message to '%s'\n", current_proc->name, receiver->name);
+
+  if (receiver->state == PROC_RECV_BLOCKED){
+    vga_printf("");
+    proc_set_state(current_proc->pid, PROC_SEND_BLOCKED);
+  }
+
   /* TODO */
   return regs;
 }
 
 struct intregs *syscall_recv_msg(struct intregs *regs)
 {
+  vga_printf("[ipc] process '%s' wants to receive a message\n", current_proc->name);
   /* TODO */
   return regs;
 }
