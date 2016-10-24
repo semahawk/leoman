@@ -80,7 +80,9 @@ int main(void)
   int sender;
 
   while (1){
+    for (volatile int i = 0; i < 400000000; i++);
     sender = ipc_recv(&msg, sizeof msg);
+    for (volatile int i = 0; i < 400000000; i++);
     reply = 0;
     ipc_reply(sender, &reply, sizeof reply);
   }

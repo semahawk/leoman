@@ -58,11 +58,8 @@ struct proc {
     /* TODO: data for loading a file off of the disk */
   } location;
 
-  struct {
-    int head, tail;
-    int count;
-    int buffer[MAX_PROC_MESSAGES]; /* process ids */
-  } mailbox;
+  /* TODO make it a queue */
+  struct proc *waiting_sender;
 };
 
 struct proc *proc_new(const char *name, bool privileged);

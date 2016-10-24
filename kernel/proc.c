@@ -197,9 +197,7 @@ struct proc *proc_new(const char *name, bool privileged)
   proc->privileged = privileged;
   proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
 
-  proc->mailbox.head  = 0;
-  proc->mailbox.tail  = 0;
-  proc->mailbox.count = 0;
+  proc->waiting_sender = NULL;
 
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */

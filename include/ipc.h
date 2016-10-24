@@ -41,14 +41,14 @@ bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, siz
  *
  * So this call is blocking.
  */
-bool ipc_recv(void *msg, size_t len);
+bool ipc_recv(void *recv_buf, size_t recv_len);
 
 /*
  * Send a message (<len> bytes at location <msg>) with a response to the
  * original <sender>. The <sender> then becomes ready (gets unblocked) and able
  * to act upon the reply.
  */
-bool ipc_reply(int sender, void *msg, size_t len);
+bool ipc_reply(int sender, void *send_buf, size_t send_len);
 
 #endif /* !IPC_H */
 

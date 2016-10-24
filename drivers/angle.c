@@ -18,7 +18,9 @@
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  puts("hello, world!\n");
+  for (volatile int i = 0; i < 80000000; i++);
+
+  ipc_send(1, 0x0, 0x0, 0x0, 0x0);
 
   while (1);
   /* we have nowhere to return right know, actually */
