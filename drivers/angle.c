@@ -18,8 +18,6 @@
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  for (volatile int i = 0; i < 80000000; i++);
-
   ipc_send(1, 0x0, 0x0, 0x0, 0x0);
 
   /* send another dummy message to make it visible that the previous transaction

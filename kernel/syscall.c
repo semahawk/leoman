@@ -78,7 +78,7 @@ err:
 
 struct intregs *syscall_recv_msg(struct intregs *regs)
 {
-  /*proc_disable_scheduling();*/
+  proc_disable_scheduling();
 
   vga_printf("[ipc] process '%s' sees if a message came\n", current_proc->name);
 
@@ -103,7 +103,9 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     current_proc->waiting_sender = NULL;
   }
 
-  /*proc_enable_scheduling();*/
+  /* XXX short window for an interrupt to come? */
+  proc_enable_scheduling();
+  proc_schedule_without_irq();
 
   regs->ecx = sender->pid;
 
