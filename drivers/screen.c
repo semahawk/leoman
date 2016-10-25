@@ -84,7 +84,7 @@ int main(void)
     sender = ipc_recv(&msg, sizeof msg);
     for (volatile int i = 0; i < 400000000; i++);
     reply = 0;
-    ipc_reply(sender, &reply, sizeof reply);
+    ipc_reply(2, &reply, sizeof reply);
   }
 
   /* we have nowhere to return right know, actually */

@@ -23,7 +23,7 @@
 
 struct intregs *syscall_send_msg(struct intregs *regs)
 {
-  /*proc_disable_scheduling();*/
+  proc_disable_scheduling();
 
   struct proc *receiver = proc_find_by_pid(regs->ecx);
 
@@ -67,7 +67,9 @@ struct intregs *syscall_send_msg(struct intregs *regs)
 
   receiver->waiting_sender = current_proc;
 
-  /*proc_enable_scheduling();*/
+  /* XXX short window for an interrupt to come? */
+  proc_enable_scheduling();
+  proc_schedule_without_irq();
 
 err:
   /* TODO */
@@ -120,6 +122,8 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
   vga_printf("[ipc] -- unblocking the original sender\n");
   /* make sender be ready to use CPU time to process the response */
   sender->state = PROC_READY;
+
+  proc_schedule_without_irq();
 
   /* TODO */
   return regs;
