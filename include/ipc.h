@@ -40,8 +40,11 @@ bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, siz
  * this call returns with the message (fills it into <msg>)
  *
  * So this call is blocking.
+ *
+ * Return the process id of the original sender which you can use when replying
+ * to the original message.
  */
-bool ipc_recv(void *recv_buf, size_t recv_len);
+int ipc_recv(void *recv_buf, size_t recv_len);
 
 /*
  * Send a message (<len> bytes at location <msg>) with a response to the

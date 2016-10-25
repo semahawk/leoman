@@ -30,16 +30,20 @@ bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, siz
   return false;
 }
 
-bool ipc_recv(void *recv_buf, size_t recv_len)
+int ipc_recv(void *recv_buf, size_t recv_len)
 {
+  int sender;
+
   /* call the kernel, and pass him the message */
   __asm volatile("movl %0, %%edi" :: "g"(recv_buf) : "%edi");
   __asm volatile("movl %0, %%eax" :: "g"(recv_len) : "%eax");
 
   __asm volatile("int %0" :: "Nd"(SYSCALL_RECV_MSG_VECTOR));
 
-  /* TODO */
-  return false;
+  /* the kernel returns the original sender's id through ecx */
+  __asm volatile("movl %%ecx, %0" : "=g"(sender));
+
+  return sender;
 }
 
 bool ipc_reply(int sender, void *send_buf, size_t send_len)

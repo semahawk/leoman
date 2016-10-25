@@ -105,6 +105,8 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
 
   /*proc_enable_scheduling();*/
 
+  regs->ecx = sender->pid;
+
   /* TODO */
   return regs;
 }
