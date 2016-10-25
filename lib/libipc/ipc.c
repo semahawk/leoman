@@ -44,6 +44,13 @@ bool ipc_recv(void *recv_buf, size_t recv_len)
 
 bool ipc_reply(int sender, void *send_buf, size_t send_len)
 {
+  /* call the kernel, and pass him the message */
+  __asm volatile("movl %0, %%esi" :: "g"(send_buf) : "%esi");
+  __asm volatile("movl %0, %%ebx" :: "g"(send_len) : "%ebx");
+  __asm volatile("movl %0, %%ecx" :: "g"(sender) : "%ecx");
+
+  __asm volatile("int %0" :: "Nd"(SYSCALL_RPLY_MSG_VECTOR));
+
   /* TODO */
   return false;
 }

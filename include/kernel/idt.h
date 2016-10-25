@@ -96,6 +96,7 @@ extern void irq15(void);
 /* }}} */
 /* {{{ INT declarations, defined in idt.asm */
 extern void int127(void); /* process scheduler */
+extern void int222(void); /* syscall for replying to messages */
 extern void int186(void); /* syscall for sending messages */
 extern void int190(void); /* syscall for receiving messages */
 /* }}} */

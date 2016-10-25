@@ -107,15 +107,36 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   return regs;
 }
 
+struct intregs *syscall_rply_msg(struct intregs *regs)
+{
+  struct proc *sender = proc_find_by_pid(regs->ecx);
+
+  if (sender == NULL)
+    /* TODO better error handling */
+    return regs;
+
+  vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
+
+  vga_printf("[ipc] -- unblocking the original sender\n");
+  /* make sender be ready to use CPU time to process the response */
+  sender->state = PROC_READY;
+
+  /* TODO */
+  return regs;
+}
+
 void syscall_install(void)
 {
+  idt_set_gate(SYSCALL_RPLY_MSG_VECTOR, int222, 8, 0xee);
   idt_set_gate(SYSCALL_SEND_MSG_VECTOR, int186, 8, 0xee);
   idt_set_gate(SYSCALL_RECV_MSG_VECTOR, int190, 8, 0xee);
 
+  int_install_handler(SYSCALL_RPLY_MSG_VECTOR, syscall_rply_msg);
   int_install_handler(SYSCALL_SEND_MSG_VECTOR, syscall_send_msg);
   int_install_handler(SYSCALL_RECV_MSG_VECTOR, syscall_recv_msg);
 
-  vga_printf("[syscall] system call gates configured (int 0x%x, 0x%x)\n", SYSCALL_SEND_MSG_VECTOR, SYSCALL_RECV_MSG_VECTOR);
+  vga_printf("[syscall] system call gates configured (int 0x%x, 0x%x, 0x%x)\n",
+      SYSCALL_RPLY_MSG_VECTOR, SYSCALL_SEND_MSG_VECTOR, SYSCALL_RECV_MSG_VECTOR);
 }
 
 /*

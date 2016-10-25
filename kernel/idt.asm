@@ -179,6 +179,7 @@ irq   15, 47
 
 ; hm, defines?
 swint 127 ; process scheduler
+swint SYSCALL_RPLY_MSG_VECTOR ; syscall for replying to messages
 swint SYSCALL_SEND_MSG_VECTOR ; syscall for sending messages
 swint SYSCALL_RECV_MSG_VECTOR ; syscall for receiving messages
 
