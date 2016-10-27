@@ -16,7 +16,7 @@
 #define MSG_IO_BUFSIZE 64
 
 struct msg_io {
-  enum { MSG_IO } type;
+  enum { MSG_IO = 0x00dead00 } type;
   char chars[MSG_IO_BUFSIZE];
 };
 

@@ -197,7 +197,8 @@ struct proc *proc_new(const char *name, bool privileged)
   proc->privileged = privileged;
   proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
 
-  proc->waiting_sender = NULL;
+  /* TODO bother with initializing all the other fields? */
+  proc->waiting_msg.sender = NULL;
 
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */

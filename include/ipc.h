@@ -15,6 +15,12 @@
 
 #include <kernel/common.h> /* for bool type */
 
+struct msg_packet {
+  struct proc *sender,   *receiver;
+  void        *send_buf, *recv_buf;
+  size_t       send_len,  recv_len;
+};
+
 /*
  * Send <send_len> bytes located at <send_buf> to process <receiver>, which is
  * expected to fill it's result into <recv_buf>.

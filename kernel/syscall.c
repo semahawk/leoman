@@ -39,6 +39,7 @@ struct intregs *syscall_send_msg(struct intregs *regs)
   void *recv_buf = (void *)regs->edi;
 
   vga_printf("[ipc] process '%s' wants to send a message to '%s'\n", current_proc->name, receiver->name);
+  vga_printf("[ipc] .. first byte of the message: %x\n", *(uint32_t *)send_buf);
 
   switch (receiver->state){
     case PROC_RECV_BLOCKED:
@@ -65,7 +66,12 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       goto err;
   }
 
-  receiver->waiting_sender = current_proc;
+  receiver->waiting_msg.sender = current_proc;
+  receiver->waiting_msg.receiver = receiver;
+  receiver->waiting_msg.send_buf = send_buf;
+  receiver->waiting_msg.send_len = send_len;
+  receiver->waiting_msg.recv_buf = recv_buf;
+  receiver->waiting_msg.recv_len = recv_len;
 
   /* XXX short window for an interrupt to come? */
   proc_enable_scheduling();
@@ -89,7 +95,7 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   /* where to store the received message */
   void *recv_buf = (void *)regs->edi;
 
-  if (NULL == (sender = current_proc->waiting_sender)){
+  if (NULL == (sender = current_proc->waiting_msg.sender)){
     /* if there was no other process which sent a message to the current process
      * then block the current process (eliminating busy looping) */
     vga_printf("[ipc] -- no pending message\n");
@@ -98,9 +104,13 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     current_proc->state = PROC_RECV_BLOCKED;
   } else {
     vga_printf("[ipc] -- indeed '%s' was waiting\n", sender->name);
+    vga_printf("[ipc] .. first byte of it's message: %x\n", *(uint32_t *)current_proc->waiting_msg.send_buf);
+
+    /* transfer the data from the sender to the current process (receiver) */
+    memcpy(recv_buf, current_proc->waiting_msg.send_buf, current_proc->waiting_msg.recv_len);
 
     /* 'pop' the waiting sender from the 'queue' */
-    current_proc->waiting_sender = NULL;
+    current_proc->waiting_msg.sender = NULL;
   }
 
   /* XXX short window for an interrupt to come? */
@@ -121,7 +131,14 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
     /* TODO better error handling */
     return regs;
 
+  void *send_buf = (void *)regs->esi;
+  size_t send_len = (size_t)regs->ebx;
+
   vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
+  vga_printf("[ipc] .. first byte of the reply: %x\n", *(uint32_t *)send_buf);
+
+  /*memcpy(current_proc->waiting_msg.recv_buf, send_buf, current_proc->waiting_msg.recv_len);*/
+  vga_printf("[ipc] filling the reply from 0x%x into 0x%x\n", (void*)send_buf, (void *)current_proc->waiting_msg.recv_buf);
 
   vga_printf("[ipc] -- unblocking the original sender\n");
   /* make sender be ready to use CPU time to process the response */

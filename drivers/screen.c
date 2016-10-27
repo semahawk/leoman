@@ -81,7 +81,7 @@ int main(void)
 
   while (1){
     sender = ipc_recv(&msg, sizeof msg);
-    reply = 0;
+    reply = 0x11babe11;
     ipc_reply(sender, &reply, sizeof reply);
   }
 

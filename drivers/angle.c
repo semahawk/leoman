@@ -13,16 +13,14 @@
 #include <stdio.h>
 #include <kernel/proc.h>
 #include <ipc.h>
+#include <msg/io.h>
 
 /* admittedly - this isn't a real driver */
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  ipc_send(1, 0x0, 0x0, 0x0, 0x0);
-
-  /* send another dummy message to make it visible that the previous transaction
-   * was completed */
-  ipc_send(1, 0x0, 0x0, 0x0, 0x0);
+  puts("hello, world\n");
+  puts("this is the userspace talking\n");
 
   while (1);
   /* we have nowhere to return right know, actually */

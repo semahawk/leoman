@@ -59,7 +59,7 @@ struct proc {
   } location;
 
   /* TODO make it a queue */
-  struct proc *waiting_sender;
+  struct msg_packet waiting_msg;
 };
 
 struct proc *proc_new(const char *name, bool privileged);
