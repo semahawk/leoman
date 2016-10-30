@@ -146,6 +146,28 @@ void unmap_pages(void *vaddr, unsigned sz)
   }
 }
 
+/*
+ * Given the virtual address <vaddr> see what physical address it is mapped to
+ * in the current address space
+ */
+void *vm_get_phys_mapping(void *vaddr)
+{
+  uint32_t page_offset = (uint32_t)vaddr & 0xfff;
+
+  vaddr = PALIGNDOWN(vaddr);
+
+  uint32_t *pdir = KERN_PDIR_ADDR;
+  uint32_t *ptab = ((uint32_t *)KERN_PTABS_ADDR) + (0x400 * vm_pdir_idx(vaddr));
+
+  /* holy crap */
+  /* the & discards the flags from the physical address */
+  /* the + is because page mappings are 12-bit aligned, so the addresses the low
+   * 12-bits unset - add the offset into the page (which are the last 12-bits
+   * in the virtual address) to the physical address to get the final physical
+   * address */
+  return (void *)((uint32_t)(ptab[vm_ptab_idx(vaddr)] & (~0x3ff)) + page_offset);
+}
+
 void *vm_init(struct kern_bootinfo *bootinfo)
 {
   /* TODO: map stuff */

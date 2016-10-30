@@ -40,6 +40,8 @@ struct intregs *syscall_send_msg(struct intregs *regs)
 
   vga_printf("[ipc] process '%s' wants to send a message to '%s'\n", current_proc->name, receiver->name);
   vga_printf("[ipc] .. first byte of the message: %x\n", *(uint32_t *)send_buf);
+  vga_printf("[ipc] .. message lies at 0x%x\n", send_buf);
+  vga_printf("[ipc] .. it is mapped to 0x%x\n", vm_get_phys_mapping(send_buf));
 
   switch (receiver->state){
     case PROC_RECV_BLOCKED:
