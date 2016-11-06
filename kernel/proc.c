@@ -138,13 +138,13 @@ void proc_load(void)
     entry = addr;
   }
 
-  void *stack = pm_alloc();
+  uint32_t user_stack_size = KiB(16);
 
   uint16_t code_seg = current_proc->privileged ? SEG_KCODE : SEG_UCODE;
   uint16_t data_seg = current_proc->privileged ? SEG_KDATA : SEG_UDATA;
 
-  map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE,
-      PTE_W | (current_proc->privileged ? 0 : PTE_U), PAGE_SIZE);
+  vm_alloc_pages_at((void *)(VM_USER_STACK_ADDR - user_stack_size),
+      current_proc->privileged ? 0 : PTE_U, user_stack_size);
 
   /* this is kind of ugly.. */
   __asm volatile("movw   %0, %%ax\n"
