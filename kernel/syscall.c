@@ -75,6 +75,7 @@ struct intregs *syscall_send_msg(struct intregs *regs)
   receiver->waiting_msg.recv_buf = recv_buf;
   receiver->waiting_msg.recv_len = recv_len;
   receiver->waiting_msg.phys_send_buf = vm_get_phys_mapping(send_buf);
+  receiver->waiting_msg.phys_recv_buf = vm_get_phys_mapping(recv_buf);
 
   /* XXX short window for an interrupt to come? */
   proc_enable_scheduling();
@@ -152,11 +153,20 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
   void *send_buf = (void *)regs->esi;
   size_t send_len = (size_t)regs->ebx;
 
+  void *mapped_recv_buf_base = 0xcafe0000;
+  void *mapped_recv_buf = (uint32_t)mapped_recv_buf_base + ((uint32_t)current_proc->waiting_msg.recv_buf & 0xfff);
+
+  map_pages(current_proc->waiting_msg.phys_recv_buf, mapped_recv_buf_base, 0, current_proc->waiting_msg.recv_len);
+
   vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
   vga_printf("[ipc] .. first byte of the reply: %x\n", *(uint32_t *)send_buf);
+  vga_printf("[ipc] .. the sender's recv buffer lies at: %x\n", current_proc->waiting_msg.recv_buf);
+  vga_printf("[ipc] .. it's mapped into receiver's address space at: %x\n", mapped_recv_buf);
 
-  /*memcpy(current_proc->waiting_msg.recv_buf, send_buf, current_proc->waiting_msg.recv_len);*/
-  vga_printf("[ipc] filling the reply from 0x%x into 0x%x\n", (void*)send_buf, (void *)current_proc->waiting_msg.recv_buf);
+  vga_printf("[ipc] filling the reply from 0x%x into 0x%x\n", (void*)send_buf, mapped_recv_buf);
+
+  memcpy(mapped_recv_buf, send_buf, current_proc->waiting_msg.recv_len);
+  vga_printf("[ipc] sender's receive buffer's first byte: 0x%x\n", *(uint32_t *)mapped_recv_buf);
 
   vga_printf("[ipc] -- unblocking the original sender\n");
   /* make sender be ready to use CPU time to process the response */
