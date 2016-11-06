@@ -123,6 +123,10 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     /* transfer the data from the sender to the current process (receiver) */
     memcpy(recv_buf, mapped_send_buf, current_proc->waiting_msg.recv_len);
 
+    /* we've copied the data into the receiver's address space, so we don't need
+     * the mapping anymore */
+    unmap_pages(mapped_send_buf, current_proc->waiting_msg.send_len);
+
     /* 'pop' the waiting sender from the 'queue' */
     current_proc->waiting_msg.sender = NULL;
   }
