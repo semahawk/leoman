@@ -95,7 +95,7 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   struct proc *sender = NULL;
 
   /* how much of a message do we accept */
-  size_t recv_len = (size_t)regs->ecx;
+  size_t recv_len = (size_t)regs->eax;
   /* where to store the received message */
   void *recv_buf = (void *)regs->edi;
 
@@ -120,9 +120,10 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     vga_printf("[ipc] .. the message lies at: %x\n", current_proc->waiting_msg.phys_send_buf);
     vga_printf("[ipc] .. it's mapped into receiver's address space at: %x\n", mapped_send_buf);
     vga_printf("[ipc] .. first byte of it's message: %x\n", *(uint32_t *)mapped_send_buf);
+    vga_printf("[ipc] .. about to copy %d bytes (we accept %d though)\n", current_proc->waiting_msg.send_len, recv_len);
 
     /* transfer the data from the sender to the current process (receiver) */
-    memcpy(recv_buf, mapped_send_buf, current_proc->waiting_msg.recv_len);
+    memcpy(recv_buf, mapped_send_buf, recv_len);
 
     /* we've copied the data into the receiver's address space, so we don't need
      * the mapping anymore */
