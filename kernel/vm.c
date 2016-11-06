@@ -168,6 +168,31 @@ void *vm_get_phys_mapping(void *vaddr)
   return (void *)((uint32_t)(ptab[vm_ptab_idx(vaddr)] & (~0x3ff)) + page_offset);
 }
 
+/*
+ * Allocate <sz> worth of physical pages, and map them continuously into the
+ * current virtual address space, starting at address <vaddr>
+ */
+void vm_alloc_pages_at(void *vaddr, unsigned flags, unsigned sz)
+{
+  void *physical_page;
+
+  if (sz == 0)
+    return;
+
+  vaddr = PALIGNDOWN(vaddr);
+
+  /* the last bit is to map a sufficent number of pages */
+  unsigned npages = sz / PAGE_SIZE + (sz % PAGE_SIZE > 0);
+
+  for (int i = 0; i < npages; i++){
+    physical_page = pm_alloc();
+
+    map_page(physical_page, vaddr, flags);
+
+    vaddr += PAGE_SIZE;
+  }
+}
+
 void *vm_init(struct kern_bootinfo *bootinfo)
 {
   /* TODO: map stuff */

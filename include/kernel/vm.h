@@ -83,6 +83,8 @@ void unmap_pagece(void *);
 void map_pages(void *, void *, unsigned, unsigned);
 void unmap_pages(void *, unsigned);
 
+void vm_alloc_pages_at(void *, unsigned, unsigned);
+
 /* convert between physical and virtual addresses */
 static inline void *p2v(uint32_t addr)
 {
