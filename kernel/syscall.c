@@ -74,6 +74,7 @@ struct intregs *syscall_send_msg(struct intregs *regs)
   receiver->waiting_msg.send_len = send_len;
   receiver->waiting_msg.recv_buf = recv_buf;
   receiver->waiting_msg.recv_len = recv_len;
+  receiver->waiting_msg.phys_send_buf = vm_get_phys_mapping(send_buf);
 
   /* XXX short window for an interrupt to come? */
   proc_enable_scheduling();
@@ -97,6 +98,15 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   /* where to store the received message */
   void *recv_buf = (void *)regs->edi;
 
+  void *mapped_send_buf_base = 0xbabe0000;
+  /* the sender's buffer lies in our memory at 0xbabe0000 + 12 lowest bits in
+   * the sender's buffer's virtual address which are the offset into the page */
+  void *mapped_send_buf = (uint32_t)mapped_send_buf_base + ((uint32_t)current_proc->waiting_msg.send_buf & 0xfff);
+
+  /* map the physical location of the sender's buffer, into our own virtual
+   * memory, located at 0xbabe0000 - this is the base address though */
+  map_pages(current_proc->waiting_msg.phys_send_buf, mapped_send_buf_base, 0, current_proc->waiting_msg.send_len);
+
   if (NULL == (sender = current_proc->waiting_msg.sender)){
     /* if there was no other process which sent a message to the current process
      * then block the current process (eliminating busy looping) */
@@ -106,10 +116,12 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     current_proc->state = PROC_RECV_BLOCKED;
   } else {
     vga_printf("[ipc] -- indeed '%s' was waiting\n", sender->name);
-    vga_printf("[ipc] .. first byte of it's message: %x\n", *(uint32_t *)current_proc->waiting_msg.send_buf);
+    vga_printf("[ipc] .. the message lies at: %x\n", current_proc->waiting_msg.phys_send_buf);
+    vga_printf("[ipc] .. it's mapped into receiver's address space at: %x\n", mapped_send_buf);
+    vga_printf("[ipc] .. first byte of it's message: %x\n", *(uint32_t *)mapped_send_buf);
 
     /* transfer the data from the sender to the current process (receiver) */
-    memcpy(recv_buf, current_proc->waiting_msg.send_buf, current_proc->waiting_msg.recv_len);
+    memcpy(recv_buf, mapped_send_buf, current_proc->waiting_msg.recv_len);
 
     /* 'pop' the waiting sender from the 'queue' */
     current_proc->waiting_msg.sender = NULL;

@@ -19,6 +19,7 @@ struct msg_packet {
   struct proc *sender,   *receiver;
   void        *send_buf, *recv_buf;
   size_t       send_len,  recv_len;
+  void *phys_send_buf;
 };
 
 /*
