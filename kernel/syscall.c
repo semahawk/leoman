@@ -51,6 +51,15 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       /* it's a way to eliminate busy-looping */
       current_proc->state = PROC_SEND_BLOCKED;
 
+      vga_printf("[ipc] -- copying the message to the receiver's buffer\n");
+
+      void *mapped_recv_buf_base = 0xdead0000;
+      void *mapped_recv_buf = (uint32_t)mapped_recv_buf_base + ((uint32_t)receiver->waiting_msg.recv_buf & 0xfff);
+
+      map_pages(receiver->waiting_msg.phys_recv_buf, mapped_recv_buf_base, 0, receiver->waiting_msg.recv_len);
+
+      memcpy(mapped_recv_buf, send_buf, receiver->waiting_msg.recv_len);
+
       vga_printf("[ipc] -- unblocking the receiver\n");
       /* unblock the receiver so it can go and process the message */
       receiver->state = PROC_READY;
@@ -104,6 +113,10 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
      * then block the current process (eliminating busy looping) */
     vga_printf("[ipc] -- no pending message\n");
     vga_printf("[ipc] -- receive-blocking the receiver\n");
+
+    current_proc->waiting_msg.recv_len = recv_len;
+    current_proc->waiting_msg.recv_buf = recv_buf;
+    current_proc->waiting_msg.phys_recv_buf = vm_get_phys_mapping(recv_buf);
 
     current_proc->state = PROC_RECV_BLOCKED;
   } else {
