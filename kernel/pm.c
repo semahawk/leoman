@@ -29,7 +29,7 @@ void *pm_alloc(void)
   for (unsigned idx = 0; idx < sizeof(pm_bitmap) / sizeof(*pm_bitmap); idx++){
     /* if it's not all ones then at least one bit is zero */
     if (pm_bitmap[idx] != (uint32_t)-1){
-      for (unsigned bit = 0; bit < sizeof(*pm_bitmap) * 8; bit++){
+      for (unsigned bit = 0; /* no guard */; bit++){
         if (!(pm_bitmap[idx] & (1 << bit))){
           /* calculate the page's address */
           page = (void *)((uint32_t)pm_page_pool + ((uint32_t)((idx * sizeof(*pm_bitmap) * 8) + bit) * PAGE_SIZE));

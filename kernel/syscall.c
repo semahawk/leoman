@@ -18,6 +18,7 @@
 #include <kernel/proc.h>
 #include <kernel/syscall.h>
 #include <kernel/vga.h>
+#include <kernel/vm.h>
 
 #include <ipc.h>
 
@@ -43,8 +44,8 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       /* it's a way to eliminate busy-looping */
       current_proc->state = PROC_SEND_BLOCKED;
 
-      void *mapped_recv_buf_base = 0xdead0000;
-      void *mapped_recv_buf = (uint32_t)mapped_recv_buf_base + ((uint32_t)receiver->waiting_msg.recv_buf & 0xfff);
+      void *mapped_recv_buf_base = (void *)0xdead0000;
+      void *mapped_recv_buf = (void *)((uint32_t)mapped_recv_buf_base + ((uint32_t)receiver->waiting_msg.recv_buf & 0xfff));
 
       map_pages(receiver->waiting_msg.phys_recv_buf, mapped_recv_buf_base, 0, receiver->waiting_msg.recv_len);
 
@@ -107,10 +108,10 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   } else {
     vga_printf("[ipc] -- indeed '%s' was waiting\n", sender->name);
 
-    void *mapped_send_buf_base = 0xbabe0000;
+    void *mapped_send_buf_base = (void *)0xbabe0000;
     /* the sender's buffer lies in our memory at 0xbabe0000 + 12 lowest bits in
      * the sender's buffer's virtual address which are the offset into the page */
-    void *mapped_send_buf = (uint32_t)mapped_send_buf_base + ((uint32_t)current_proc->waiting_msg.send_buf & 0xfff);
+    void *mapped_send_buf = (void *)((uint32_t)mapped_send_buf_base + ((uint32_t)current_proc->waiting_msg.send_buf & 0xfff));
 
     /* map the physical location of the sender's buffer, into our own virtual
      * memory, located at 0xbabe0000 - this is the base address though */
@@ -150,8 +151,8 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
 
   vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
 
-  void *mapped_recv_buf_base = 0xcafe0000;
-  void *mapped_recv_buf = (uint32_t)mapped_recv_buf_base + ((uint32_t)current_proc->waiting_msg.recv_buf & 0xfff);
+  void *mapped_recv_buf_base = (void *)0xcafe0000;
+  void *mapped_recv_buf = (void *)((uint32_t)mapped_recv_buf_base + ((uint32_t)current_proc->waiting_msg.recv_buf & 0xfff));
 
   map_pages(current_proc->waiting_msg.phys_recv_buf, mapped_recv_buf_base, 0, current_proc->waiting_msg.recv_len);
 

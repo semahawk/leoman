@@ -13,6 +13,7 @@
 #include <kernel/common.h>
 #include <kernel/gdt.h>
 #include <kernel/tss.h>
+#include <kernel/vga.h>
 
 static struct tss_entry tss;
 

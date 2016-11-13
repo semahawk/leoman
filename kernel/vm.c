@@ -14,6 +14,7 @@
 
 #include <kernel/common.h>
 #include <kernel/pm.h>
+#include <kernel/vga.h>
 #include <kernel/vm.h>
 
 /* kernel page directory */
@@ -98,7 +99,6 @@ void unmap_page(void *vaddr)
 {
   vaddr = PALIGNDOWN(vaddr);
 
-  uint32_t *pdir = KERN_PDIR_ADDR;
   uint32_t *ptab = ((uint32_t *)KERN_PTABS_ADDR) + (0x400 * vm_pdir_idx(vaddr));
 
   ptab[vm_ptab_idx(vaddr)] = 0x0;
@@ -156,7 +156,6 @@ void *vm_get_phys_mapping(void *vaddr)
 
   vaddr = PALIGNDOWN(vaddr);
 
-  uint32_t *pdir = KERN_PDIR_ADDR;
   uint32_t *ptab = ((uint32_t *)KERN_PTABS_ADDR) + (0x400 * vm_pdir_idx(vaddr));
 
   /* holy crap */

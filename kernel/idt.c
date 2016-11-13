@@ -201,7 +201,7 @@ void isr_handler(struct intregs *regs)
 
 struct intregs *irq_handler(struct intregs *regs)
 {
-  struct intregs *ret;
+  struct intregs *ret = regs;
 
   if (regs->num >= 32 && regs->num < 48){
     irq_handler_t handler = irq_handlers[regs->num - 32];
