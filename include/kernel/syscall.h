@@ -13,6 +13,7 @@
 #ifndef SYSCALL_H
 #define SYSCALL_H
 
+#define SYSCALL_RPLY_MSG_VECTOR 222 /* 0xde */
 #define SYSCALL_SEND_MSG_VECTOR 186 /* 0xba */
 #define SYSCALL_RECV_MSG_VECTOR 190 /* 0xbe */
 

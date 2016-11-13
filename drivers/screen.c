@@ -11,11 +11,13 @@
  */
 
 #include <stdint.h>
-#include <kernel/fairy.h>
 #include <ipc.h>
+#include <msg/io.h>
 
 #include "screen.h"
 
+/* IPC doesn't yet work so don't bother */
+#if 0
 static uint16_t *video_memory;
 /* current column / row */
 static int column, row;
@@ -69,39 +71,18 @@ static void clear(void)
     for (unsigned x = 0; x < screen_columns; x++)
       put_char_at('\0', x, y);
 }
+#endif
 
 int main(void)
 {
-  struct msg msg;
-
-  /* FIXME there's apparently still some problems with loading (ELF) executables
-   *       properly - which is why the initialization here */
-  column = 0, row = 0;
-  fg_color = LIGHT_BROWN, bg_color = BLACK;
-
-  msg.type = FAIRY_REQUEST_VIDEO_MEMORY;
-  ipc_send(1, &msg);
+  struct msg_io msg;
+  int reply;
+  int sender;
 
   while (1){
-    /* block until we get the message with the video memory address back */
-    if (ipc_recv(1, &msg)){
-
-      if (msg.type == FAIRY_VIDEO_MEMORY_ADDRESS){
-        video_memory = (void *)msg.data;
-        break;
-      }
-    }
-  }
-
-  clear();
-
-  while (1){
-    /* TODO add some functionality to block a process which checked for any
-     * messages but didn't find any to avoid busy looping like we are here if
-     * nobody wants to print stuff */
-    if (ipc_recv(0, &msg)){
-      put_char((char)((char)msg.data & 0xff));
-    }
+    sender = ipc_recv(&msg, sizeof msg);
+    reply = 0x11babe11;
+    ipc_reply(sender, &reply, sizeof reply);
   }
 
   /* we have nowhere to return right know, actually */

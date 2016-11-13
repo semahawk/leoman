@@ -13,7 +13,6 @@
 #include <kernel/config.h>
 #include <kernel/common.h>
 #include <kernel/elf.h>
-#include <kernel/fairy.h>
 #include <kernel/gdt.h>
 #include <kernel/idt.h>
 #include <kernel/pm.h>
@@ -74,31 +73,6 @@ void proc_idle(void)
   }
 }
 
-void proc_manager(void)
-{
-  struct msg *msg, response;
-
-  while (1){
-    if (NULL != (msg = proc_pop_msg(current_proc->pid))){
-      switch (msg->type){
-        case MSG_GETPID:
-          response.receiver = msg->sender;
-          response.sender = current_proc->pid;
-          response.data = msg->sender;
-
-          vga_printf("[debug/procmgr] proc %d is asking for their id\n", msg->sender);
-          break;
-        default:
-          /* FIXME */
-          break;
-      }
-
-      /* send the reply */
-      proc_push_msg(msg->sender, &response);
-    }
-  }
-}
-
 /*
  * This function pretty much just calls `proc_schedule_after_irq` (this is the
  * handler for software interrupt no. 127)
@@ -130,10 +104,10 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
   /* don't put blocked processes to sleep (they'd get scheduled then) */
   /* TODO: try passing the proc structure directly, not just the pid */
   if (!proc_is_blocked(current_proc->pid))
-    current_proc->state = PROC_SLEEPING;
+    current_proc->state = PROC_READY;
 
   /* find a new process that could be run */
-  if (NULL == (next_proc = find_next_proc(PROC_SLEEPING))){
+  if (NULL == (next_proc = find_next_proc(PROC_READY))){
     /* if there's no process to switch to then default to idle */
     next_proc = idle;
   }
@@ -164,13 +138,13 @@ void proc_load(void)
     entry = addr;
   }
 
-  void *stack = pm_alloc();
+  uint32_t user_stack_size = KiB(16);
 
   uint16_t code_seg = current_proc->privileged ? SEG_KCODE : SEG_UCODE;
   uint16_t data_seg = current_proc->privileged ? SEG_KDATA : SEG_UDATA;
 
-  map_pages(stack, (void *)VM_USER_STACK_ADDR - PAGE_SIZE,
-      PTE_W | (current_proc->privileged ? 0 : PTE_U), PAGE_SIZE);
+  vm_alloc_pages_at((void *)(VM_USER_STACK_ADDR - user_stack_size),
+      current_proc->privileged ? 0 : PTE_U, user_stack_size);
 
   /* this is kind of ugly.. */
   __asm volatile("movw   %0, %%ax\n"
@@ -217,15 +191,14 @@ struct proc *proc_new(const char *name, bool privileged)
   map_page(stack, stack, PTE_W);
 
   proc->pid   = next_pid++;
-  proc->state = PROC_SLEEPING;
+  proc->state = PROC_READY;
   proc->pdir  = vm_copy_kernel_pdir();
   proc->memsz = PAGE_SIZE;
   proc->privileged = privileged;
   proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
 
-  proc->mailbox.head  = 0;
-  proc->mailbox.tail  = 0;
-  proc->mailbox.count = 0;
+  /* TODO bother with initializing all the other fields? */
+  proc->waiting_msg.sender = NULL;
 
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
@@ -288,20 +261,18 @@ void proc_earlyinit(void)
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
-  idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
-  proc_new_from_memory("fairy", true, (void *)proc_fairy, 0);
-  current_proc = proc_new_from_memory("procmgr", true, (void *)proc_manager, 0);
+  current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
 
   vga_printf("[proc] early stage initialized\n");
 }
 
 /* TODO: have a variant of those 'blocking' functions which would take the
  *       struct proc directly, and not have to traverse the process list */
-void proc_block(int pid)
+void proc_set_state(int pid, enum proc_state state)
 {
   struct proc *proc = proc_find_by_pid(pid);
 
-  proc->state = PROC_BLOCKED;
+  proc->state = state;
 }
 
 void proc_awake(int pid)
@@ -315,14 +286,17 @@ void proc_awake(int pid)
    * Devour worlds, smite, forsaken.
    *
    */
-  proc->state = PROC_SLEEPING;
+  proc->state = PROC_READY;
 }
 
 int proc_is_blocked(int pid)
 {
   struct proc *proc = proc_find_by_pid(pid);
 
-  return proc->state == PROC_BLOCKED;
+  return (proc->state == PROC_SEND_BLOCKED)
+      || (proc->state == PROC_RECV_BLOCKED)
+      || (proc->state == PROC_REPLY_BLOCKED)
+    ;
 }
 
 void proc_disable_scheduling(void)
@@ -338,39 +312,6 @@ void proc_enable_scheduling(void)
 bool proc_scheduling_enabled(void)
 {
   return !!scheduling_enabled;
-}
-
-void proc_push_msg(int pid, struct msg *msg)
-{
-  struct proc *proc = proc_find_by_pid(pid);
-
-  if (++proc->mailbox.head >= MAX_PROC_MESSAGES)
-    proc->mailbox.head = 0;
-
-  memcpy(&proc->mailbox.buffer[proc->mailbox.head], msg, sizeof(*msg));;
-  proc->mailbox.count++;
-}
-
-struct msg *proc_pop_msg(int pid)
-{
-  struct proc *proc = proc_find_by_pid(pid);
-
-  if (proc->mailbox.count == 0)
-    return NULL;
-
-  proc->mailbox.count--;
-
-  if (++proc->mailbox.tail >= MAX_PROC_MESSAGES)
-    proc->mailbox.tail = 0;
-
-  return &proc->mailbox.buffer[proc->mailbox.tail];
-}
-
-bool proc_is_mailbox_full(int pid)
-{
-  struct proc *proc = proc_find_by_pid(pid);
-
-  return proc->mailbox.count >= MAX_PROC_MESSAGES;
 }
 
 /*

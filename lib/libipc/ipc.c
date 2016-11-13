@@ -14,32 +14,49 @@
 #include <kernel/syscall.h>
 #include <ipc.h>
 
-bool ipc_send(int receiver, struct msg *msg)
+bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, size_t recv_len)
 {
-  msg->receiver = receiver;
-
   /* call the kernel, and pass him the message */
-  __asm volatile("movl %0, %%eax" :: "r"(msg) : "eax");
+  __asm volatile("movl %0, %%edi" :: "g"(recv_buf) : "%edi");
+  __asm volatile("movl %0, %%esi" :: "g"(send_buf) : "%esi");
+
+  __asm volatile("movl %0, %%ecx" :: "g"(receiver) : "%ecx");
+  __asm volatile("movl %0, %%ebx" :: "g"(send_len) : "%ebx");
+  __asm volatile("movl %0, %%eax" :: "g"(recv_len) : "%eax");
+
   __asm volatile("int %0" :: "Nd"(SYSCALL_SEND_MSG_VECTOR));
 
-  /* FIXME */
-  return true;
+  /* TODO */
+  return false;
 }
 
-bool ipc_recv(int sender, struct msg *msg)
+int ipc_recv(void *recv_buf, size_t recv_len)
 {
-  bool any_msg_received;
+  int sender;
 
-  /* call the kernel, and pass him the pointer to message to fill in */
-  __asm volatile("movl %0, %%ebx" :: "r"(sender) : "ebx");
-  __asm volatile("movl %0, %%eax" :: "r"(msg) : "eax");
+  /* call the kernel, and pass him the message */
+  __asm volatile("movl %0, %%edi" :: "g"(recv_buf) : "%edi");
+  __asm volatile("movl %0, %%eax" :: "g"(recv_len) : "%eax");
+
   __asm volatile("int %0" :: "Nd"(SYSCALL_RECV_MSG_VECTOR));
 
-  /* the recv_msg syscall uses the eax register to indicate whether there was a
-   * message fetched from the process' mailbox */
-  __asm volatile("movl %%eax, %0" : "=a"(any_msg_received));
+  /* the kernel returns the original sender's id through ecx */
+  __asm volatile("movl %%ecx, %0" : "=g"(sender));
 
-  return any_msg_received;
+  return sender;
+}
+
+bool ipc_reply(int sender, void *send_buf, size_t send_len)
+{
+  /* call the kernel, and pass him the message */
+  __asm volatile("movl %0, %%esi" :: "g"(send_buf) : "%esi");
+  __asm volatile("movl %0, %%ebx" :: "g"(send_len) : "%ebx");
+  __asm volatile("movl %0, %%ecx" :: "g"(sender) : "%ecx");
+
+  __asm volatile("int %0" :: "Nd"(SYSCALL_RPLY_MSG_VECTOR));
+
+  /* TODO */
+  return false;
 }
 
 /*

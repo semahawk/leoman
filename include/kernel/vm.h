@@ -76,11 +76,14 @@ typedef uint32_t pte_t;
 uint32_t *new_pdir(void);
 uint32_t *vm_copy_kernel_pdir(void);
 void *vm_init(struct kern_bootinfo *);
+void *vm_get_phys_mapping(void *);
 
 void map_page(void *, void *, unsigned);
 void unmap_pagece(void *);
 void map_pages(void *, void *, unsigned, unsigned);
 void unmap_pages(void *, unsigned);
+
+void vm_alloc_pages_at(void *, unsigned, unsigned);
 
 /* convert between physical and virtual addresses */
 static inline void *p2v(uint32_t addr)

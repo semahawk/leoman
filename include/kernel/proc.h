@@ -26,8 +26,11 @@
 enum proc_state {
   PROC_UNUSED,
   PROC_RUNNING,
-  PROC_SLEEPING,
-  PROC_BLOCKED,
+  PROC_READY,
+  PROC_SEND_BLOCKED,
+  PROC_RECV_BLOCKED,
+  PROC_REPLY_BLOCKED,
+  /* yes, I've been reading about QNX lately... */
 };
 
 struct proc {
@@ -55,11 +58,8 @@ struct proc {
     /* TODO: data for loading a file off of the disk */
   } location;
 
-  struct {
-    int head, tail;
-    int count;
-    struct msg buffer[MAX_PROC_MESSAGES];
-  } mailbox;
+  /* TODO make it a queue */
+  struct msg_packet waiting_msg;
 };
 
 struct proc *proc_new(const char *name, bool privileged);
@@ -67,7 +67,7 @@ struct proc *proc_new_from_memory(const char *name, bool privileged, void *addr,
 void proc_earlyinit(void);
 void proc_kickoff_first_process(void);
 
-void proc_block(int pid);
+void proc_set_state(int pid, enum proc_state);
 void proc_awake(int pid);
 int  proc_is_blocked(int pid);
 
@@ -79,10 +79,6 @@ void proc_schedule_without_irq(void);
 struct intregs *proc_schedule_after_irq(struct intregs *);
 
 struct proc *proc_find_by_pid(int pid);
-
-void proc_push_msg(int pid, struct msg *msg);
-struct msg *proc_pop_msg(int pid);
-bool proc_is_mailbox_full(int pid);
 
 /* defined in proc.c */
 extern volatile struct proc *current_proc;

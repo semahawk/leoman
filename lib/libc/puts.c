@@ -11,20 +11,21 @@
  */
 
 #include <ipc.h>
+#include <msg/io.h>
 
 int puts(const char *s)
 {
-  struct msg msg;
+  struct msg_io msg;
+  int result;
 
-  for (; *s; s++){
-    msg.data = *s;
-    ipc_send(3, &msg);
+  msg.type = MSG_IO;
 
-    /* FIXME lousy way of not-losing messages */
-    for (unsigned i = 0; i < 200000; i++);
-  }
+  for (int i = 0; *s && i < MSG_IO_BUFSIZE; s++)
+    msg.chars[i++] = *s;
 
-  return 1;
+  ipc_send(1, &msg, sizeof msg, &result, sizeof result);
+
+  return result;
 }
 
 /*
