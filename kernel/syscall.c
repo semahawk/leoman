@@ -34,19 +34,14 @@ struct intregs *syscall_send_msg(struct intregs *regs)
   }
 
   vga_printf("[ipc] process '%s' wants to send a message to '%s'\n", current_proc->name, receiver->name);
-  vga_printf("[ipc] .. first byte of the message: %x\n", *(uint32_t *)msg->send_buf);
-  vga_printf("[ipc] .. message lies at 0x%x\n", msg->send_buf);
-  vga_printf("[ipc] .. it is mapped to 0x%x\n", vm_get_phys_mapping(msg->send_buf));
 
   switch (receiver->state){
     case PROC_RECV_BLOCKED:
-      vga_printf("[ipc] -- the receiver is already recv-blocked\n");
-      vga_printf("[ipc] -- send-blocking the sender\n");
+      vga_printf("[ipc] -- send-blocking '%s' (the sender)\n", current_proc->name);
+
       /* send-block the sender - it now has to wait for the response */
       /* it's a way to eliminate busy-looping */
       current_proc->state = PROC_SEND_BLOCKED;
-
-      vga_printf("[ipc] -- copying the message to the receiver's buffer\n");
 
       void *mapped_recv_buf_base = 0xdead0000;
       void *mapped_recv_buf = (uint32_t)mapped_recv_buf_base + ((uint32_t)receiver->waiting_msg.recv_buf & 0xfff);
@@ -55,13 +50,13 @@ struct intregs *syscall_send_msg(struct intregs *regs)
 
       memcpy(mapped_recv_buf, msg->send_buf, receiver->waiting_msg.recv_len);
 
-      vga_printf("[ipc] -- unblocking the receiver\n");
+      vga_printf("[ipc] -- unblocking '%s' (the receiver)\n", receiver->name);
       /* unblock the receiver so it can go and process the message */
       receiver->state = PROC_READY;
       break;
     case PROC_READY:
-      vga_printf("[ipc] -- the receiver is ready to reply\n");
-      vga_printf("[ipc] -- reply-blocking the sender\n");
+      vga_printf("[ipc] -- reply-blocking '%s' (the sender)\n", current_proc->name);
+
       /* reply-block the sender - it now has to wait for the response */
       /* it's a way to eliminate busy-looping */
       current_proc->state = PROC_REPLY_BLOCKED;
@@ -102,8 +97,7 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   if (NULL == (sender = proc_find_by_pid(current_proc->waiting_msg.sender))){
     /* if there was no other process which sent a message to the current process
      * then block the current process (eliminating busy looping) */
-    vga_printf("[ipc] -- no pending message\n");
-    vga_printf("[ipc] -- receive-blocking the receiver\n");
+    vga_printf("[ipc] -- none - receive-blocking '%s' (the receiver)\n", current_proc->name);
 
     current_proc->waiting_msg.recv_len = msg->recv_len;
     current_proc->waiting_msg.recv_buf = msg->recv_buf;
@@ -111,7 +105,7 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
 
     current_proc->state = PROC_RECV_BLOCKED;
   } else {
-    vga_printf("[ipc] -- indeed '%s' (0x%x) was waiting\n", sender->name, (uint32_t)sender);
+    vga_printf("[ipc] -- indeed '%s' was waiting\n", sender->name);
 
     void *mapped_send_buf_base = 0xbabe0000;
     /* the sender's buffer lies in our memory at 0xbabe0000 + 12 lowest bits in
@@ -121,11 +115,6 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     /* map the physical location of the sender's buffer, into our own virtual
      * memory, located at 0xbabe0000 - this is the base address though */
     map_pages(current_proc->waiting_msg.phys_send_buf, mapped_send_buf_base, 0, current_proc->waiting_msg.send_len);
-
-    vga_printf("[ipc] .. the message lies at: %x\n", current_proc->waiting_msg.phys_send_buf);
-    vga_printf("[ipc] .. it's mapped into receiver's address space at: %x\n", mapped_send_buf);
-    vga_printf("[ipc] .. first byte of it's message: %x\n", *(uint32_t *)mapped_send_buf);
-    vga_printf("[ipc] .. about to copy %d bytes (we accept %d though)\n", current_proc->waiting_msg.send_len, msg->recv_len);
 
     /* transfer the data from the sender to the current process (receiver) */
     memcpy(msg->recv_buf, mapped_send_buf, msg->recv_len);
@@ -159,22 +148,17 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
     /* TODO better error handling */
     return regs;
 
+  vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
+
   void *mapped_recv_buf_base = 0xcafe0000;
   void *mapped_recv_buf = (uint32_t)mapped_recv_buf_base + ((uint32_t)current_proc->waiting_msg.recv_buf & 0xfff);
 
   map_pages(current_proc->waiting_msg.phys_recv_buf, mapped_recv_buf_base, 0, current_proc->waiting_msg.recv_len);
 
-  vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
-  vga_printf("[ipc] .. first byte of the reply: %x\n", *(uint32_t *)msg->send_buf);
-  vga_printf("[ipc] .. the sender's recv buffer lies at: %x\n", current_proc->waiting_msg.recv_buf);
-  vga_printf("[ipc] .. it's mapped into receiver's address space at: %x\n", mapped_recv_buf);
-
-  vga_printf("[ipc] filling the reply from 0x%x into 0x%x\n", (void*)msg->send_buf, mapped_recv_buf);
-
   memcpy(mapped_recv_buf, msg->send_buf, current_proc->waiting_msg.recv_len);
-  vga_printf("[ipc] sender's receive buffer's first byte: 0x%x\n", *(uint32_t *)mapped_recv_buf);
 
-  vga_printf("[ipc] -- unblocking the original sender\n");
+  vga_printf("[ipc] -- unblocking '%s' (the original sender)\n", sender->name);
+
   /* make sender be ready to use CPU time to process the response */
   sender->state = PROC_READY;
 
