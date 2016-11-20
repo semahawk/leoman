@@ -112,6 +112,11 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
     next_proc = idle;
   }
 
+  if (next_proc == current_proc){
+    /* don't 'switch' to the same process which is running right now */
+    return cpu_state;
+  }
+
   current_proc = next_proc;
 
   tss_set_ss(SEG_KDATA);
