@@ -33,6 +33,9 @@ volatile struct proc *current_proc = NULL;
 
 static int scheduling_enabled = false;
 
+/* too lazy to create a separate header file for single function prototype... */
+extern void msg_dispatcher(void);
+
 static struct proc *find_next_proc(enum proc_state state)
 {
   static int i = 0;
@@ -266,6 +269,7 @@ void proc_earlyinit(void)
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
+  current_proc = proc_new_from_memory("kernel", true, (void *)msg_dispatcher, 0);
   current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
 
   vga_printf("[proc] early stage initialized\n");

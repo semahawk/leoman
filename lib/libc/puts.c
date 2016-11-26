@@ -23,7 +23,7 @@ int puts(const char *s)
   for (int i = 0; *s && i < MSG_IO_BUFSIZE; s++)
     msg.chars[i++] = *s;
 
-  ipc_send(1, &msg, sizeof msg, &result, sizeof result);
+  ipc_send(2, &msg, sizeof msg, &result, sizeof result);
 
   return result;
 }

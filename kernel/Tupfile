@@ -3,7 +3,9 @@ include_rules
 CFLAGS += -target i386-pc-none -std=c99 -ffreestanding -fno-builtin -nostdlib
 CPPFLAGS += -Wno-invalid-pp-token
 
+LIBS = ../lib/libipc/libipc.a
+
 : foreach *.c |> !cc |> %B.c.o
 : foreach *.asm |> $(CPP) $(CPPFLAGS) -D__ASSEMBLY__ - < %f > %o |> %B.asm.cpped
 : foreach *.asm.cpped |> nasm -f elf32 %f -o %o |> %B.asm.o
-: *.c.o *.asm.o | kernel.ld |> $(CC) $(CFLAGS) $(CPPFLAGS) -T kernel.ld %f -o %o |> kernel
+: *.c.o *.asm.o | kernel.ld $(LIBS) |> $(CC) $(CFLAGS) $(CPPFLAGS) -T kernel.ld %f -o %o $(LIBS) |> kernel
