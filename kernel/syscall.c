@@ -44,6 +44,8 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       /* it's a way to eliminate busy-looping */
       current_proc->state = PROC_SEND_BLOCKED;
 
+      vga_printf("[ipc] -- unblocking '%s' (the receiver)\n", receiver->name);
+
       void *mapped_recv_buf_base = (void *)0xdead0000;
       void *mapped_recv_buf = (void *)((uint32_t)mapped_recv_buf_base + ((uint32_t)receiver->waiting_msg.recv_buf & 0xfff));
 
@@ -51,12 +53,29 @@ struct intregs *syscall_send_msg(struct intregs *regs)
 
       memcpy(mapped_recv_buf, msg->send_buf, receiver->waiting_msg.recv_len);
 
-      vga_printf("[ipc] -- unblocking '%s' (the receiver)\n", receiver->name);
+      unmap_pages(mapped_recv_buf_base, receiver->waiting_msg.recv_len);
+
+      void *mapped_msg_packet_base = (void *)0xbabe0000;
+      struct msg_packet *mapped_msg_packet = (void *)((uint32_t)mapped_msg_packet_base + ((uint32_t)receiver->waiting_msg.phys_msg_packet & 0xfff));
+
+      map_pages(receiver->waiting_msg.phys_msg_packet, mapped_msg_packet, 0, sizeof(struct msg_packet));
+
+      /* this is what's going to be returned in the receiver's ipc_recv call */
+      /* if we don't overwrite it here then it will think it got a message from
+       * an undefined process */
+      mapped_msg_packet->sender = current_proc->pid;
+      /* don't think there were two same messages */
+      receiver->waiting_msg.sender = -2;
+
+      unmap_pages(mapped_msg_packet, sizeof(struct msg_packet));
+
       /* unblock the receiver so it can go and process the message */
       receiver->state = PROC_READY;
       break;
     case PROC_READY:
       vga_printf("[ipc] -- reply-blocking '%s' (the sender)\n", current_proc->name);
+
+      receiver->waiting_msg.sender = current_proc->pid;
 
       /* reply-block the sender - it now has to wait for the response */
       /* it's a way to eliminate busy-looping */
@@ -68,7 +87,6 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       goto err;
   }
 
-  receiver->waiting_msg.sender = current_proc->pid;
   receiver->waiting_msg.receiver = msg->receiver;
   receiver->waiting_msg.send_buf = msg->send_buf;
   receiver->waiting_msg.send_len = msg->send_len;
@@ -90,10 +108,10 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
 {
   proc_disable_scheduling();
 
-  vga_printf("[ipc] process '%s' sees if a message came\n", current_proc->name);
-
   struct msg_packet *msg = (struct msg_packet *)regs->eax;
   struct proc *sender = NULL;
+
+  vga_printf("[ipc] process '%s' sees if a message came (waiting sender: %x)\n", current_proc->name, current_proc->waiting_msg.sender);
 
   if (NULL == (sender = proc_find_by_pid(current_proc->waiting_msg.sender))){
     /* if there was no other process which sent a message to the current process
@@ -103,6 +121,7 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     current_proc->waiting_msg.recv_len = msg->recv_len;
     current_proc->waiting_msg.recv_buf = msg->recv_buf;
     current_proc->waiting_msg.phys_recv_buf = vm_get_phys_mapping(msg->recv_buf);
+    current_proc->waiting_msg.phys_msg_packet = vm_get_phys_mapping(msg);
 
     current_proc->state = PROC_RECV_BLOCKED;
   } else {
@@ -128,9 +147,9 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
     /* setting it to -2 because proc_earlyinit gives every unused proc -1 */
     /* I'm not sure which party to blame for this 'bug' */
     current_proc->waiting_msg.sender = -2;
-  }
 
-  msg->sender = sender->pid;
+    msg->sender = sender->pid;
+  }
 
   /* XXX short window for an interrupt to come? */
   proc_enable_scheduling();

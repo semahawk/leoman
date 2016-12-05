@@ -20,6 +20,13 @@ struct msg_packet {
   void        *send_buf, *recv_buf;
   size_t       send_len,  recv_len;
   void *phys_send_buf, *phys_recv_buf;
+  /* physical location of the msg_packet
+   * it's a dirty hack - when a process calls ipc_recv, and there was no other
+   * process having called ipc_send, this process gets blocked - but - when
+   * finally some process decides to send the first process a message, then we
+   * need to modify the return value of the ipc_recv call (we don't know the
+   * sender at this point) */
+  void *phys_msg_packet;
 };
 
 /*
