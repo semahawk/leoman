@@ -14,13 +14,19 @@
 #include <kernel/proc.h>
 #include <ipc.h>
 #include <msg/io.h>
+#include <msg/interrupt.h>
 
 /* admittedly - this isn't a real driver */
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  puts("hello, world\n");
-  puts("this is the userspace talking\n");
+  struct msg_interrupt msg;
+  int result;
+
+  msg.type  = MSG_INTERRUPT_REQUEST_FORWARDING;
+  msg.which = 0x1;
+
+  ipc_send(0, &msg, sizeof msg, &result, sizeof result);
 
   while (1);
   /* we have nowhere to return right know, actually */

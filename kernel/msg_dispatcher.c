@@ -10,19 +10,35 @@
  *
  */
 
+#include <kernel/proc.h>
+#include <kernel/vga.h>
+
 #include <ipc.h>
+#include <msg/interrupt.h>
 
 /*
  * This is the 'kernel process'
  */
 void msg_dispatcher(void)
 {
-  int msg, response;
+  /* TODO: make it more generic - not just interrupts */
+  struct msg_interrupt msg;
+  int response;
   int sender;
 
   while (1){
     sender = ipc_recv(&msg, sizeof msg);
     response = 1;
+
+    switch (msg.type){
+      case MSG_INTERRUPT_REQUEST_FORWARDING:
+        vga_printf("[kernel] process %s (%x) wants to have interrupt %d forwarded\n", proc_find_by_pid(sender)->name, sender, msg.which);
+        break;
+      default:
+        response = 0;
+        break;
+    }
+
     ipc_reply(sender, &response, sizeof response);
   }
 }
