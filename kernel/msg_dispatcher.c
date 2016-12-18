@@ -13,6 +13,7 @@
 #include <kernel/proc.h>
 #include <kernel/vga.h>
 #include <kernel/vm.h>
+#include <kernel/x86.h>
 
 #include <ipc.h>
 #include <msg/kernel.h>
@@ -51,6 +52,13 @@ void msg_dispatcher(void)
         response = 0x10000000;
 
         proc_enable_scheduling();
+        break;
+      case MSG_PORT_IN_BYTE:
+        response = inb(msg.data.port.which);
+        break;
+      case MSG_PORT_OUT_BYTE:
+        outb(msg.data.port.which, (uint8_t)(msg.data.port.data & 0xff));
+        response = 1;
         break;
       default:
         response = 0;

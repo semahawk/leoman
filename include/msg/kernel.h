@@ -19,6 +19,8 @@ struct msg_kernel {
   enum {
     MSG_REQUEST_INTERRUPT_FORWARDING,
     MSG_MAP_MEMORY,
+    MSG_PORT_IN_BYTE,
+    MSG_PORT_OUT_BYTE,
   } type;
 
   union {
@@ -30,6 +32,11 @@ struct msg_kernel {
       uintptr_t paddr;
       size_t length;
     } map_memory;
+
+    struct {
+      uint16_t which;
+      uint32_t data;
+    } port;
   } data;
 };
 
