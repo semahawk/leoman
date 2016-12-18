@@ -13,22 +13,25 @@
 #include <stdio.h>
 #include <kernel/proc.h>
 #include <ipc.h>
-#include <msg/io.h>
-#include <msg/interrupt.h>
+#include <msg/kernel.h>
 
 /* admittedly - this isn't a real driver */
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  struct msg_interrupt msg;
+  struct msg_kernel msg;
   int result;
 
-  msg.type  = MSG_INTERRUPT_REQUEST_FORWARDING;
-  msg.which = 0x1;
+  msg.type = MSG_MAP_MEMORY;
+  msg.data.map_memory.paddr  = 0xb8000;
+  msg.data.map_memory.length = 80 * 25;
 
   ipc_send(0, &msg, sizeof msg, &result, sizeof result);
 
-  while (1);
+  uint16_t *addr = (void *)result;
+
+  while (1)
+    *addr = 0x0b01;
   /* we have nowhere to return right know, actually */
   /* but keep the compiler happy */
   return 0;

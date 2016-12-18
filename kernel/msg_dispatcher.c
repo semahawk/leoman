@@ -12,34 +12,52 @@
 
 #include <kernel/proc.h>
 #include <kernel/vga.h>
+#include <kernel/vm.h>
 
 #include <ipc.h>
-#include <msg/interrupt.h>
+#include <msg/kernel.h>
 
 /*
  * This is the 'kernel process'
  */
 void msg_dispatcher(void)
 {
-  /* TODO: make it more generic - not just interrupts */
-  struct msg_interrupt msg;
+  struct msg_kernel msg;
   int response;
-  int sender;
+  int sender_pid;
+  struct proc *sender;
 
   while (1){
-    sender = ipc_recv(&msg, sizeof msg);
+    sender_pid = ipc_recv(&msg, sizeof msg);
     response = 1;
 
+    /* TODO: some sanity checking? */
+    sender = proc_find_by_pid(sender_pid);
+
     switch (msg.type){
-      case MSG_INTERRUPT_REQUEST_FORWARDING:
-        vga_printf("[kernel] process %s (%x) wants to have interrupt %d forwarded\n", proc_find_by_pid(sender)->name, sender, msg.which);
+      case MSG_REQUEST_INTERRUPT_FORWARDING:
+        vga_printf("[kernel] process %s wants to have interrupt %d forwarded\n",
+            sender->name, msg.data.interrupt.which);
+        break;
+      case MSG_MAP_MEMORY:
+        proc_disable_scheduling();
+        vga_printf("[kernel] process %s wants to get %d bytes at 0x%x mapped\n", sender->name,
+            msg.data.map_memory.length, msg.data.map_memory.paddr);
+        /* TODO: perform some permission-checking when we have users */
+        set_cr3((uint32_t)sender->pdir);
+        map_pages((void *)msg.data.map_memory.paddr, (void *)0x10000000, PTE_U, msg.data.map_memory.length);
+        set_cr3((uint32_t)current_proc->pdir);
+
+        response = 0x10000000;
+
+        proc_enable_scheduling();
         break;
       default:
         response = 0;
         break;
     }
 
-    ipc_reply(sender, &response, sizeof response);
+    ipc_reply(sender->pid, &response, sizeof response);
   }
 }
 
