@@ -19,19 +19,11 @@
 /* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  struct msg_kernel msg;
-  int result;
+  while (1){
+    puts("hello from userspace (times infinity)!\n");
+    for (volatile int i = 0; i < 80000000; i++);
+  }
 
-  msg.type = MSG_MAP_MEMORY;
-  msg.data.map_memory.paddr  = 0xb8000;
-  msg.data.map_memory.length = 80 * 25;
-
-  ipc_send(0, &msg, sizeof msg, &result, sizeof result);
-
-  uint16_t *addr = (void *)result;
-
-  while (1)
-    *addr = 0x0b01;
   /* we have nowhere to return right know, actually */
   /* but keep the compiler happy */
   return 0;

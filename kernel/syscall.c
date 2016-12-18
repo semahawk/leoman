@@ -34,17 +34,11 @@ struct intregs *syscall_send_msg(struct intregs *regs)
     return regs;
   }
 
-  vga_printf("[ipc] process '%s' wants to send a message to '%s'\n", current_proc->name, receiver->name);
-
   switch (receiver->state){
     case PROC_RECV_BLOCKED:
-      vga_printf("[ipc] -- send-blocking '%s' (the sender)\n", current_proc->name);
-
       /* send-block the sender - it now has to wait for the response */
       /* it's a way to eliminate busy-looping */
       current_proc->state = PROC_SEND_BLOCKED;
-
-      vga_printf("[ipc] -- unblocking '%s' (the receiver)\n", receiver->name);
 
       void *mapped_recv_buf_base = (void *)0xdead0000;
       void *mapped_recv_buf = (void *)((uint32_t)mapped_recv_buf_base + ((uint32_t)receiver->waiting_msg.recv_buf & 0xfff));
@@ -73,8 +67,6 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       receiver->state = PROC_READY;
       break;
     case PROC_READY:
-      vga_printf("[ipc] -- reply-blocking '%s' (the sender)\n", current_proc->name);
-
       receiver->waiting_msg.sender = current_proc->pid;
 
       /* reply-block the sender - it now has to wait for the response */
@@ -82,8 +74,8 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       current_proc->state = PROC_REPLY_BLOCKED;
       break;
     default:
-      vga_printf("[ipc] now this is interesting...\n");
-      vga_printf("[ipc] !! the receiver has no state!\n");
+       vga_printf("[ipc] now this is interesting...\n"); 
+       vga_printf("[ipc] !! the receiver has no state!\n"); 
       goto err;
   }
 
@@ -111,13 +103,9 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
   struct msg_packet *msg = (struct msg_packet *)regs->eax;
   struct proc *sender = NULL;
 
-  vga_printf("[ipc] process '%s' sees if a message came (waiting sender: %x)\n", current_proc->name, current_proc->waiting_msg.sender);
-
   if (NULL == (sender = proc_find_by_pid(current_proc->waiting_msg.sender))){
     /* if there was no other process which sent a message to the current process
      * then block the current process (eliminating busy looping) */
-    vga_printf("[ipc] -- none - receive-blocking '%s' (the receiver)\n", current_proc->name);
-
     current_proc->waiting_msg.recv_len = msg->recv_len;
     current_proc->waiting_msg.recv_buf = msg->recv_buf;
     current_proc->waiting_msg.phys_recv_buf = vm_get_phys_mapping(msg->recv_buf);
@@ -125,8 +113,6 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
 
     current_proc->state = PROC_RECV_BLOCKED;
   } else {
-    vga_printf("[ipc] -- indeed '%s' was waiting\n", sender->name);
-
     void *mapped_send_buf_base = (void *)0xbabe0000;
     /* the sender's buffer lies in our memory at 0xbabe0000 + 12 lowest bits in
      * the sender's buffer's virtual address which are the offset into the page */
@@ -168,16 +154,12 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
     /* TODO better error handling */
     return regs;
 
-  vga_printf("[ipc] process '%s' wishes to reply to '%s'\n", current_proc->name, sender->name);
-
   void *mapped_recv_buf_base = (void *)0xcafe0000;
   void *mapped_recv_buf = (void *)((uint32_t)mapped_recv_buf_base + ((uint32_t)current_proc->waiting_msg.recv_buf & 0xfff));
 
   map_pages(current_proc->waiting_msg.phys_recv_buf, mapped_recv_buf_base, 0, current_proc->waiting_msg.recv_len);
 
   memcpy(mapped_recv_buf, msg->send_buf, current_proc->waiting_msg.recv_len);
-
-  vga_printf("[ipc] -- unblocking '%s' (the original sender)\n", sender->name);
 
   /* make sender be ready to use CPU time to process the response */
   sender->state = PROC_READY;

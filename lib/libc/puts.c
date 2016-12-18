@@ -18,7 +18,7 @@ int puts(const char *s)
   struct msg_io msg;
   int result;
 
-  msg.type = MSG_IO;
+  msg.type = MSG_PUTS;
 
   for (int i = 0; *s && i < MSG_IO_BUFSIZE; s++)
     msg.chars[i++] = *s;

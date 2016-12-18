@@ -11,18 +11,18 @@
  */
 
 #include <stdint.h>
+
 #include <ipc.h>
+#include <msg/kernel.h>
 #include <msg/io.h>
 
 #include "screen.h"
 
-/* IPC doesn't yet work so don't bother */
-#if 0
 static uint16_t *video_memory;
 /* current column / row */
-static int column, row;
+static int column = 0, row = 0;
 /* current foreground and background colors */
-static enum color fg_color, bg_color;
+static enum color fg_color = 0xf, bg_color = 0x0;
 /* screen's dimensions */
 static const int screen_columns = 80, screen_rows = 25;
 
@@ -71,7 +71,6 @@ static void clear(void)
     for (unsigned x = 0; x < screen_columns; x++)
       put_char_at('\0', x, y);
 }
-#endif
 
 int main(void)
 {
@@ -79,8 +78,48 @@ int main(void)
   int reply;
   int sender;
 
+  /* initialize the variables */
+  /* FIXME: apparently we don't handle BSS to well */
+  column = row = 0;
+  /* current foreground and background colors */
+  fg_color = 0xf, bg_color = 0x0;
+
+  {
+    struct msg_kernel msg;
+    int response;
+
+    msg.type = MSG_MAP_MEMORY;
+    msg.data.map_memory.paddr  = 0xb8000;
+    msg.data.map_memory.length = (screen_columns * screen_rows) * sizeof(*video_memory);
+
+    ipc_send(0, &msg, sizeof msg, &response, sizeof response);
+
+    video_memory = (void *)response;
+  }
+
+  clear();
+
   while (1){
     sender = ipc_recv(&msg, sizeof msg);
+
+    switch (msg.type){
+      case MSG_PUTS: {
+        /* print the buffer in msg.chars untill we
+         *   a) hit the first nul or
+         *   b) hit the end of the buffer */
+        for (unsigned char *p = msg.chars; *p != '\0'; p++){
+          if ((uintptr_t)p - (uintptr_t)msg.chars >= MSG_IO_BUFSIZE)
+            break;
+
+          put_char(*p);
+        }
+      }
+
+        break;
+      default:
+        break;
+    }
+
     reply = 0x11babe11;
     ipc_reply(sender, &reply, sizeof reply);
   }

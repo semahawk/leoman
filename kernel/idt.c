@@ -15,6 +15,7 @@
 
 #include <kernel/common.h>
 #include <kernel/idt.h>
+#include <kernel/proc.h>
 #include <kernel/vga.h>
 #include <kernel/x86.h>
 
@@ -130,6 +131,8 @@ static void screen_of_death(struct intregs *regs)
   vga_printf("  esp:%x ebp:%x esi:%x edi:%x  cs:%x\n", regs->esp, regs->ebp, regs->esi, regs->edi, regs->cs);
   vga_printf("   ds:%x  es:%x  fs:%x  gs:%x  ss:%x\n", regs->ds, regs->es, regs->fs, regs->gs, regs->ss);
   vga_printf("\n");
+
+  vga_printf("  Process which was running: %s\n", current_proc->name);
 
   /* print additional informations about the exception */
   if (regs->num == 14 /* page fault */){
