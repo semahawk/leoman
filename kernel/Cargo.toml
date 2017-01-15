@@ -1,0 +1,13 @@
+[package]
+name = "kernel"
+version = "0.1.0"
+authors = ["Szymon Urbaś <szymon.urbas@aol.com>"]
+build = "build.rs"
+
+[lib]
+crate-type = ["staticlib"]
+
+[build-dependencies]
+nasm-rs = "0.0.6"
+
+[dependencies]

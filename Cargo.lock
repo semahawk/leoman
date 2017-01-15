@@ -1,4 +1,14 @@
 [root]
-name = "leoman"
+name = "kernel"
 version = "0.1.0"
+dependencies = [
+ "nasm-rs 0.0.6 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
+[[package]]
+name = "nasm-rs"
+version = "0.0.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum nasm-rs 0.0.6 (registry+https://github.com/rust-lang/crates.io-index)" = "da1854e15cde0b7f77db1d5e73dd44734af7e565ddc1c29b9340eed88981b865"

@@ -6,7 +6,18 @@
 // Created on: 06 Jan 2017 21:05:59 +0100 (CET) 21:05
 //
 
-fn kmain() -> ! {
+#![feature(lang_items)]
+#![no_std]
+
+#[lang = "eh_personality"]
+extern fn eh_personality() {}
+
+#[lang = "panic_fmt"]
+#[no_mangle]
+pub extern fn panic_fmt() -> ! { loop {} }
+
+#[no_mangle]
+pub extern fn kmain() -> ! {
   loop {}
 }
 
