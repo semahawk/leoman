@@ -191,7 +191,7 @@ void proc_kickoff_first_process(void)
   proc_load();
 }
 
-struct proc *proc_new(const char *name, bool privileged)
+struct proc *proc_new(const char *name, bool privileged, bool superuser)
 {
   struct proc *proc = find_next_proc(PROC_UNUSED);
   uint32_t *stack = pm_alloc();
@@ -248,9 +248,9 @@ struct proc *proc_new(const char *name, bool privileged)
   return proc;
 }
 
-struct proc *proc_new_from_memory(const char *name, bool user, void *addr, uint32_t size)
+struct proc *proc_new_from_memory(const char *name, bool privileged, bool superuser, void *addr, uint32_t size)
 {
-  struct proc *proc = proc_new(name, user);
+  struct proc *proc = proc_new(name, privileged, superuser);
 
   proc->location.memory.address = addr;
   proc->location.memory.size    = size;
@@ -269,8 +269,8 @@ void proc_earlyinit(void)
   idt_set_gate(0x7f, int127, 0x8, 0xee);
   int_install_handler(0x7f, proc_schedule_after_irq);
 
-  current_proc = proc_new_from_memory("kernel", true, (void *)msg_dispatcher, 0);
-  current_proc = idle = proc_new_from_memory("idle", true, (void *)proc_idle, 0);
+  current_proc = proc_new_from_memory("kernel", true, true, (void *)msg_dispatcher, 0);
+  current_proc = idle = proc_new_from_memory("idle", true, true, (void *)proc_idle, 0);
 
   vga_printf("[proc] early stage initialized\n");
 }

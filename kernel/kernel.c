@@ -221,7 +221,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 
     if ((initrd_proc_executable = sar_lookup(bootinfo->initrd_addr, *initrd_proc_name))){
       vga_printf("[initrd] loading process %s\n", *initrd_proc_name);
-      proc_new_from_memory(*initrd_proc_name, false,
+      proc_new_from_memory(*initrd_proc_name, false, true,
           (void *)bootinfo->initrd_addr + initrd_proc_executable->offset, initrd_proc_executable->size);
     } else {
       vga_printf("error: process '%s' was not found in the initrd!\n", *initrd_proc_name);
