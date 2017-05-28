@@ -7,16 +7,24 @@
 //
 
 extern crate nasm_rs;
+extern crate glob;
 
 fn main() {
-  nasm_rs::compile_library_args("libentry.a", &["src/entry.asm", "src/multiboot_header.asm"], &["-f elf32"]);
+  for file in glob::glob("src/*.asm").unwrap().chain(glob::glob("src/arch/**/*.asm").unwrap()) {
+    match file {
+      Ok(path) => {
+        let libname = path.file_stem().unwrap().to_str().unwrap();
+        let path = path.to_str().unwrap();
+        nasm_rs::compile_library_args(format!("lib{}.a", libname).as_ref(), &[path], &["-f elf32"]);
+        println!("cargo:rustc-link-lib=static={}", libname);
+        println!("cargo:rerun-if-changed={}", path);
+      },
+      _ => (),
+    }
+  }
 
-  println!("cargo:rerun-if-changed=src/entry.asm");
-  println!("cargo:rerun-if-changed=src/multiboot_header.asm");
-
-  println!("cargo:rustc-link-lib=static=entry");
-
-  println!("cargo:rerun-if-changed=src/layout.ld");
+  println!("cargo:rerun-if-changed=src/arch/{}/layout.ld", cfg!(arch));
+  println!("cargo:link-arg=-Tsrc/arch/{}/layout.ld", cfg!(arch));
 }
 
 /*

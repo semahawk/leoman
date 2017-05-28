@@ -6,3 +6,4 @@ build = "build.rs"
 
 [build-dependencies]
 nasm-rs = "0.0.7"
+glob = "*"
