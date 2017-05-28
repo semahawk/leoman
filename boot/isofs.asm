@@ -179,7 +179,7 @@ find_and_load_file:
   ; of sectors to load
   xor dx, dx
   mov ax, [di+10]
-  mov cx, 512 ; 512 or 2048 goddammit
+  mov cx, 2048 ; 512 or 2048 goddammit
   div cx ; is the sector size fixed?
   mov dx, ax
   mov cx, [di+2]
