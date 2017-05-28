@@ -16,10 +16,8 @@ use core::intrinsics;
 pub extern "C" fn kmain() {
   unsafe {
     let vga = 0xb8000 as *mut u32;
-    let data = 0xdeadbeef;
-    let data = 0xdeadbabe;
 
-    *vga = 0x2f592f41;
+    *vga = 0x3f4b3f4f;
   };
 
   loop {}
