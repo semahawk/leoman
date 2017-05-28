@@ -181,6 +181,10 @@ find_and_load_file:
   mov ax, [di+10]
   mov cx, 2048 ; 512 or 2048 goddammit
   div cx ; is the sector size fixed?
+  cmp dx, 0 ; let's see if we had a reminder
+  je .skip_adding_one
+  inc ax ; we divided with a reminder, so let's add one more sector
+.skip_adding_one:
   mov dx, ax
   mov cx, [di+2]
   mov ax, [di+10]
