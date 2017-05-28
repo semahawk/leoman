@@ -3,21 +3,20 @@
 // Copyright (C) 2017 Szymon Urbaś <szymon.urbas@aol.com>
 // Distributed under terms of the BSD (2-clause) license.
 //
-// Created on: 06 Jan 2017 22:30:24 +0100 (CET)
+// Created on: 21 May 2017 21:08:29 +0200 (CEST)
 //
 
 extern crate nasm_rs;
 
-use std::env;
-
 fn main() {
-  let out_dir = env::var("OUT_DIR").unwrap();
+  nasm_rs::compile_library_args("libentry.a", &["src/entry.asm", "src/multiboot_header.asm"], &["-f elf32"]);
 
-  nasm_rs::compile_library("entry.o", &["entry.asm"]);
+  println!("cargo:rerun-if-changed=src/entry.asm");
+  println!("cargo:rerun-if-changed=src/multiboot_header.asm");
 
-  println!("cargo:rustc-link-search=native={}", out_dir);
   println!("cargo:rustc-link-lib=static=entry");
-  println!("cargo:rerun-if-changed=/src/asm/boot.asm");
+
+  println!("cargo:rerun-if-changed=src/layout.ld");
 }
 
 /*

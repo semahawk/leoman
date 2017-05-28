@@ -1,8 +1,6 @@
 [package]
-name = "kernel"
+name = "drivers"
 version = "0.1.0"
 authors = ["Szymon Urbaś <szymon.urbas@aol.com>"]
-build = "build.rs"
 
-[build-dependencies]
-nasm-rs = "0.0.7"
+[dependencies]
