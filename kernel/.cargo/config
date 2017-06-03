@@ -5,7 +5,6 @@ target = "i686-unknown-leoman"
 rustflags = [
     "-C", "link-arg=-Tsrc/arch/x86/layout.ld",
     "-C", "link-arg=-m32",
-    "-C", "link-dead-code",
     "-C", "link-arg=-nostdlib",
     "-C", "link-arg=-nodefaultlibs",
     "-C", "link-arg=-static-libgcc",

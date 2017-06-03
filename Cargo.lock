@@ -4,6 +4,7 @@ version = "0.1.0"
 dependencies = [
  "glob 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)",
  "nasm-rs 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -20,6 +21,12 @@ name = "nasm-rs"
 version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
+[[package]]
+name = "rlibc"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
 [metadata]
 "checksum glob 0.2.11 (registry+https://github.com/rust-lang/crates.io-index)" = "8be18de09a56b60ed0edf84bc9df007e30040691af7acd1c41874faac5895bfb"
 "checksum nasm-rs 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)" = "89af38d13d13783fabebbcd150c854ecdfe64cc72e251ebc33e7aca1c1f9b376"
+"checksum rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"

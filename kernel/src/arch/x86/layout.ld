@@ -11,13 +11,13 @@ SECTIONS
   .preamble : AT(ADDR(.preamble))
   {
     preamble = .;
-    *(.preamble)
+    KEEP(*(.preamble));
     . = ALIGN(4K);
   }
 
   .multiboot : AT(ADDR(.multiboot))
   {
-    *(*.multiboot*);
+    KEEP(*(*.multiboot*));
     . = ALIGN(4);
   }
 
@@ -28,24 +28,24 @@ SECTIONS
   .text : AT(ADDR(.text) - kernel_off)
   {
     text = .;
-    *(.text)
-    *(.rodata*)
+    KEEP(*(.text));
+    KEEP(*(.rodata*));
     . = ALIGN(4K);
   }
 
   .data : AT(ADDR(.data) - kernel_off)
   {
     data = .;
-    *(.data)
+    KEEP(*(.data));
     . = ALIGN(4K);
   }
 
   .bss : AT(ADDR(.bss) - kernel_off)
   {
     bss = .;
-    *(COMMON)
-    *(.bss)
-    *(.stack)
+    *(COMMON);
+    *(.bss);
+    *(.stack);
     . = ALIGN(4K);
   }
 

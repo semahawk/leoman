@@ -6,6 +6,8 @@
 // Created on: 03 Jun 2017 18:37:58 +0200 (CEST)
 //
 
+pub mod vga;
+
 pub fn early_init() {
   unsafe {
     let vga = 0xb8000 as *mut u32;
@@ -13,6 +15,15 @@ pub fn early_init() {
     *vga.offset(0) = 0x3f383f78;
     *vga.offset(1) = 0x3f36;
   };
+}
+
+pub fn init_output() {
+
+}
+
+macro_rules! println {
+  () => (($crate::arch::vga::VGA.write_char('i')));
+  ($i:expr) => (($crate::arch::vga::VGA.write_str($i)));
 }
 
 /*

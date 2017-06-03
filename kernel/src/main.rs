@@ -10,14 +10,20 @@
 #![no_main]
 #![no_std]
 
+extern crate rlibc;
+
 use core::intrinsics;
 
 #[cfg_attr(target_arch = "x86", path = "arch/x86/mod.rs")]
+#[macro_use]
 mod arch;
 
 #[no_mangle]
 pub extern "C" fn kmain() {
   arch::early_init();
+  arch::init_output();
+
+  println!("hello, world says the kernel!");
 
   loop {}
 }
