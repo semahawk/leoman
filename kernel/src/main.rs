@@ -12,13 +12,12 @@
 
 use core::intrinsics;
 
+#[cfg_attr(target_arch = "x86", path = "arch/x86/mod.rs")]
+mod arch;
+
 #[no_mangle]
 pub extern "C" fn kmain() {
-  unsafe {
-    let vga = 0xb8000 as *mut u32;
-
-    *vga = 0x3f4b3f4f;
-  };
+  arch::early_init();
 
   loop {}
 }
