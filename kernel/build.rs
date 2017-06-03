@@ -9,13 +9,37 @@
 extern crate nasm_rs;
 extern crate glob;
 
+use std::env;
+
+#[allow(non_camel_case_types)]
+#[derive(Debug)]
+enum Arch {
+  x86,
+  unknown,
+}
+
 fn main() {
-  for file in glob::glob("src/*.asm").unwrap().chain(glob::glob("src/arch/**/*.asm").unwrap()) {
+  let target_triple = env::var("TARGET").unwrap();
+  let arch = if target_triple.starts_with("i686") {
+    Arch::x86
+  } else {
+    Arch::unknown
+  };
+
+  for file in glob::glob("src/*.asm").unwrap().chain(
+              glob::glob(format!("src/arch/{:?}/*.asm", arch).as_ref()).unwrap()) {
     match file {
       Ok(path) => {
         let libname = path.file_stem().unwrap().to_str().unwrap();
         let path = path.to_str().unwrap();
-        nasm_rs::compile_library_args(format!("lib{}.a", libname).as_ref(), &[path], &["-f elf32"]);
+
+        let nasm_args = match arch {
+          Arch::x86 => ["-f elf32"],
+          Arch::unknown => [""],
+        };
+
+        nasm_rs::compile_library_args(format!("lib{}.a", libname).as_ref(), &[path], &nasm_args);
+
         println!("cargo:rustc-link-lib=static={}", libname);
         println!("cargo:rerun-if-changed={}", path);
       },
@@ -23,8 +47,10 @@ fn main() {
     }
   }
 
-  println!("cargo:rerun-if-changed=src/arch/{}/layout.ld", cfg!(arch));
-  println!("cargo:link-arg=-Tsrc/arch/{}/layout.ld", cfg!(arch));
+  println!("cargo:rerun-if-changed=src/arch/{:?}/layout.ld", arch);
+  println!("cargo:link-arg=-Tsrc/arch/{:?}/layout.ld", arch);
+
+  ()
 }
 
 /*

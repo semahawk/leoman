@@ -22,7 +22,7 @@ all: leoman.iso
 .PHONY: kernel
 kernel:
 	@echo Building the kernel...
-	@(export RUST_TARGET_PATH="$(topdir)/targets" && cd kernel && xargo build --target=$(target) --quiet)
+	@(export RUST_TARGET_PATH="$(topdir)/targets" && cd kernel && xargo build --target=$(target) -vv)
 
 .PHONY: boot
 boot:
