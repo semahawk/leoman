@@ -97,7 +97,7 @@ int main(void)
     video_memory = (void *)response;
   }
 
-  clear();
+  /*clear();*/
 
   while (1){
     sender = ipc_recv(&msg, sizeof msg);

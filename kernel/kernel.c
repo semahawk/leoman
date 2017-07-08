@@ -213,6 +213,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   syscall_install();
   /* part one of processes init */
   proc_earlyinit();
+  /* initialize and enumerate PCI devices */
+  pci_init();
 
   /* load the required processes off of the initrd */
   /* hang if any of those was not found */
