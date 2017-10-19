@@ -82,7 +82,7 @@ int main(void)
   /* FIXME: apparently we don't handle BSS to well */
   column = row = 0;
   /* current foreground and background colors */
-  fg_color = 0xf, bg_color = 0x0;
+  fg_color = 0xb, bg_color = 0x0;
 
   {
     struct msg_kernel msg;
@@ -95,9 +95,12 @@ int main(void)
     ipc_send(0, &msg, sizeof msg, &response, sizeof response);
 
     video_memory = (void *)response;
+    /* HACK */
+    /* somehow `response` ends up with 0x0 here... */
+    video_memory = (void *)0x10000000;
   }
 
-  /*clear();*/
+  clear();
 
   while (1){
     sender = ipc_recv(&msg, sizeof msg);
@@ -113,6 +116,9 @@ int main(void)
 
           put_char(*p);
         }
+      }
+      case MSG_PUTC: {
+        put_char(msg.one_char);
       }
 
         break;

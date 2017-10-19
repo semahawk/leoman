@@ -2,7 +2,7 @@ include_rules
 
 # which files eventually end up in the initial ramdisk
 # important!
-INITRD_FILES = drivers/angle drivers/screen
+INITRD_FILES = drivers/angle drivers/screen servers/kbd exec/shell
 
 : $(INITRD_FILES) | tools/sar |> tools/sar c %o $(INITRD_FILES) |> initrd.bin
 

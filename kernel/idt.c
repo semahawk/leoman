@@ -34,7 +34,7 @@ static void *isr_handlers[32] = { 0 };
 /* IRQ subroutine table */
 /* an array of function pointers, which get executed if a hardware interrupt is
  * issued (IDT entries between 32 and 47, inclusively) to handle it */
-static void *irq_handlers[16] = { 0 };
+static struct irq_handler_entry irq_handlers[16] = { { .handler = NULL, .pdir = 0 } };
 
 /* INT subroutine table */
 /* an array of function pointers, which get executed if a software interrupt is
@@ -207,11 +207,23 @@ struct intregs *irq_handler(struct intregs *regs)
   struct intregs *ret = regs;
 
   if (regs->num >= 32 && regs->num < 48){
-    irq_handler_t handler = irq_handlers[regs->num - 32];
+    irq_handler_t handler = irq_handlers[regs->num - 32].handler;
+    pde_t pdir = irq_handlers[regs->num - 32].pdir;
 
     /* launch the handler if there is any associated with the IRQ being fired */
     if (handler){
+      pde_t saved_pdir = get_cr3();
+
+      /* switch to the interrupt handlers address space */
+      /* it's in order to have userspace interrupt handlers possible */
+      if (0 != pdir)
+        set_cr3(pdir);
+
       ret = handler(regs);
+
+      /* restore the original address space */
+      if (0 != pdir)
+        set_cr3(saved_pdir);
     } else {
       /* if not found, display an upper case Q on red background */
       *((uint16_t *)0xb8002) = 0xc051;
@@ -233,10 +245,12 @@ struct intregs *irq_handler(struct intregs *regs)
 /*
  * Sets a handler for an IRQ of a given <num>
  */
-void irq_install_handler(int num, irq_handler_t handler)
+void irq_install_handler(int num, irq_handler_t handler, pde_t pdir)
 {
-  if (num < 16)
-    irq_handlers[num] = handler;
+  if (num < 16){
+    irq_handlers[num].handler = handler;
+    irq_handlers[num].pdir    = pdir;
+  }
   /* else error? */
 }
 
@@ -246,7 +260,7 @@ void irq_install_handler(int num, irq_handler_t handler)
 void irq_uninstall_handler(int num)
 {
   if (num < 16)
-    irq_handlers[num] = 0;
+    irq_handlers[num].handler = NULL;
   /* else error? */
 }
 

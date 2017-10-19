@@ -17,6 +17,7 @@
 
 size_t strlen(const char *s);
 int puts(const char *s);
+void *memset(void *s, int c, size_t n);
 
 #endif /* !STDIO_H */
 

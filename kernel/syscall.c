@@ -34,6 +34,8 @@ struct intregs *syscall_send_msg(struct intregs *regs)
     return regs;
   }
 
+  /*vga_printf("[ipc] proc %s sends a message to %s (state: %d)\n", current_proc->name, receiver->name, receiver->state);*/
+
   switch (receiver->state){
     case PROC_RECV_BLOCKED:
       /* send-block the sender - it now has to wait for the response */
@@ -74,8 +76,8 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       current_proc->state = PROC_REPLY_BLOCKED;
       break;
     default:
-       vga_printf("[ipc] now this is interesting...\n"); 
-       vga_printf("[ipc] !! the receiver has no state!\n"); 
+       vga_printf("[ipc] !! the receiver (%s) has an unknown state (%d)!\n",
+           receiver->name, receiver->state);
       goto err;
   }
 
@@ -147,12 +149,16 @@ struct intregs *syscall_recv_msg(struct intregs *regs)
 
 struct intregs *syscall_rply_msg(struct intregs *regs)
 {
+  proc_disable_scheduling();
+
   struct msg_packet *msg = (struct msg_packet *)regs->eax;
   struct proc *sender = proc_find_by_pid(msg->sender);
 
   if (sender == NULL)
     /* TODO better error handling */
     return regs;
+
+  /*vga_printf("[ipc] proc %s is replying to %s\n", current_proc->name, sender->name);*/
 
   void *mapped_recv_buf_base = (void *)0xcafe0000;
   void *mapped_recv_buf = (void *)((uint32_t)mapped_recv_buf_base + ((uint32_t)current_proc->waiting_msg.recv_buf & 0xfff));
@@ -164,6 +170,7 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
   /* make sender be ready to use CPU time to process the response */
   sender->state = PROC_READY;
 
+  proc_enable_scheduling();
   proc_schedule_without_irq();
 
   /* TODO */

@@ -15,6 +15,8 @@
 
 #include <stdint.h>
 
+#include <kernel/idt.h>
+
 struct msg_kernel {
   enum {
     MSG_REQUEST_INTERRUPT_FORWARDING,
@@ -26,6 +28,7 @@ struct msg_kernel {
   union {
     struct {
       int which;
+      irq_handler_t handler;
     } interrupt;
 
     struct {

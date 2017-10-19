@@ -2,7 +2,7 @@
  *
  * kbd.c
  *
- * Created at:  Sun 13 Apr 15:24:28 2014 15:24:28
+ * Created at:  07 Sep 2017 18:37:32 +0200 (CEST)
  *
  * Author:  Szymon Urbaś <szymon.urbas@aol.com>
  *
@@ -10,13 +10,21 @@
  *
  */
 
+#include <stdint.h>
+#include <stdio.h>
+
+#include <ipc.h>
+#include <msg/kernel.h>
+#include <msg/io.h>
+
 #include <kernel/common.h>
 #include <kernel/idt.h>
 #include <kernel/vga.h>
 #include <kernel/x86.h>
 
 /* last key pressed */
-uint8_t key_buffer;
+static uint8_t _last_scancode;
+static bool _key_pressed = false;
 
 #define KEY_LSHIFT 0x2a
 #define KEY_RSHIFT 0x36
@@ -65,7 +73,7 @@ static inline uint8_t kbd_get_scancode(void)
   return inb(0x60);
 }
 
-struct intregs *kbd_handler(struct intregs *regs)
+static struct intregs *kbd_irq_handler(struct intregs *regs)
 {
   uint8_t scancode = kbd_get_scancode();
   uint8_t mask = MASK_NORMAL;
@@ -80,27 +88,55 @@ struct intregs *kbd_handler(struct intregs *regs)
   if (is_pressed[MASK_SHIFT])
     mask = MASK_SHIFT;
 
-  /* don't bother with break codes */
-  if (!(scancode & 0x80)){
-    key_buffer = layout[scancode][mask];
-
-    if (key_buffer == 'p')
-      proc_dump_proc_list();
-  }
+  _last_scancode = scancode;
+  _key_pressed = true;
 
   return regs;
 }
 
-void kbd_install(void)
+int main(void)
 {
-  irq_install_handler(1, kbd_handler, 0);
+  struct msg_io msg;
+  int reply;
+  int sender;
 
-  vga_printf("[kbd] keyboard driver initialised (irq 1)\n");
-}
+  {
+    /* request IRQ1 (keyboard) */
+    struct msg_kernel msg;
+    int response;
 
-void kbd_uninstall(void)
-{
-  irq_uninstall_handler(1);
+    msg.type = MSG_REQUEST_INTERRUPT_FORWARDING;
+    msg.data.interrupt.which = 1;
+    msg.data.interrupt.handler = kbd_irq_handler;
+
+    /* TODO: error handling */
+    ipc_send(0, &msg, sizeof msg, &response, sizeof response);
+  }
+
+  while (1){
+    sender = ipc_recv(&msg, sizeof msg);
+
+    switch (msg.type){
+      case MSG_GETC: {
+        while (!_key_pressed)
+          ;
+
+          reply = layout[_last_scancode][0];
+
+        _key_pressed = false;
+      }
+
+        break;
+      default:
+        break;
+    }
+
+    ipc_reply(sender, &reply, sizeof reply);
+  }
+
+  /* we have nowhere to return right know, actually */
+  /* but keep the compiler happy */
+  return 0;
 }
 
 /*

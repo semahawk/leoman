@@ -104,6 +104,8 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
 
   current_proc->trapframe = cpu_state;
 
+  /*vga_printf("cr3: 0x%x\n", get_cr3());*/
+
   /* don't put blocked processes to sleep (they'd get scheduled then) */
   /* TODO: try passing the proc structure directly, not just the pid */
   if (!proc_is_blocked(current_proc->pid))
@@ -243,7 +245,7 @@ struct proc *proc_new(const char *name, bool privileged, bool superuser)
 
   current_proc = proc;
 
-  vga_printf("[proc] new process: %s (pid %d)\n", proc->name, proc->pid);
+  vga_printf("[proc] new process: %s (pid %d, pdir: %x)\n", proc->name, proc->pid, proc->pdir);
 
   return proc;
 }
@@ -321,6 +323,21 @@ void proc_enable_scheduling(void)
 bool proc_scheduling_enabled(void)
 {
   return !!scheduling_enabled;
+}
+
+void proc_dump_proc_list(void)
+{
+  vga_printf("## proc dump ##\n");
+  for (unsigned int i = 0; i < NPROCS; i++){
+    struct proc *proc = &procs[i];
+
+    if (PROC_UNUSED == proc->state)
+      continue;
+
+    vga_printf("%d: %s %s: state %d, prvl %d, super %d\n",
+        proc->pid, current_proc == proc ? "*" : " ", proc->name,
+        proc->state, proc->privileged, proc->superuser);
+  }
 }
 
 /*

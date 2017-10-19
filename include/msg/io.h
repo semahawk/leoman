@@ -17,9 +17,12 @@
 
 struct msg_io {
   enum {
+    MSG_GETC,
     MSG_PUTS,
+    MSG_PUTC,
   } type;
 
+  unsigned char one_char;
   unsigned char chars[MSG_IO_BUFSIZE];
 };
 

@@ -10,7 +10,11 @@
  *
  */
 
+#ifndef KERNEL_IDT_H
+#define KERNEL_IDT_H
+
 #include <stdint.h>
+#include <kernel/vm.h>
 
 #include "common.h"
 
@@ -27,13 +31,18 @@ struct idt_ptr {
   uint32_t base;
 } __PACKED;
 
+struct irq_handler_entry {
+  void *handler;
+  pde_t pdir;
+};
+
 typedef struct intregs *(*isr_handler_t)(struct intregs *);
 typedef struct intregs *(*irq_handler_t)(struct intregs *);
 typedef struct intregs *(*int_handler_t)(struct intregs *);
 
 void idt_install(void);
 
-void irq_install_handler(int, irq_handler_t);
+void irq_install_handler(int, irq_handler_t, pde_t);
 void irq_uninstall_handler(int);
 
 void int_install_handler(int, int_handler_t);
@@ -100,6 +109,8 @@ extern void int222(void); /* syscall for replying to messages */
 extern void int186(void); /* syscall for sending messages */
 extern void int190(void); /* syscall for receiving messages */
 /* }}} */
+
+#endif /* !KERNEL_IDT_H */
 
 /*
  * vi: ft=c:ts=2:sw=2:expandtab

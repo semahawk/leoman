@@ -16,18 +16,17 @@
 #include <ipc.h>
 #include <msg/kernel.h>
 
-/* admittedly - this isn't a real driver */
-/* it's just a dummy code to test IPC with the server */
 int main(void)
 {
-  for (volatile int i = 0; i < 300000000; i++)
-    ;
+  /* actually important */
+  /* without that the system doesn't initialize some stuff and sending messages
+   * doesn't work yet */
+  for (volatile int i = 0; i < 100000000; i++);
 
+  puts("type! ");
   while (1){
-    /*(void)outb(0x10, 0x0);*/
-    /*__asm volatile("cli\r\nhlt\r\n");*/
-    /*puts("angle\n");*/
-    for (volatile int i = 0; i < 100000000; i++);
+    char ch = getc();
+    putc(ch);
   }
 
   /* we have nowhere to return right know, actually */

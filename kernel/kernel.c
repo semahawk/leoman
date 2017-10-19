@@ -181,7 +181,8 @@ static void adjust_the_memory_map(struct kern_bootinfo *bootinfo)
  * initrd */
 static const char *const essential_initrd_processes[] = {
   /* the order here is the order those processes will be loaded in */
-  "screen", "angle", NULL
+  "screen", "kbd", "shell", "angle",
+  NULL
 };
 
 void kmain(struct kern_bootinfo *bootinfo)
