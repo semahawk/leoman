@@ -88,8 +88,10 @@ static struct intregs *kbd_irq_handler(struct intregs *regs)
   if (is_pressed[MASK_SHIFT])
     mask = MASK_SHIFT;
 
-  _last_scancode = scancode;
-  _key_pressed = true;
+  if (!(scancode & 0x80)){
+    _last_scancode = scancode;
+    _key_pressed = true;
+  }
 
   return regs;
 }
