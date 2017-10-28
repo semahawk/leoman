@@ -5,7 +5,6 @@
 /elf.c.o
 /entry.asm.asm.o
 /entry.asm.cpped
-/fairy.c.o
 /gdt.asm.asm.o
 /gdt.asm.cpped
 /gdt.c.o
@@ -15,6 +14,8 @@
 /kbd.c.o
 /kernel
 /kernel.c.o
+/msg_dispatcher.c.o
+/pci.c.o
 /pm.c.o
 /proc.c.o
 /sar.c.o
