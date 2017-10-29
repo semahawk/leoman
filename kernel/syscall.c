@@ -167,6 +167,8 @@ struct intregs *syscall_rply_msg(struct intregs *regs)
 
   memcpy(mapped_recv_buf, msg->send_buf, current_proc->waiting_msg.recv_len);
 
+  unmap_pages(mapped_recv_buf_base, current_proc->waiting_msg.recv_len);
+
   /* make sender be ready to use CPU time to process the response */
   sender->state = PROC_READY;
 
