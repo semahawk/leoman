@@ -92,12 +92,11 @@ int main(void)
     msg.data.map_memory.paddr  = 0xb8000;
     msg.data.map_memory.length = (screen_columns * screen_rows) * sizeof(*video_memory);
 
+    for (volatile int i = 0; i < 100000000; i++);
+
     ipc_send(0, &msg, sizeof msg, &response, sizeof response);
 
     video_memory = (void *)response;
-    /* HACK */
-    /* somehow `response` ends up with 0x0 here... */
-    video_memory = (void *)0x10000000;
   }
 
   clear();
