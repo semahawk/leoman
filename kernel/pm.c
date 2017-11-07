@@ -46,6 +46,46 @@ void *pm_alloc(void)
   return NULL;
 }
 
+void *pm_alloc_cont(size_t page_num)
+{
+  /* currently the limit is the number of bits in a word */
+  /* TODO: add support for cross-index bitmask finding */
+  /* ugh, what I mean is that if pm_bitmap[n] has 3 right-most bits zeroed, and
+   * pm_bitmap[n+1] has 3 left-most bits zeroed, we should be able to allocate 6
+   * continuous pages there */
+  size_t limit = sizeof(pm_bitmap[0]) * 8;
+  void *page;
+
+  if (page_num > limit){
+    vga_printf("[pm] WARNING: allocating more than %d contiguous pages is not supported!\n", limit);
+    return NULL;
+  }
+
+  /* traverse the bitmap */
+  for (unsigned idx = 0; idx < sizeof(pm_bitmap) / sizeof(*pm_bitmap); idx++){
+    /* if it's not all ones then at least one bit is zero */
+    if (pm_bitmap[idx] != (uint32_t)-1){
+      /* find 'page_num' free bits in pm_bitmap[idx] */
+      uint32_t mask = (uint32_t)-1 >> (limit - page_num);
+      uint32_t shift = 0;
+
+      for (unsigned _i = 0; _i <= limit - page_num; _i++, mask <<= 1, shift++){
+        /* we did find 'page_num' free bits */
+        if (0 == (pm_bitmap[idx] & mask)){
+          /* calculate the page's address */
+          page = (void *)((uint32_t)pm_page_pool + ((uint32_t)((idx * sizeof(*pm_bitmap) * 8) + shift) * PAGE_SIZE));
+          /* set the bit - mark the page used */
+          pm_bitmap[idx] |= mask;
+
+          return (void *)v2p(page);
+        }
+      }
+    }
+  }
+
+  return NULL;
+}
+
 void pm_free(void *addr)
 {
   addr = PALIGNDOWN(addr);

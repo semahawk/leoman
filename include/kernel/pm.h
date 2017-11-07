@@ -20,6 +20,7 @@
 #define PM_BITMAP_NMEMB 32 * 1024
 
 void *pm_alloc(void);
+void *pm_alloc_cont(size_t page_num);
 void  pm_free(void *);
 void *pm_init(struct kern_bootinfo *);
 
