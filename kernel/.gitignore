@@ -8,6 +8,7 @@
 /gdt.asm.asm.o
 /gdt.asm.cpped
 /gdt.c.o
+/heap.c.o
 /idt.asm.asm.o
 /idt.asm.cpped
 /idt.c.o

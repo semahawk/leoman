@@ -18,6 +18,7 @@
 #include <kernel/vm.h>
 #include <kernel/pm.h>
 #include <kernel/gdt.h>
+#include <kernel/heap.h>
 #include <kernel/idt.h>
 #include <kernel/kbd.h>
 #include <kernel/vga.h>
@@ -216,6 +217,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   proc_earlyinit();
   /* initialize and enumerate PCI devices */
   pci_init();
+  /* initialize the kernel heap */
+  heap_init();
 
   /* load the required processes off of the initrd */
   /* hang if any of those was not found */
