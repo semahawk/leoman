@@ -25,6 +25,7 @@
 #include <kernel/proc.h>
 #include <kernel/sar.h>
 #include <kernel/syscall.h>
+#include <kernel/smp.h>
 #include <kernel/timer.h>
 #include <kernel/tss.h>
 #include <kernel/x86.h>
@@ -219,6 +220,8 @@ void kmain(struct kern_bootinfo *bootinfo)
   pci_init();
   /* initialize the kernel heap */
   heap_init();
+  /* initialize and start-up the APs (Aplication Processors) */
+  smp_init();
 
   /* load the required processes off of the initrd */
   /* hang if any of those was not found */

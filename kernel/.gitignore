@@ -20,6 +20,7 @@
 /pm.c.o
 /proc.c.o
 /sar.c.o
+/smp.c.o
 /syscall.c.o
 /timer.c.o
 /tss.c.o
