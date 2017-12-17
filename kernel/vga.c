@@ -202,6 +202,9 @@ void vga_printf(const char *fmt, ...)
         case '%':
           vga_putch('%');
           break;
+        case 'c':
+          vga_putch(va_arg(vl, char));
+          break;
         case 'd':
           vga_putd(va_arg(vl, int));
           break;
