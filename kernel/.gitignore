@@ -15,6 +15,7 @@
 /kbd.c.o
 /kernel
 /kernel.c.o
+/mmio.c.o
 /msg_dispatcher.c.o
 /pci.c.o
 /pm.c.o
