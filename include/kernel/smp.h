@@ -16,6 +16,9 @@
 #include <stdint.h>
 
 void smp_init(void);
+int smp_init_core(uint8_t core_id);
+int smp_send_init_ipi(uint8_t core_id);
+int smp_send_startup_ipi(uint8_t core_id, uint8_t code_page);
 
 /* The mp_*table* thingies are from the MultiProcessor specification.
  * Reference: https://pdos.csail.mit.edu/6.828/2011/readings/ia32/MPspec.pdf */

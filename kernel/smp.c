@@ -11,8 +11,11 @@
  */
 
 #include <kernel/common.h>
+#include <kernel/mmio.h>
 #include <kernel/smp.h>
 #include <kernel/vga.h>
+#include <kernel/vm.h>
+#include <kernel/x86.h>
 
 static struct mp_float_table *mp_float_table = NULL;
 static struct mp_conf_table *mp_conf_table = NULL;
@@ -60,9 +63,13 @@ void smp_init(void)
     vga_printf("[smp] -- length: %d, revision: 1.%d, phys addr: 0x%x\n",
         mp_float_table->length, mp_float_table->spec_rev, mp_float_table->phys_addr);
 
+    /* identity-map the local APIC so we can access it's registers */
+    map_pages((void *)mp_conf_table->local_apic_addr,
+        (void *)mp_conf_table->local_apic_addr, PTE_C | PTE_T, MiB(1) - 1);
+
     void *entry = &mp_conf_table->_entries[0];
 
-    vga_printf("[smp] detecting hardware...\n", entry);
+    vga_printf("[smp] detecting hardware...\n");
 
     for (unsigned i = 0; i < mp_conf_table->entry_count; i++){
         uint8_t entry_type = *(uint8_t *)entry;
@@ -72,6 +79,11 @@ void smp_init(void)
                 struct mp_conf_table_cpu_entry *cpu_entry = entry;
 
                 vga_printf("[smp] -- cpu#%x\n", cpu_entry->local_apic_id);
+
+                /* don't initialize the BSP (bootstrap processor) */
+                if (cpu_entry->local_apic_id != 0x0)
+                  /* FIXME find a better way of figuring out the BSP */
+                  smp_init_core(cpu_entry->local_apic_id);
 
                 entry += sizeof(*cpu_entry);
                 core_num++;
@@ -113,6 +125,64 @@ void smp_init(void)
     }
 
     vga_printf("[smp] detected %d core(s)\n", core_num);
+}
+
+int smp_init_core(uint8_t core_id)
+{
+    int ret = 0;
+
+    if (0 != (ret = smp_send_init_ipi(core_id))){
+        vga_printf("[smp] couldn't send INIT IPI to cpu#0x%x\n", core_id);
+        return 1;
+    }
+
+    /* wait for a bit */
+    for (volatile int i = 0; i < 10000; i++);
+
+    /* create the hlt trampoline */
+    memset((void *)0x8000, 0xf4, 1);
+
+    /* send the startup IPI, so the AP starts at 0x8000 */
+    if (0 != (ret = smp_send_startup_ipi(core_id, 0x8))){
+        vga_printf("[smp] couldn't send STARTUP IPI to cpu#0x%x\n", core_id);
+        return 1;
+    }
+
+    return ret;
+}
+
+int smp_send_init_ipi(uint8_t core_id)
+{
+    void *apic = (void *)((uintptr_t)mp_conf_table->local_apic_addr);
+
+    vga_printf("[smp] sending INIT IPI to core#%x\n", core_id);
+
+    /* make sure we don't have any pending IPIs */
+    while (mmio_read32(apic + 0x30) & BIT(12));
+
+    /* set the delivery target (high doubleword of ICR) */
+    mmio_write32(apic + 0x310, ((uint32_t)core_id) << 24);
+    /* level triggered, INIT */
+    mmio_write32(apic + 0x300, 0x4500);
+
+    return 0;
+}
+
+int smp_send_startup_ipi(uint8_t core_id, uint8_t code_page)
+{
+    void *apic = (void *)((uintptr_t)mp_conf_table->local_apic_addr);
+
+    vga_printf("[smp] sending STARTUP IPI to core#%x\n", core_id);
+
+    /* make sure we don't have any pending IPIs */
+    while (mmio_read32(apic + 0x30) & BIT(12));
+
+    /* set the delivery target (high doubleword of ICR) */
+    mmio_write32(apic + 0x310, ((uint32_t)core_id) << 24);
+    /* level triggered, STARTUP, page where the code lies */
+    mmio_write32(apic + 0x300, 0x4600 | code_page);
+
+    return 0;
 }
 
 /*
