@@ -129,26 +129,31 @@ void smp_init(void)
 
 int smp_init_core(uint8_t core_id)
 {
-    int ret = 0;
+    if ((uint32_t)&_binary_trampoline_bin_size > 0x1000){
+        vga_printf("[smp] error: trampoline is bigger than 4KiB!\n");
+        return 1;
+    }
 
-    if (0 != (ret = smp_send_init_ipi(core_id))){
+    /* copy the trampoline to the destination of 0x8000 */
+    memcpy(0x8000,
+        (void *)((uint32_t)&_binary_trampoline_bin_start),
+        (void *)((uint32_t)&_binary_trampoline_bin_size));
+
+    if (0 != smp_send_init_ipi(core_id)){
         vga_printf("[smp] couldn't send INIT IPI to cpu#0x%x\n", core_id);
         return 1;
     }
 
     /* wait for a bit */
-    for (volatile int i = 0; i < 10000; i++);
-
-    /* create the hlt trampoline */
-    memset((void *)0x8000, 0xf4, 1);
+    for (volatile int i = 0; i < 100; i++);
 
     /* send the startup IPI, so the AP starts at 0x8000 */
-    if (0 != (ret = smp_send_startup_ipi(core_id, 0x8))){
+    if (0 != smp_send_startup_ipi(core_id, 0x8)){
         vga_printf("[smp] couldn't send STARTUP IPI to cpu#0x%x\n", core_id);
         return 1;
     }
 
-    return ret;
+    return 0;
 }
 
 int smp_send_init_ipi(uint8_t core_id)

@@ -15,6 +15,11 @@
 
 #include <stdint.h>
 
+/* provided by the linker */
+extern uint32_t _binary_trampoline_bin_start;
+extern uint32_t _binary_trampoline_bin_end;
+extern uint32_t _binary_trampoline_bin_size;
+
 void smp_init(void);
 int smp_init_core(uint8_t core_id);
 int smp_send_init_ipi(uint8_t core_id);
