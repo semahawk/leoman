@@ -6,10 +6,17 @@ bits 16
 start:
     jmp 0x0:trampoline
 
+align KERNEL_TRAMPOLINE_VARS_OFFSET
+magic: dd 0x0
+stack_id: dd 0x0
+
 trampoline:
     ; update the segment register
     xor ax, ax
     mov ds, ax
+
+    mov bx, word [magic]
+    mov cx, word [magic + 2]
 
 .halt:
     cli

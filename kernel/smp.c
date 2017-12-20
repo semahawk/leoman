@@ -81,9 +81,10 @@ void smp_init(void)
                 vga_printf("[smp] -- cpu#%x\n", cpu_entry->local_apic_id);
 
                 /* don't initialize the BSP (bootstrap processor) */
-                if (cpu_entry->local_apic_id != 0x0)
+                if (cpu_entry->local_apic_id != 0x0){
                   /* FIXME find a better way of figuring out the BSP */
                   smp_init_core(cpu_entry->local_apic_id);
+                }
 
                 entry += sizeof(*cpu_entry);
                 core_num++;
@@ -138,6 +139,8 @@ int smp_init_core(uint8_t core_id)
     memcpy(KERNEL_TRAMPOLINE_LOAD_ADDR,
         (void *)((uint32_t)&_binary_trampoline_bin_start),
         (void *)((uint32_t)&_binary_trampoline_bin_size));
+
+    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR, 0xdeadbeef);
 
     if (0 != smp_send_init_ipi(core_id)){
         vga_printf("[smp] couldn't send INIT IPI to cpu#0x%x\n", core_id);

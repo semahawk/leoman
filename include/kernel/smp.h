@@ -15,10 +15,19 @@
 
 #define KERNEL_TRAMPOLINE_LOAD_ADDR 0x8000
 #define KERNEL_TRAMPOLINE_MAX_SIZE 0x1000
+#define KERNEL_TRAMPOLINE_STACK_SIZE 256
+#define KERNEL_TRAMPOLINE_STACK_SIZE_LOG2 8
+#define KERNEL_TRAMPOLINE_STACKS_START_ADDR \
+    (KERNEL_TRAMPOLINE_LOAD_ADDR + KERNEL_TRAMPOLINE_MAX_SIZE)
+#define KERNEL_TRAMPOLINE_VARS_OFFSET 16
+#define KERNEL_TRAMPOLINE_VARS_ADDR \
+    (KERNEL_TRAMPOLINE_LOAD_ADDR + KERNEL_TRAMPOLINE_VARS_OFFSET)
 
 #ifndef __ASSEMBLY__
 #include <stdint.h>
+#endif /* !__ASSEMBLY__ */
 
+#ifndef __ASSEMBLY__
 /* provided by the linker */
 extern uint32_t _binary_trampoline_bin_start;
 extern uint32_t _binary_trampoline_bin_end;
