@@ -8,7 +8,6 @@ start:
 
 trampoline:
     ; update the segment register
-    ; mov ax, 0x8000
     xor ax, ax
     mov ds, ax
 
