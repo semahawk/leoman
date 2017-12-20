@@ -13,18 +13,26 @@
 #ifndef KERNEL_SMP_H
 #define KERNEL_SMP_H
 
+#define KERNEL_TRAMPOLINE_LOAD_ADDR 0x8000
+#define KERNEL_TRAMPOLINE_MAX_SIZE 0x1000
+
+#ifndef __ASSEMBLY__
 #include <stdint.h>
 
 /* provided by the linker */
 extern uint32_t _binary_trampoline_bin_start;
 extern uint32_t _binary_trampoline_bin_end;
 extern uint32_t _binary_trampoline_bin_size;
+#endif /* !__ASSEMBLY__ */
 
+#ifndef __ASSEMBLY__
 void smp_init(void);
 int smp_init_core(uint8_t core_id);
 int smp_send_init_ipi(uint8_t core_id);
 int smp_send_startup_ipi(uint8_t core_id, uint8_t code_page);
+#endif /* !__ASSEMBLY__ */
 
+#ifndef __ASSEMBLY__
 /* The mp_*table* thingies are from the MultiProcessor specification.
  * Reference: https://pdos.csail.mit.edu/6.828/2011/readings/ia32/MPspec.pdf */
 struct mp_float_table {
@@ -97,6 +105,7 @@ struct mp_conf_table_local_int_assign_entry {
     uint8_t dest_apic_id;
     uint8_t dest_apic_intin;
 } __PACKED;
+#endif /* !__ASSEMBLY__ */
 
 #endif /* !KERNEL_SMP_H */
 

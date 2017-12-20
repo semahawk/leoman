@@ -129,13 +129,13 @@ void smp_init(void)
 
 int smp_init_core(uint8_t core_id)
 {
-    if ((uint32_t)&_binary_trampoline_bin_size > 0x1000){
+    if ((uint32_t)&_binary_trampoline_bin_size > KERNEL_TRAMPOLINE_MAX_SIZE){
         vga_printf("[smp] error: trampoline is bigger than 4KiB!\n");
         return 1;
     }
 
-    /* copy the trampoline to the destination of 0x8000 */
-    memcpy(0x8000,
+    /* copy the trampoline to the destination */
+    memcpy(KERNEL_TRAMPOLINE_LOAD_ADDR,
         (void *)((uint32_t)&_binary_trampoline_bin_start),
         (void *)((uint32_t)&_binary_trampoline_bin_size));
 
@@ -147,8 +147,9 @@ int smp_init_core(uint8_t core_id)
     /* wait for a bit */
     for (volatile int i = 0; i < 100; i++);
 
-    /* send the startup IPI, so the AP starts at 0x8000 */
-    if (0 != smp_send_startup_ipi(core_id, 0x8)){
+    /* send the startup IPI so the AP actually starts executing code
+     * in the trampoline */
+    if (0 != smp_send_startup_ipi(core_id, KERNEL_TRAMPOLINE_LOAD_ADDR / PAGE_SIZE)){
         vga_printf("[smp] couldn't send STARTUP IPI to cpu#0x%x\n", core_id);
         return 1;
     }

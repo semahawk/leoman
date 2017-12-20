@@ -1,4 +1,6 @@
-org 0x8000
+#include <kernel/smp.h>
+
+org KERNEL_TRAMPOLINE_LOAD_ADDR
 bits 16
 
 start:
