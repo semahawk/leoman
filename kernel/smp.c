@@ -79,6 +79,7 @@ void smp_init(void)
     /* send the kernel's page directory address to the AP so it can enable paging */
     mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 0, get_cr3());
     mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 4, 0x0);
+    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 8, kmain_secondary_cores);
 
     void *entry = &mp_conf_table->_entries[0];
 

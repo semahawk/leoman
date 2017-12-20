@@ -39,6 +39,7 @@ void smp_init(void);
 int smp_init_core(uint8_t core_id);
 int smp_send_init_ipi(uint8_t core_id);
 int smp_send_startup_ipi(uint8_t core_id, uint8_t code_page);
+void kmain_secondary_cores(uint32_t magic);
 #endif /* !__ASSEMBLY__ */
 
 #ifndef __ASSEMBLY__

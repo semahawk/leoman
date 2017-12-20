@@ -9,6 +9,7 @@ start:
 align KERNEL_TRAMPOLINE_VARS_OFFSET
 kernel_pdir: dd 0x0
 unique_stack_id: dd 0x0
+kmain_secondary_cores: dd 0x0
 
 trampoline:
     ; update the segment register
@@ -53,6 +54,14 @@ find_my_stack:
     inc esp
     shl esp, KERNEL_TRAMPOLINE_STACK_SIZE_LOG2
     add esp, KERNEL_TRAMPOLINE_STACKS_START_ADDR
+
+enter_kmain_for_secondary_cores:
+    mov eax, dword [0x0fee00020]
+    shr eax, 24
+    push eax
+
+    mov edx, dword [kmain_secondary_cores]
+    call edx
 
 .halt:
     cli

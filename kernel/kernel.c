@@ -238,6 +238,9 @@ void kmain(struct kern_bootinfo *bootinfo)
     }
   }
 
+  vga_printf("[debug] halting...\n");
+  halt();
+
   if (!all_processes_loaded)
     for (;;) halt();
 
@@ -246,6 +249,14 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("putting kmain into an endless loop (if you can see me we have a bug).\n");
   /* should never get here */
+  for (;;)
+    halt();
+}
+
+void kmain_secondary_cores(uint32_t core_id)
+{
+  vga_printf("cpu#%x says hi (and halts)!\n", core_id);
+
   for (;;)
     halt();
 }
