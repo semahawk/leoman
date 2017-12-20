@@ -8,6 +8,7 @@ start:
 
 align KERNEL_TRAMPOLINE_VARS_OFFSET
 kernel_pdir: dd 0x0
+unique_stack_id: dd 0x0
 
 trampoline:
     ; update the segment register
@@ -38,6 +39,20 @@ enable_paging:
     mov eax, cr0
     or eax, 0x80000000
     mov cr0, eax
+
+; reference: http://ethv.net/workshops/osdev/notes/notes-5
+find_my_stack:
+    mov eax, dword [unique_stack_id]
+    mov ebx, eax
+    inc ebx
+    lock cmpxchg dword [unique_stack_id], ebx
+    jnz find_my_stack
+
+    dec ebx
+    mov esp, ebx
+    inc esp
+    shl esp, KERNEL_TRAMPOLINE_STACK_SIZE_LOG2
+    add esp, KERNEL_TRAMPOLINE_STACKS_START_ADDR
 
 .halt:
     cli

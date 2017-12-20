@@ -67,6 +67,19 @@ void smp_init(void)
     map_pages((void *)mp_conf_table->local_apic_addr,
         (void *)mp_conf_table->local_apic_addr, PTE_C | PTE_T, MiB(1) - 1);
 
+    vm_change_pages_attrs((void *)KERNEL_TRAMPOLINE_LOAD_ADDR,
+        PTE_P | PTE_C | PTE_T | PTE_W, KERNEL_TRAMPOLINE_MAX_SIZE);
+
+    /* copy the trampoline to the destination */
+    memcpy(KERNEL_TRAMPOLINE_LOAD_ADDR,
+        (void *)((uint32_t)&_binary_trampoline_bin_start),
+        (void *)((uint32_t)&_binary_trampoline_bin_size));
+
+    /* NOTE: the addresses here _must_ match the variables in trampoline_bin.asm! */
+    /* send the kernel's page directory address to the AP so it can enable paging */
+    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 0, get_cr3());
+    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 4, 0x0);
+
     void *entry = &mp_conf_table->_entries[0];
 
     vga_printf("[smp] detecting hardware...\n");
@@ -134,15 +147,6 @@ int smp_init_core(uint8_t core_id)
         vga_printf("[smp] error: trampoline is bigger than 4KiB!\n");
         return 1;
     }
-
-    /* copy the trampoline to the destination */
-    memcpy(KERNEL_TRAMPOLINE_LOAD_ADDR,
-        (void *)((uint32_t)&_binary_trampoline_bin_start),
-        (void *)((uint32_t)&_binary_trampoline_bin_size));
-
-    /* NOTE: the addresses here _must_ match the variables in trampoline_bin.asm! */
-    /* send the kernel's page directory address to the AP so it can enable paging */
-    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 0, get_cr3());
 
     if (0 != smp_send_init_ipi(core_id)){
         vga_printf("[smp] couldn't send INIT IPI to cpu#0x%x\n", core_id);
