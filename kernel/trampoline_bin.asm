@@ -7,16 +7,12 @@ start:
     jmp 0x0:trampoline
 
 align KERNEL_TRAMPOLINE_VARS_OFFSET
-magic: dd 0x0
-stack_id: dd 0x0
+kernel_pdir: dd 0x0
 
 trampoline:
     ; update the segment register
     xor ax, ax
     mov ds, ax
-
-    mov bx, word [magic]
-    mov cx, word [magic + 2]
 
 enter_protected_mode:
     cli
@@ -35,7 +31,13 @@ protected_mode:
     mov gs, eax
     mov ss, eax
 
-    mov eax, dword [magic]
+enable_paging:
+    mov eax, dword [kernel_pdir]
+    mov cr3, eax
+
+    mov eax, cr0
+    or eax, 0x80000000
+    mov cr0, eax
 
 .halt:
     cli

@@ -140,7 +140,9 @@ int smp_init_core(uint8_t core_id)
         (void *)((uint32_t)&_binary_trampoline_bin_start),
         (void *)((uint32_t)&_binary_trampoline_bin_size));
 
-    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR, 0xdeadbeef);
+    /* NOTE: the addresses here _must_ match the variables in trampoline_bin.asm! */
+    /* send the kernel's page directory address to the AP so it can enable paging */
+    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 0, get_cr3());
 
     if (0 != smp_send_init_ipi(core_id)){
         vga_printf("[smp] couldn't send INIT IPI to cpu#0x%x\n", core_id);
