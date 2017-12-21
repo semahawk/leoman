@@ -47,8 +47,8 @@ page_table_0:
 kernel_page_table:
   %assign addr 0x0
   %rep 1024
-    ; attributes: supervisor level, read + write, present
-    dd addr | 3
+    ; attributes: cache disabled, write through, supervisor level, read + write, present
+    dd addr | 3 | (1 << 3) | (1 << 4)
   %assign addr addr + 4096
   %endrep
 

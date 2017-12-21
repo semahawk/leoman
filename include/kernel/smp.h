@@ -35,6 +35,10 @@ extern uint32_t _binary_trampoline_bin_size;
 #endif /* !__ASSEMBLY__ */
 
 #ifndef __ASSEMBLY__
+extern volatile uint32_t smp_initialized_cores_num;
+#endif /* !__ASSEMBLY__ */
+
+#ifndef __ASSEMBLY__
 void smp_init(void);
 int smp_init_core(uint8_t core_id);
 int smp_send_init_ipi(uint8_t core_id);

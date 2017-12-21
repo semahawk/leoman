@@ -17,9 +17,10 @@
 #include <kernel/vm.h>
 #include <kernel/x86.h>
 
+volatile uint32_t smp_initialized_cores_num = 0x1;
+
 static struct mp_float_table *mp_float_table = NULL;
 static struct mp_conf_table *mp_conf_table = NULL;
-static unsigned core_num = 0;
 
 /* search for the MP table, starting at <addr> but not going further than <len> bytes */
 /* return 1 if found and 0 if table was not found */
@@ -92,7 +93,7 @@ void smp_init(void)
             case 0: {
                 struct mp_conf_table_cpu_entry *cpu_entry = entry;
 
-                vga_printf("[smp] -- cpu#%x\n", cpu_entry->local_apic_id);
+                // vga_printf("[smp] -- cpu#%x\n", cpu_entry->local_apic_id);
 
                 /* don't initialize the BSP (bootstrap processor) */
                 if (cpu_entry->local_apic_id != 0x0){
@@ -101,16 +102,15 @@ void smp_init(void)
                 }
 
                 entry += sizeof(*cpu_entry);
-                core_num++;
                 break;
             }
             case 1: {
                 struct mp_conf_table_bus_entry *bus_entry = entry;
 
-                vga_printf("[smp] -- bus#%c%c%c\n",
-                    bus_entry->type_string[0],
-                    bus_entry->type_string[1],
-                    bus_entry->type_string[2]);
+                // vga_printf("[smp] -- bus#%c%c%c\n",
+                    // bus_entry->type_string[0],
+                    // bus_entry->type_string[1],
+                    // bus_entry->type_string[2]);
 
                 entry += sizeof(*bus_entry);
                 break;
@@ -139,11 +139,14 @@ void smp_init(void)
         }
     }
 
-    vga_printf("[smp] detected %d core(s)\n", core_num);
+    vga_printf("[smp] woke %d core(s) up\n", smp_initialized_cores_num);
 }
 
 int smp_init_core(uint8_t core_id)
 {
+    volatile uint32_t saved_inited_cores_num = smp_initialized_cores_num;
+    uint32_t tries = 0;
+
     if ((uint32_t)&_binary_trampoline_bin_size > KERNEL_TRAMPOLINE_MAX_SIZE){
         vga_printf("[smp] error: trampoline is bigger than 4KiB!\n");
         return 1;
@@ -164,14 +167,26 @@ int smp_init_core(uint8_t core_id)
         return 1;
     }
 
+    /* wait for a bit to give the AP time to increase the initialized
+     * cores counter */
+    do {
+        uint32_t current_inited_cores_num = smp_initialized_cores_num;
+
+        /* check if the AP actually booted */
+        /* TODO poll for this */
+        if (current_inited_cores_num > saved_inited_cores_num + 1){
+            vga_printf("[smp] more cores woke-up than intended!\n");
+            return 1;
+        } else if (current_inited_cores_num == saved_inited_cores_num + 1)
+            break;
+    } while (tries++ < 10000000);
+
     return 0;
 }
 
 int smp_send_init_ipi(uint8_t core_id)
 {
     void *apic = (void *)((uintptr_t)mp_conf_table->local_apic_addr);
-
-    vga_printf("[smp] sending INIT IPI to core#%x\n", core_id);
 
     /* make sure we don't have any pending IPIs */
     while (mmio_read32(apic + 0x30) & BIT(12));
@@ -187,8 +202,6 @@ int smp_send_init_ipi(uint8_t core_id)
 int smp_send_startup_ipi(uint8_t core_id, uint8_t code_page)
 {
     void *apic = (void *)((uintptr_t)mp_conf_table->local_apic_addr);
-
-    vga_printf("[smp] sending STARTUP IPI to core#%x\n", core_id);
 
     /* make sure we don't have any pending IPIs */
     while (mmio_read32(apic + 0x30) & BIT(12));
