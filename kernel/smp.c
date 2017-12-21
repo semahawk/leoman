@@ -71,15 +71,15 @@ void smp_init(void)
         PTE_P | PTE_C | PTE_T | PTE_W, KERNEL_TRAMPOLINE_MAX_SIZE);
 
     /* copy the trampoline to the destination */
-    memcpy(KERNEL_TRAMPOLINE_LOAD_ADDR,
+    memcpy((void *)KERNEL_TRAMPOLINE_LOAD_ADDR,
         (void *)((uint32_t)&_binary_trampoline_bin_start),
-        (void *)((uint32_t)&_binary_trampoline_bin_size));
+        (size_t)((uint32_t)&_binary_trampoline_bin_size));
 
     /* NOTE: the addresses here _must_ match the variables in trampoline_bin.asm! */
     /* send the kernel's page directory address to the AP so it can enable paging */
-    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 0, get_cr3());
-    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 4, 0x0);
-    mmio_write32(KERNEL_TRAMPOLINE_VARS_ADDR + 8, kmain_secondary_cores);
+    mmio_write32((void *)KERNEL_TRAMPOLINE_VARS_ADDR + 0, get_cr3());
+    mmio_write32((void *)KERNEL_TRAMPOLINE_VARS_ADDR + 4, 0x0);
+    mmio_write32((void *)KERNEL_TRAMPOLINE_VARS_ADDR + 8, (uint32_t)kmain_secondary_cores);
 
     void *entry = &mp_conf_table->_entries[0];
 
