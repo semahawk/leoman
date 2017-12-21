@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #include <kernel/common.h>
+#include <kernel/atomic.h>
 #include <kernel/elf.h>
 #include <kernel/vm.h>
 #include <kernel/pm.h>
@@ -256,7 +257,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 void kmain_secondary_cores(uint32_t core_id)
 {
   /* let the BSP know that we've booted properly */
-  __asm__ __volatile__("lock incl %0" : "=m"(smp_initialized_cores_num));
+  atomic_inc(&smp_initialized_cores_num);
 
   for (;;)
     halt();
