@@ -17,13 +17,14 @@ int puts(const char *s)
 {
   struct msg_io msg;
   int result;
+  int screen = find_by_name("screen");
 
   msg.type = MSG_PUTS;
 
   for (int i = 0; *s && i < MSG_IO_BUFSIZE; s++)
     msg.chars[i++] = *s;
 
-  ipc_send(2, &msg, sizeof msg, &result, sizeof result);
+  ipc_send(screen, &msg, sizeof msg, &result, sizeof result);
 
   return result;
 }

@@ -17,11 +17,12 @@ int putc(char c)
 {
   struct msg_io msg;
   int result;
+  int screen = find_by_name("screen");
 
   msg.type = MSG_PUTC;
   msg.one_char = c;
 
-  ipc_send(2, &msg, sizeof msg, &result, sizeof result);
+  ipc_send(screen, &msg, sizeof msg, &result, sizeof result);
 
   return result;
 }

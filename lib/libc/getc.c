@@ -17,10 +17,11 @@ int getc(void)
 {
   struct msg_io msg;
   int result;
+  int kbd = find_by_name("kbd");
 
   msg.type = MSG_GETC;
 
-  ipc_send(3, &msg, sizeof msg, &result, sizeof result);
+  ipc_send(kbd, &msg, sizeof msg, &result, sizeof result);
 
   return result;
 }
