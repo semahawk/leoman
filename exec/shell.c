@@ -18,11 +18,6 @@
 
 int main(void)
 {
-  /* actually important */
-  /* without that the system doesn't initialize some stuff and sending messages
-   * doesn't work yet */
-  for (volatile int i = 0; i < 150000000; i++);
-
   puts("type! ");
   while (1){
     char ch = getc();
