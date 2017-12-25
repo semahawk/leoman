@@ -16,6 +16,7 @@
 #include <stdint.h>
 
 #include <kernel/idt.h>
+#include <kernel/proc.h>
 
 struct msg_kernel {
   enum {
@@ -23,6 +24,7 @@ struct msg_kernel {
     MSG_MAP_MEMORY,
     MSG_PORT_IN_BYTE,
     MSG_PORT_OUT_BYTE,
+    MSG_FIND_PROC_BY_NAME,
   } type;
 
   union {
@@ -40,6 +42,10 @@ struct msg_kernel {
       uint16_t which;
       uint32_t data;
     } port;
+
+    struct {
+      char name[MAX_PROC_NAME_LEN];
+    } find_proc_by_name;
   } data;
 };
 

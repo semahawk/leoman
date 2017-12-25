@@ -73,7 +73,11 @@ void msg_dispatcher(void)
         outb(msg.data.port.which, (uint8_t)(msg.data.port.data & 0xff));
         response = 1;
         break;
+      case MSG_FIND_PROC_BY_NAME:
+        response = proc_find_by_name(msg.data.find_proc_by_name.name);
+        break;
       default:
+        vga_printf("# warning: unhandled message! type: %d\n", msg.type);
         response = 0;
         break;
     }

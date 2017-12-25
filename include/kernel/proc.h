@@ -80,6 +80,7 @@ void proc_schedule_without_irq(void);
 struct intregs *proc_schedule_after_irq(struct intregs *);
 
 struct proc *proc_find_by_pid(int pid);
+int proc_find_by_name(char name[static MAX_PROC_NAME_LEN]);
 
 /* defined in proc.c */
 extern volatile struct proc *current_proc;

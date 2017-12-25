@@ -11,8 +11,11 @@
  */
 
 #include <kernel/common.h> /* for bool type */
+#include <kernel/proc.h>
 #include <kernel/syscall.h>
+
 #include <ipc.h>
+#include <msg/kernel.h>
 
 bool ipc_send(int receiver, void *send_buf, size_t send_len, void *recv_buf, size_t recv_len)
 {
@@ -72,6 +75,21 @@ bool ipc_reply(int sender, void *send_buf, size_t send_len)
 
   /* TODO */
   return false;
+}
+
+bool find_by_name(const char *name)
+{
+  struct msg_kernel msg;
+  int response;
+
+  msg.type = MSG_FIND_PROC_BY_NAME;
+
+  for (unsigned i = 0; i < MAX_PROC_NAME_LEN; i++)
+    msg.data.find_proc_by_name.name[i] = name[i];
+
+  ipc_send(0, &msg, sizeof(msg), &response, sizeof(response));
+
+  return response;
 }
 
 /*

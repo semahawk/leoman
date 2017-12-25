@@ -67,6 +67,12 @@ int ipc_recv(void *recv_buf, size_t recv_len);
  */
 bool ipc_reply(int sender, void *send_buf, size_t send_len);
 
+/*
+ * Helper functions
+ */
+
+bool find_by_name(const char *name);
+
 #endif /* !IPC_H */
 
 /*
