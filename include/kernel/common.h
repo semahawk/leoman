@@ -35,6 +35,8 @@ int strcmp(const char *, const char *);
 
 typedef enum { false = 0, true = 1 } bool;
 
+bool streq(const char *, const char *);
+
 struct kern_bootinfo {
   /* address of the initrd file loaded by boot1 */
   uint32_t *initrd_addr;

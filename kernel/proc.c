@@ -70,7 +70,7 @@ struct proc *proc_find_by_pid(int pid)
 int proc_find_by_name(char name[static MAX_PROC_NAME_LEN])
 {
   for (struct proc *proc = procs; proc < &procs[NPROCS]; proc++)
-    if (0 == strcmp(proc->name, name))
+    if (streq(proc->name, name))
       return proc->pid;
 
   return 0;

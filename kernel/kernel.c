@@ -54,6 +54,11 @@ int strcmp(const char *s1, const char *s2)
   return (*(const unsigned char *)s1 - *(const unsigned char *)(s2 - 1));
 }
 
+bool streq(const char *s1, const char *s2)
+{
+  return strcmp(s1, s2) == 0;
+}
+
 void *memset(void *dst, int ch, size_t len)
 {
   while (len-- != 0)
