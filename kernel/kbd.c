@@ -93,7 +93,7 @@ struct intregs *kbd_handler(struct intregs *regs)
 
 void kbd_install(void)
 {
-  irq_install_handler(1, kbd_handler, 0);
+  irq_install_handler(1, kbd_handler, 0, 0);
 
   vga_printf("[kbd] keyboard driver initialised (irq 1)\n");
 }

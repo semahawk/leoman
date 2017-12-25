@@ -49,7 +49,7 @@ void msg_dispatcher(void)
         /*vga_printf("[kernel] .. and handled with 0x%x\n", phys);*/
         /*vga_printf("[kernel] handler at virt 0x%x, phys 0x%x\n", virt, phys);*/
         /* TODO sanity/security checking of `which` */
-        irq_install_handler(which, (irq_handler_t)virt, (uint32_t)sender->pdir);
+        irq_install_handler(which, (irq_handler_t)virt, (uint32_t)sender->pdir, sender_pid);
         response = 0x33cafe33;
         proc_enable_scheduling();
         break;

@@ -20,10 +20,16 @@ struct msg_io {
     MSG_GETC,
     MSG_PUTS,
     MSG_PUTC,
+
+    /* THIS IS A HACK */
+    /* we should use msg_irq for this, but then, how should
+     * the kbd server distinguish between the two? */
+    MSG_IRQ,
   } type;
 
   unsigned char one_char;
   unsigned char chars[MSG_IO_BUFSIZE];
+  unsigned int which_irq;
 };
 
 #endif /* !IO_H */

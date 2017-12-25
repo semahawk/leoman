@@ -19,6 +19,10 @@
 #include <kernel/vga.h>
 #include <kernel/x86.h>
 
+#include <msg/io.h>
+#include <msg/irq.h>
+#include <ipc.h>
+
 /* THE mighty IDT */
 static struct idt_entry idt[256];
 
@@ -34,7 +38,7 @@ static void *isr_handlers[32] = { 0 };
 /* IRQ subroutine table */
 /* an array of function pointers, which get executed if a hardware interrupt is
  * issued (IDT entries between 32 and 47, inclusively) to handle it */
-static struct irq_handler_entry irq_handlers[16] = { { .handler = NULL, .pdir = 0 } };
+static struct irq_handler_entry irq_handlers[16] = { { .handler = NULL, .pdir = 0, .receiver = 0 } };
 
 /* INT subroutine table */
 /* an array of function pointers, which get executed if a software interrupt is
@@ -209,21 +213,21 @@ struct intregs *irq_handler(struct intregs *regs)
   if (regs->num >= 32 && regs->num < 48){
     irq_handler_t handler = irq_handlers[regs->num - 32].handler;
     pde_t pdir = irq_handlers[regs->num - 32].pdir;
+    int receiver = irq_handlers[regs->num - 32].receiver;
 
     /* launch the handler if there is any associated with the IRQ being fired */
     if (handler){
-      pde_t saved_pdir = get_cr3();
+      /* poor hack, to tell user-space interrupts from kernel ones */
+      if (0 != pdir){
+        struct msg_io msg = {
+          .type = MSG_IRQ,
+          .which_irq = regs->num - 32,
+        };
 
-      /* switch to the interrupt handlers address space */
-      /* it's in order to have userspace interrupt handlers possible */
-      if (0 != pdir)
-        set_cr3(pdir);
-
-      ret = handler(regs);
-
-      /* restore the original address space */
-      if (0 != pdir)
-        set_cr3(saved_pdir);
+        ipc_send_no_irq(receiver, &msg, sizeof(msg), NULL, 0);
+      } else {
+        ret = handler(regs);
+      }
     } else {
       /* if not found, display an upper case Q on red background */
       *((uint16_t *)0xb8002) = 0xc051;
@@ -245,11 +249,12 @@ struct intregs *irq_handler(struct intregs *regs)
 /*
  * Sets a handler for an IRQ of a given <num>
  */
-void irq_install_handler(int num, irq_handler_t handler, pde_t pdir)
+void irq_install_handler(int num, irq_handler_t handler, pde_t pdir, int receiver)
 {
   if (num < 16){
-    irq_handlers[num].handler = handler;
-    irq_handlers[num].pdir    = pdir;
+    irq_handlers[num].handler  = handler;
+    irq_handlers[num].pdir     = pdir;
+    irq_handlers[num].receiver = receiver;
   }
   /* else error? */
 }

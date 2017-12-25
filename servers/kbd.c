@@ -73,6 +73,27 @@ static inline uint8_t kbd_get_scancode(void)
   return inb(0x60);
 }
 
+static void kbd_msg_handler(void)
+{
+  uint8_t scancode = kbd_get_scancode();
+  uint8_t mask = MASK_NORMAL;
+
+  /* see if Shift was pressed */
+  if (scancode == KEY_LSHIFT || scancode == KEY_RSHIFT)
+    is_pressed[MASK_SHIFT] = 1;
+  /* see if Shift was released */
+  if (scancode == RELEASED(KEY_LSHIFT) || scancode == RELEASED(KEY_RSHIFT))
+    is_pressed[MASK_SHIFT] = 0;
+
+  if (is_pressed[MASK_SHIFT])
+    mask = MASK_SHIFT;
+
+  if (!(scancode & 0x80)){
+    _last_scancode = scancode;
+    _key_pressed = true;
+  }
+}
+
 static struct intregs *kbd_irq_handler(struct intregs *regs)
 {
   uint8_t scancode = kbd_get_scancode();
@@ -120,16 +141,21 @@ int main(void)
 
     switch (msg.type){
       case MSG_GETC: {
-        while (!_key_pressed)
-          ;
+      //   while (!_key_pressed)
+      //     ;
 
-          reply = layout[_last_scancode][0];
+      //     reply = layout[_last_scancode][0];
 
-        _key_pressed = false;
+      //   _key_pressed = false;
       }
 
         break;
+      case MSG_IRQ: {
+        reply = 'a';
+        break;
+      }
       default:
+        *(uint32_t *)0x20000000 = 0xdeadbabe;
         break;
     }
 

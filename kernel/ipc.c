@@ -12,6 +12,22 @@
 
 #include <kernel/ipc.h>
 
+bool ipc_send_no_irq(int receiver, void *send_buf, size_t send_len, void *recv_buf, size_t recv_len)
+{
+  struct msg_packet msg = {
+    .receiver = receiver,
+    .send_buf = send_buf,
+    .send_len = send_len,
+    .recv_buf = recv_buf,
+    .recv_len = recv_len,
+  };
+
+  ipc_send_msg(&msg, proc_find_by_pid(receiver));
+
+  /* TODO */
+  return false;
+}
+
 int ipc_send_msg(struct msg_packet *msg, struct proc *receiver)
 {
   /*vga_printf("[ipc] proc %s sends a message to %s (state: %d)\n", current_proc->name, receiver->name, receiver->state);*/

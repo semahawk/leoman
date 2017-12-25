@@ -18,6 +18,7 @@
 #include <ipc.h>
 
 int ipc_send_msg(struct msg_packet *msg, struct proc *receiver);
+bool ipc_send_no_irq(int receiver, void *send_buf, size_t send_len, void *recv_buf, size_t recv_len);
 
 #endif /* !KERNEL_IPC_H */
 
