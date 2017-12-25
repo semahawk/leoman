@@ -224,9 +224,6 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* initialize and start-up the APs (Aplication Processors) */
   smp_init();
 
-  vga_printf("[debug] halting...\n");
-  halt();
-
   /* load the required processes off of the initrd */
   /* hang if any of those was not found */
   for (const char **initrd_proc_name = (const char **)essential_initrd_processes; *initrd_proc_name != NULL; initrd_proc_name++){
