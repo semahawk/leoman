@@ -25,6 +25,8 @@
 #define MiB(n) ((uint32_t)0x00100000 * (n))
 #define GiB(n) ((uint32_t)0x40000000 * (n))
 
+#define BIT(n) (1 << (n))
+
 /* these should later go to string.h, as soon as we have libc */
 void *memset(void *, int, size_t);
 void *memcpy(void *, void *, size_t);

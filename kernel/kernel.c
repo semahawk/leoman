@@ -14,6 +14,7 @@
 #include <stdint.h>
 
 #include <kernel/common.h>
+#include <kernel/atomic.h>
 #include <kernel/elf.h>
 #include <kernel/vm.h>
 #include <kernel/pm.h>
@@ -25,6 +26,7 @@
 #include <kernel/proc.h>
 #include <kernel/sar.h>
 #include <kernel/syscall.h>
+#include <kernel/smp.h>
 #include <kernel/timer.h>
 #include <kernel/tss.h>
 #include <kernel/x86.h>
@@ -219,6 +221,11 @@ void kmain(struct kern_bootinfo *bootinfo)
   pci_init();
   /* initialize the kernel heap */
   heap_init();
+  /* initialize and start-up the APs (Aplication Processors) */
+  smp_init();
+
+  vga_printf("[debug] halting...\n");
+  halt();
 
   /* load the required processes off of the initrd */
   /* hang if any of those was not found */
@@ -243,6 +250,15 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   vga_printf("putting kmain into an endless loop (if you can see me we have a bug).\n");
   /* should never get here */
+  for (;;)
+    halt();
+}
+
+void kmain_secondary_cores(uint32_t core_id)
+{
+  /* let the BSP know that we've booted properly */
+  atomic_inc(&smp_initialized_cores_num);
+
   for (;;)
     halt();
 }

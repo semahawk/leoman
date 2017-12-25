@@ -206,6 +206,30 @@ void vm_alloc_pages_at(void *vaddr, unsigned flags, unsigned sz)
   }
 }
 
+void vm_change_page_attrs(void *vaddr, unsigned new_flags)
+{
+  vaddr = PALIGNDOWN(vaddr);
+
+  uint32_t *ptab = ((uint32_t *)KERN_PTABS_ADDR) + (0x400 * vm_pdir_idx(vaddr));
+  uint32_t *pte = &ptab[vm_ptab_idx(vaddr)];
+
+  *pte = (*pte & (~0x3ff)) | new_flags;
+}
+
+void vm_change_pages_attrs(void *vaddr, unsigned new_flags, size_t bytes)
+{
+  vaddr = PALIGNDOWN(vaddr);
+
+  /* the last bit is to modify a sufficent number of pages */
+  unsigned npages = bytes / PAGE_SIZE + (bytes % PAGE_SIZE > 0);
+
+  for (int i = 0; i < npages; i++){
+    vm_change_page_attrs(vaddr, new_flags);
+
+    vaddr += PAGE_SIZE;
+  }
+}
+
 void *vm_init(struct kern_bootinfo *bootinfo)
 {
   /* TODO: map stuff */

@@ -5,7 +5,9 @@ CPPFLAGS += -Wno-invalid-pp-token
 
 LIBS = ../lib/libipc/libipc.a
 
-: foreach *.c |> !cc |> %B.c.o
-: foreach *.asm |> $(CPP) $(CPPFLAGS) -D__ASSEMBLY__ - < %f > %o |> %B.asm.cpped
-: foreach *.asm.cpped |> nasm -f elf32 %f -o %o |> %B.asm.o
-: *.c.o *.asm.o | kernel.ld $(LIBS) |> $(CC) $(CFLAGS) $(CPPFLAGS) -T kernel.ld %f -o %o $(LIBS) |> kernel
+: foreach *.c |> !cc |> %B.o {c_objs}
+: foreach *.asm |> $(CPP) $(CPPFLAGS) -D__ASSEMBLY__ - < %f > %o |> %B.cpped
+: foreach *_bin.cpped |> nasm -f bin %f -o %o |> %g.bin {asm_bins}
+: {asm_bins} |> objcopy --input binary --output elf32-i386 --binary-architecture i386 %f %o |> %B.o {asm_objs}
+: foreach *_obj.cpped |> nasm -f elf32 %f -o %o |> %B.o {asm_objs}
+: {c_objs} {asm_objs} | kernel.ld $(LIBS) |> $(CC) $(CFLAGS) $(CPPFLAGS) -T kernel.ld %f -o %o $(LIBS) |> kernel
