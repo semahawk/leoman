@@ -45,22 +45,22 @@ void *kalloc(size_t bytes)
 
   struct block *block;
 
-  vga_printf("[heap] requesting %d bytes of data\n", bytes);
-
   for (block = heap_pool_addr; block != NULL; block = block->next){
-    vga_printf("[heap] .. found some block with %d data\n", block->data_size);
     if (block->type == BLOCK_UNUSED && (block->data_size + sizeof(struct block)) >= bytes){
-      struct block *new_block = (void *)((uintptr_t)block + sizeof(struct block) + bytes);
-      /* copy the meta-data from the 'current' block to the new one */
-      memcpy(new_block, block, sizeof(struct block));
-      /* decrease by the number of requested bytes */
-      new_block->data_size -= bytes + sizeof(struct block);
+      if (block->next == NULL){
+        struct block *new_block = (void *)((uintptr_t)block + sizeof(struct block) + bytes);
+
+        /* copy the meta-data from the 'current' block to the new one */
+        memcpy(new_block, block, sizeof(struct block));
+        /* decrease by the number of requested bytes */
+        new_block->data_size -= bytes + sizeof(struct block);
+
+        block->next = new_block;
+      }
 
       block->data_size = bytes;
       block->type = BLOCK_USED;
-      block->next = new_block;
 
-      vga_printf("[heap] -- found suitable block!\n");
       return (void *)((uintptr_t)block + sizeof(struct block));
     }
   }
