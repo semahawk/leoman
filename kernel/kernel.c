@@ -218,14 +218,14 @@ void kmain(struct kern_bootinfo *bootinfo)
   kbd_install();
   /* install the timer */
   timer_install();
+  /* initialize the kernel heap */
+  heap_init();
   /* initiate system calls */
   syscall_install();
   /* part one of processes init */
   proc_earlyinit();
   /* initialize and enumerate PCI devices */
   pci_init();
-  /* initialize the kernel heap */
-  heap_init();
   /* initialize and start-up the APs (Aplication Processors) */
   smp_init();
 

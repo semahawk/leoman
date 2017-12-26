@@ -16,6 +16,8 @@
 #include <stdint.h>
 #include <ipc.h>
 
+#include <queue.h>
+
 #include "common.h"
 
 #define MAX_PROC_NAME_LEN 32
@@ -59,8 +61,7 @@ struct proc {
     /* TODO: data for loading a file off of the disk */
   } location;
 
-  /* TODO make it a queue */
-  struct msg_packet waiting_msg;
+  STAILQ_HEAD(recv_queue, msg_packet_queue) recv_queue;
 };
 
 struct proc *proc_new(const char *name, bool privileged, bool superuser);

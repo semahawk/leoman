@@ -123,8 +123,10 @@ void unmap_page(void *vaddr)
  */
 void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
 {
-  if (sz == 0)
+  if (sz == 0){
+    vga_printf("[vm] Warning: attempting to map 0 bytes (0x%x -> 0x%x)!\n", paddr, vaddr);
     return;
+  }
 
   paddr = PALIGNDOWN(paddr);
   vaddr = PALIGNDOWN(vaddr);

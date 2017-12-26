@@ -28,6 +28,8 @@ void msg_dispatcher(void)
   int sender_pid;
   struct proc *sender;
 
+  // for (volatile int i = 0; i < 100000000; i++);
+
   while (1){
     sender_pid = ipc_recv(&msg, sizeof msg);
     response = 1;
@@ -38,8 +40,8 @@ void msg_dispatcher(void)
     switch (msg.type){
       case MSG_REQUEST_INTERRUPT_FORWARDING:
         proc_disable_scheduling();
-        /*vga_printf("[kernel] process %s wants to have interrupt %d forwarded\n",*/
-            /*sender->name, msg.data.interrupt.which);*/
+        vga_printf("[kernel] process %s wants to have interrupt %d forwarded\n",
+            sender->name, msg.data.interrupt.which);
         int which = msg.data.interrupt.which;
         uint32_t virt = (uint32_t)msg.data.interrupt.handler;
         uint32_t save_curr_cr3 = get_cr3();

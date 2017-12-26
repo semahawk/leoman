@@ -14,6 +14,7 @@
 #define IPC_H
 
 #include <kernel/common.h> /* for bool type */
+#include <queue.h> /* for bool type */
 
 struct msg_packet {
   int sender, receiver;
@@ -27,6 +28,11 @@ struct msg_packet {
    * need to modify the return value of the ipc_recv call (we don't know the
    * sender at this point) */
   void *phys_msg_packet;
+};
+
+struct msg_packet_queue {
+  struct msg_packet msg;
+  STAILQ_ENTRY(msg_packet_queue) msgs;
 };
 
 /*

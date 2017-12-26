@@ -84,6 +84,8 @@ int main(void)
   /* current foreground and background colors */
   fg_color = 0xb, bg_color = 0x0;
 
+  while(1);
+
   {
     struct msg_kernel msg;
     int response;

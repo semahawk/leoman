@@ -216,8 +216,7 @@ struct proc *proc_new(const char *name, bool privileged, bool superuser)
   proc->privileged = privileged;
   proc->kstack = (uint32_t *)((uint32_t)stack + PAGE_SIZE);
 
-  /* TODO bother with initializing all the other fields? */
-  proc->waiting_msg.sender = -2;
+  STAILQ_INIT(&proc->recv_queue);
 
   /* set the name */
   /* FIXME use(/have even) strncpy (or even better strlcpy) */
