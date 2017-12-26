@@ -10,7 +10,7 @@ build:
 	@tup
 
 run: build
-	qemu-system-i386 -smp 16 -cdrom leoman.iso -monitor stdio
+	qemu-system-i386 -smp 16 -cdrom leoman.iso -monitor stdio -serial file:serial.log
 
 # vim:ft=make
 #

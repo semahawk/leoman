@@ -13,6 +13,8 @@
 #ifndef X86_H
 #define X86_H
 
+#include <kernel/common.h>
+
 uint32_t get_eip(void);
 
 static inline uint8_t inb(uint16_t port)

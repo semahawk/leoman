@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#include <kernel/com.h>
 #include <kernel/print.h>
 #include <kernel/vga.h>
 
@@ -147,15 +148,21 @@ void kvformat(char *buf, size_t size, char *fmt, va_list vl)
 
 void kprintf(const char *fmt, ...)
 {
+    char buf[KERNEL_MAX_PRINT_SIZE];
     va_list vl;
 
     va_start(vl, fmt);
-    vga_vprintf(fmt, vl);
+    kvformat(buf, sizeof(buf), fmt, vl);
+
+    com_puts(buf);
+    vga_puts(buf);
+
     va_end(vl);
 }
 
 void print_init(void)
 {
+    com_init();
     vga_init();
 }
 
