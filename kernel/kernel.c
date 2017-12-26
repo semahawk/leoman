@@ -202,7 +202,7 @@ void kmain(struct kern_bootinfo *bootinfo)
 
   adjust_the_memory_map(bootinfo);
   /* set up the printing utilities */
-  vga_init();
+  print_init();
 
   kprintf("[kern] available memory detected %d MiB\n", bootinfo->mem_avail / 1024 / 1024);
 

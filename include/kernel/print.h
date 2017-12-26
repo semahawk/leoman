@@ -18,6 +18,8 @@
 
 #define KERNEL_MAX_PRINT_SIZE 256
 
+void print_init(void);
+
 void kformat(char *buf, size_t size, char *fmt, ...);
 void kvformat(char *buf, size_t size, char *fmt, va_list args);
 void kprintf(const char *fmt, ...);

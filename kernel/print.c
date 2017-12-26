@@ -154,6 +154,11 @@ void kprintf(const char *fmt, ...)
     va_end(vl);
 }
 
+void print_init(void)
+{
+    vga_init();
+}
+
 /*
  * vi: ft=c:ts=4:sw=4:expandtab
  */
