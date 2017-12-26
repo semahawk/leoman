@@ -19,6 +19,7 @@
 /msg_dispatcher.o
 /pci.o
 /pm.o
+/print.o
 /proc.o
 /sar.o
 /smp.o
