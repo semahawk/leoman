@@ -12,7 +12,6 @@
 /idt.o
 /idt_obj.cpped
 /idt_obj.o
-/ipc.o
 /kbd.o
 /kernel
 /kernel.o
