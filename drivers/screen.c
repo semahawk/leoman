@@ -84,8 +84,6 @@ int main(void)
   /* current foreground and background colors */
   fg_color = 0xb, bg_color = 0x0;
 
-  while(1);
-
   {
     struct msg_kernel msg;
     int response;
@@ -93,8 +91,6 @@ int main(void)
     msg.type = MSG_MAP_MEMORY;
     msg.data.map_memory.paddr  = 0xb8000;
     msg.data.map_memory.length = (screen_columns * screen_rows) * sizeof(*video_memory);
-
-    for (volatile int i = 0; i < 100000000; i++);
 
     ipc_send(0, &msg, sizeof msg, &response, sizeof response);
 

@@ -102,8 +102,6 @@ int main(void)
   int reply;
   int sender;
 
-  for (volatile int i = 0; i < 50000000; i++);
-
   {
     /* request IRQ1 (keyboard) */
     struct msg_kernel msg;
@@ -115,13 +113,6 @@ int main(void)
 
     /* TODO: error handling */
     ipc_send(0, &msg, sizeof msg, &response, sizeof response);
-
-    // for (volatile int i = 0; i < 100000000; i++);
-
-    // uint32_t *addr = (uint32_t *)response;
-    // *addr = response;
-
-    while (1);
   }
 
   while (1){
