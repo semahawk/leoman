@@ -18,7 +18,7 @@
 #include <kernel/pm.h>
 #include <kernel/vm.h>
 #include <kernel/proc.h>
-#include <kernel/vga.h>
+#include <kernel/print.h>
 #include <kernel/timer.h>
 #include <kernel/tss.h>
 #include <kernel/x86.h>
@@ -79,7 +79,7 @@ int proc_find_by_name(char name[static MAX_PROC_NAME_LEN])
 void proc_idle(void)
 {
   for (;;){
-    vga_printf("i");
+    kprintf("i");
     for (unsigned i = 0; i < 1000000; i++)
       ;
   }
@@ -113,7 +113,7 @@ struct intregs *proc_schedule_after_irq(struct intregs *cpu_state)
 
   current_proc->trapframe = cpu_state;
 
-  /*vga_printf("cr3: 0x%x\n", get_cr3());*/
+  /*kprintf("cr3: 0x%x\n", get_cr3());*/
 
   /* don't put blocked processes to sleep (they'd get scheduled then) */
   /* TODO: try passing the proc structure directly, not just the pid */
@@ -191,7 +191,7 @@ void proc_kickoff_first_process(void)
 {
   current_proc->state = PROC_RUNNING;
 
-  vga_printf("[proc] executing first process: %s\n", current_proc->name);
+  kprintf("[proc] executing first process: %s\n", current_proc->name);
 
   tss_set_ss(SEG_KDATA);
   tss_set_esp((uint32_t)current_proc->kstack);
@@ -253,7 +253,7 @@ struct proc *proc_new(const char *name, bool privileged, bool superuser)
 
   current_proc = proc;
 
-  vga_printf("[proc] new process: %s (pid %d, pdir: %x)\n", proc->name, proc->pid, proc->pdir);
+  kprintf("[proc] new process: %s (pid %d, pdir: %x)\n", proc->name, proc->pid, proc->pdir);
 
   return proc;
 }
@@ -282,7 +282,7 @@ void proc_earlyinit(void)
   current_proc = proc_new_from_memory("kernel", true, true, (void *)msg_dispatcher, 0);
   current_proc = idle = proc_new_from_memory("idle", true, true, (void *)proc_idle, 0);
 
-  vga_printf("[proc] early stage initialized\n");
+  kprintf("[proc] early stage initialized\n");
 }
 
 /* TODO: have a variant of those 'blocking' functions which would take the
@@ -335,14 +335,14 @@ bool proc_scheduling_enabled(void)
 
 void proc_dump_proc_list(void)
 {
-  vga_printf("## proc dump ##\n");
+  kprintf("## proc dump ##\n");
   for (unsigned int i = 0; i < NPROCS; i++){
     struct proc *proc = &procs[i];
 
     if (PROC_UNUSED == proc->state)
       continue;
 
-    vga_printf("%d: %s %s: state %d, prvl %d, super %d\n",
+    kprintf("%d: %s %s: state %d, prvl %d, super %d\n",
         proc->pid, current_proc == proc ? "*" : " ", proc->name,
         proc->state, proc->privileged, proc->superuser);
   }

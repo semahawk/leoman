@@ -14,7 +14,7 @@
 
 #include <kernel/common.h>
 #include <kernel/pm.h>
-#include <kernel/vga.h>
+#include <kernel/print.h>
 #include <kernel/x86.h>
 #include <kernel/vm.h>
 
@@ -80,12 +80,12 @@ void map_page(void *paddr, void *vaddr, unsigned flags)
     if (ptab[vm_ptab_idx(vaddr)] & PTE_P){
       /* page is already mapped */
       if ((ptab[vm_ptab_idx(vaddr)] & 0xfffff000) != ((uint32_t)paddr & 0xfffff000)){
-        vga_printf("[vm] ERROR: mapping page 0x%x to 0x%x but is already mapped to 0x%x\n",
+        kprintf("[vm] ERROR: mapping page 0x%x to 0x%x but is already mapped to 0x%x\n",
             vaddr, paddr, ptab[vm_ptab_idx(vaddr)]);
         halt();
       } else {
         if ((ptab[vm_ptab_idx(vaddr)] & 0x1f) != (flags & 0x1f)){
-          vga_printf("[vm] ERROR: changing flags of mapping 0x%x (from 0x%x to 0x%x)\n",
+          kprintf("[vm] ERROR: changing flags of mapping 0x%x (from 0x%x to 0x%x)\n",
               vaddr, ptab[vm_ptab_idx(vaddr)] & 0xfff, flags);
           halt();
         }
@@ -124,7 +124,7 @@ void unmap_page(void *vaddr)
 void map_pages(void *paddr, void *vaddr, unsigned flags, unsigned sz)
 {
   if (sz == 0){
-    vga_printf("[vm] Warning: attempting to map 0 bytes (0x%x -> 0x%x)!\n", paddr, vaddr);
+    kprintf("[vm] Warning: attempting to map 0 bytes (0x%x -> 0x%x)!\n", paddr, vaddr);
     return;
   }
 
@@ -235,7 +235,7 @@ void vm_change_pages_attrs(void *vaddr, unsigned new_flags, size_t bytes)
 void *vm_init(struct kern_bootinfo *bootinfo)
 {
   /* TODO: map stuff */
-  vga_printf("[vm] virtual memory manager was set up\n");
+  kprintf("[vm] virtual memory manager was set up\n");
 
   return kernel_pdir;
 }

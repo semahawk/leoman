@@ -111,6 +111,14 @@ void vga_printf(const char *fmt, ...)
   va_end(vl);
 }
 
+void vga_vprintf(const char *fmt, va_list vl)
+{
+  char buf[KERNEL_MAX_PRINT_SIZE];
+
+  kvformat(buf, sizeof(buf), fmt, vl);
+  vga_puts(buf);
+}
+
 /*
  * vi: ft=c:ts=2:sw=2:expandtab
  */

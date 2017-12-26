@@ -12,8 +12,8 @@
 
 #include <kernel/common.h>
 #include <kernel/pm.h>
+#include <kernel/print.h>
 #include <kernel/vm.h>
-#include <kernel/vga.h>
 
 /* the bitmap */
 static uint32_t pm_bitmap[PM_BITMAP_NMEMB];
@@ -57,7 +57,7 @@ void *pm_alloc_cont(size_t page_num)
   void *page;
 
   if (page_num > limit){
-    vga_printf("[pm] WARNING: allocating more than %d contiguous pages is not supported!\n", limit);
+    kprintf("[pm] WARNING: allocating more than %d contiguous pages is not supported!\n", limit);
     return NULL;
   }
 
@@ -119,7 +119,7 @@ void *pm_init(struct kern_bootinfo *bootinfo)
   /* zero-out the bitmap */
   memset(pm_bitmap, 0x0, sizeof(pm_bitmap));
 
-  vga_printf("[pm] physical memory manager initialized\n");
+  kprintf("[pm] physical memory manager initialized\n");
 
   return (void *)v2p(pm_page_pool);
 }

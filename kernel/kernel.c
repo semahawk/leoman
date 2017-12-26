@@ -204,7 +204,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* set up the printing utilities */
   vga_init();
 
-  vga_printf("[kern] available memory detected %d MiB\n", bootinfo->mem_avail / 1024 / 1024);
+  kprintf("[kern] available memory detected %d MiB\n", bootinfo->mem_avail / 1024 / 1024);
 
   /* set up the segments, kernel code and data, &c */
   gdt_init();
@@ -235,11 +235,11 @@ void kmain(struct kern_bootinfo *bootinfo)
     struct sar_file *initrd_proc_executable;
 
     if ((initrd_proc_executable = sar_lookup(bootinfo->initrd_addr, *initrd_proc_name))){
-      vga_printf("[initrd] loading process %s\n", *initrd_proc_name);
+      kprintf("[initrd] loading process %s\n", *initrd_proc_name);
       proc_new_from_memory(*initrd_proc_name, false, true,
           (void *)bootinfo->initrd_addr + initrd_proc_executable->offset, initrd_proc_executable->size);
     } else {
-      vga_printf("error: process '%s' was not found in the initrd!\n", *initrd_proc_name);
+      kprintf("error: process '%s' was not found in the initrd!\n", *initrd_proc_name);
       all_processes_loaded = false;
     }
   }
@@ -250,7 +250,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* processes will start running right now */
   proc_kickoff_first_process();
 
-  vga_printf("putting kmain into an endless loop (if you can see me we have a bug).\n");
+  kprintf("putting kmain into an endless loop (if you can see me we have a bug).\n");
   /* should never get here */
   for (;;)
     halt();

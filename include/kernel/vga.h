@@ -44,6 +44,7 @@ void vga_init(void);
 void vga_putch(char ch);
 void vga_putchat(char ch, uint8_t color, size_t x, size_t y);
 void vga_printf(const char *fmt, ...);
+void vga_vprintf(const char *fmt, va_list vl);
 void vga_puts(const char *s);
 void vga_putd(int v);
 void vga_puthd(uint32_t v);

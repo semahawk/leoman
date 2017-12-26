@@ -18,8 +18,8 @@
 #include <kernel/heap.h>
 #include <kernel/pm.h>
 #include <kernel/proc.h>
+#include <kernel/print.h>
 #include <kernel/syscall.h>
-#include <kernel/vga.h>
 #include <kernel/vm.h>
 #include <kernel/x86.h>
 
@@ -103,7 +103,7 @@ struct intregs *syscall_send_msg(struct intregs *regs)
       current_proc->state = PROC_REPLY_BLOCKED;
       break;
     default:
-       vga_printf("[ipc] !! the receiver (%s) has an unknown state (%d)!\n",
+       kprintf("[ipc] !! the receiver (%s) has an unknown state (%d)!\n",
            receiver->name, receiver->state);
       goto err;
   }
@@ -205,7 +205,7 @@ void syscall_install(void)
   int_install_handler(SYSCALL_SEND_MSG_VECTOR, syscall_send_msg);
   int_install_handler(SYSCALL_RECV_MSG_VECTOR, syscall_recv_msg);
 
-  vga_printf("[syscall] system call gates configured (int 0x%x, 0x%x, 0x%x)\n",
+  kprintf("[syscall] system call gates configured (int 0x%x, 0x%x, 0x%x)\n",
       SYSCALL_RPLY_MSG_VECTOR, SYSCALL_SEND_MSG_VECTOR, SYSCALL_RECV_MSG_VECTOR);
 }
 

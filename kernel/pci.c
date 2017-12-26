@@ -12,6 +12,7 @@
 
 #include <kernel/common.h>
 #include <kernel/pci.h>
+#include <kernel/print.h>
 #include <kernel/x86.h>
 
 uint16_t pci_read_config(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t reg)
@@ -35,7 +36,7 @@ uint16_t pci_read_config(uint8_t bus, uint8_t dev, uint8_t fun, uint8_t reg)
 
 int pci_init(void)
 {
-  vga_printf("[pci] enumerating devices:\n");
+  kprintf("[pci] enumerating devices:\n");
 
   for (unsigned bus = 0; bus < 8; bus++){
     for (unsigned device = 0; device < 32; device++){
@@ -46,7 +47,7 @@ int pci_init(void)
         if (vendor_id == 0x0000 || vendor_id == 0xffff)
           continue;
 
-        vga_printf("[pci] -- %x:%x.%x %x:%x\n", bus, device, function, vendor_id, device_id);
+        kprintf("[pci] -- %x:%x.%x %x:%x\n", bus, device, function, vendor_id, device_id);
       }
     }
   }

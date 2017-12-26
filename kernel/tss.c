@@ -12,8 +12,8 @@
 
 #include <kernel/common.h>
 #include <kernel/gdt.h>
+#include <kernel/print.h>
 #include <kernel/tss.h>
-#include <kernel/vga.h>
 
 static struct tss_entry tss;
 
@@ -49,7 +49,7 @@ void tss_init(uint32_t ss, uint32_t esp)
   tss.fs =
   tss.gs = SEG_KDATA | 3;
 
-  vga_printf("[tss] task state segment was initialized\n");
+  kprintf("[tss] task state segment was initialized\n");
 }
 
 /*

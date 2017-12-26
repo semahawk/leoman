@@ -20,6 +20,7 @@
 
 void kformat(char *buf, size_t size, char *fmt, ...);
 void kvformat(char *buf, size_t size, char *fmt, va_list args);
+void kprintf(const char *fmt, ...);
 
 #endif /* !KERNEL_PRINT_H */
 

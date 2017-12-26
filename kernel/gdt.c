@@ -15,8 +15,8 @@
 
 #include <kernel/common.h>
 #include <kernel/gdt.h>
+#include <kernel/print.h>
 #include <kernel/tss.h>
-#include <kernel/vga.h>
 #include <kernel/x86.h>
 
 /* THE mighty GDT */
@@ -68,7 +68,7 @@ void gdt_init(void)
   gdt_load(gdt, sizeof(gdt));
   gdt_flush();
 
-  vga_printf("[gdt] global descriptors were set up\n");
+  kprintf("[gdt] global descriptors were set up\n");
 
   tss_flush(SEG_TSS);
 }

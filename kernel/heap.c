@@ -13,7 +13,7 @@
 #include <kernel/common.h>
 #include <kernel/heap.h>
 #include <kernel/pm.h>
-#include <kernel/vga.h>
+#include <kernel/print.h>
 #include <kernel/vm.h>
 #include <kernel/x86.h>
 
@@ -34,12 +34,12 @@ static void *const heap_pool_addr = (void *)0xe4000000;
 void *kalloc(size_t bytes)
 {
   if (!heap_initialized){
-    vga_printf("[heap] the kernel heap was not initialized yet - cannot allocate %d bytes!\n", bytes);
+    kprintf("[heap] the kernel heap was not initialized yet - cannot allocate %d bytes!\n", bytes);
     return NULL;
   }
 
   if (0 == bytes){
-    vga_printf("[heap] WARNING: requesting 0 bytes of data!\n");
+    kprintf("[heap] WARNING: requesting 0 bytes of data!\n");
     return NULL;
   }
 
@@ -86,15 +86,15 @@ void kfree(void *addr)
 void heap_list_blocks(void)
 {
   if (!heap_initialized){
-    vga_printf("[heap] %s: the heap is not initialized yet!\n", __func__);
+    kprintf("[heap] %s: the heap is not initialized yet!\n", __func__);
     return;
   }
 
-  vga_printf("[heap] ## dumping the blocks:\n");
+  kprintf("[heap] ## dumping the blocks:\n");
   for (struct block *block = heap_pool_addr;
        block != NULL;
        block = block->next){
-    vga_printf("[heap] -- type: %d, data_size: %d\n", block->type, block->data_size);
+    kprintf("[heap] -- type: %d, data_size: %d\n", block->type, block->data_size);
   }
 }
 
@@ -102,10 +102,10 @@ void heap_init(void)
 {
   void *heap_pool_phys_addr;
 
-  vga_printf("[heap] initializing heap (%d B)\n", CONFIG_KERNEL_HEAP_SIZE);
+  kprintf("[heap] initializing heap (%d B)\n", CONFIG_KERNEL_HEAP_SIZE);
 
   if (NULL == (heap_pool_phys_addr = pm_alloc_cont(CONFIG_KERNEL_HEAP_SIZE / PAGE_SIZE))){
-    vga_printf("[heap] -- failed - can't proceed!\n");
+    kprintf("[heap] -- failed - can't proceed!\n");
     halt();
   }
 

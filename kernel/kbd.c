@@ -12,7 +12,7 @@
 
 #include <kernel/common.h>
 #include <kernel/idt.h>
-#include <kernel/vga.h>
+#include <kernel/print.h>
 #include <kernel/x86.h>
 
 /* last key pressed */
@@ -95,7 +95,7 @@ void kbd_install(void)
 {
   irq_install_handler(1, kbd_handler, 0);
 
-  vga_printf("[kbd] keyboard driver initialised (irq 1)\n");
+  kprintf("[kbd] keyboard driver initialised (irq 1)\n");
 }
 
 void kbd_uninstall(void)

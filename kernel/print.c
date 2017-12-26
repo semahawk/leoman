@@ -145,6 +145,15 @@ void kvformat(char *buf, size_t size, char *fmt, va_list vl)
     *buf = '\0';
 }
 
+void kprintf(const char *fmt, ...)
+{
+    va_list vl;
+
+    va_start(vl, fmt);
+    vga_vprintf(fmt, vl);
+    va_end(vl);
+}
+
 /*
  * vi: ft=c:ts=4:sw=4:expandtab
  */

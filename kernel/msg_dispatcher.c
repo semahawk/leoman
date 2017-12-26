@@ -10,8 +10,8 @@
  *
  */
 
+#include <kernel/print.h>
 #include <kernel/proc.h>
-#include <kernel/vga.h>
 #include <kernel/vm.h>
 #include <kernel/x86.h>
 
@@ -38,7 +38,7 @@ void msg_dispatcher(void)
     switch (msg.type){
       case MSG_REQUEST_INTERRUPT_FORWARDING:
         proc_disable_scheduling();
-        // vga_printf("[kernel] process %s wants to have interrupt %d forwarded\n",
+        // kprintf("[kernel] process %s wants to have interrupt %d forwarded\n",
             // sender->name, msg.data.interrupt.which);
         int which = msg.data.interrupt.which;
         uint32_t virt = (uint32_t)msg.data.interrupt.handler;
@@ -46,8 +46,8 @@ void msg_dispatcher(void)
         set_cr3((uint32_t)sender->pdir);
         uint32_t phys = (uint32_t)(uintptr_t)vm_get_phys_mapping((void *)virt);
         set_cr3(save_curr_cr3);
-        /*vga_printf("[kernel] .. and handled with 0x%x\n", phys);*/
-        /*vga_printf("[kernel] handler at virt 0x%x, phys 0x%x\n", virt, phys);*/
+        /*kprintf("[kernel] .. and handled with 0x%x\n", phys);*/
+        /*kprintf("[kernel] handler at virt 0x%x, phys 0x%x\n", virt, phys);*/
         /* TODO sanity/security checking of `which` */
         irq_install_handler(which, (irq_handler_t)virt, (uint32_t)sender->pdir);
         response = 0x33cafe33;
@@ -55,7 +55,7 @@ void msg_dispatcher(void)
         break;
       case MSG_MAP_MEMORY:
         proc_disable_scheduling();
-        /*vga_printf("[kernel] process %s wants to get %d bytes at 0x%x mapped\n", sender->name,*/
+        /*kprintf("[kernel] process %s wants to get %d bytes at 0x%x mapped\n", sender->name,*/
             /*msg.data.map_memory.length, msg.data.map_memory.paddr);*/
         /* TODO: perform some permission-checking when we have users */
         set_cr3((uint32_t)sender->pdir);
@@ -77,7 +77,7 @@ void msg_dispatcher(void)
         response = proc_find_by_name(msg.data.find_proc_by_name.name);
         break;
       default:
-        vga_printf("# warning: unhandled message! type: %d\n", msg.type);
+        kprintf("# warning: unhandled message! type: %d\n", msg.type);
         response = 0;
         break;
     }

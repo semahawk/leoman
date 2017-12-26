@@ -13,7 +13,7 @@
 #include <kernel/common.h>
 #include <kernel/idt.h>
 #include <kernel/proc.h>
-#include <kernel/vga.h>
+#include <kernel/print.h>
 #include <kernel/x86.h>
 
 /* this counter will keep track of how many ticks the system has been
@@ -59,7 +59,7 @@ void timer_install(void)
 
   timer_set_phase(1000);
 
-  vga_printf("[timer] timer was set up (irq 0)\n");
+  kprintf("[timer] timer was set up (irq 0)\n");
 }
 
 void timer_uninstall(void)

@@ -16,6 +16,7 @@
 #include <kernel/common.h>
 #include <kernel/idt.h>
 #include <kernel/proc.h>
+#include <kernel/print.h>
 #include <kernel/vga.h>
 #include <kernel/x86.h>
 
@@ -111,28 +112,28 @@ static void screen_of_death(struct intregs *regs)
 
   vga_row = 1; vga_col = 1;
 
-  vga_printf("     \xdc\xdf\xdf\xdc \xdb  \xdc\xdf\xdf\xdb\xdc\xdc\xdc\xdc  \xdc\xdf\xdf\xdc\xdf\xdf\xdf\xdc  \xdc\xdf\xdf\xdc \xdf\xdc  \xdc\xdf\xdf\xdb\xdc\xdc\xdc\xdc  \xdc\xdf\xdf\xdf\xdf\xdc     \n");
-  vga_printf("    \xdb  \xdb \xdc\xdf \xde  \xdc\xdf   \xde \xdb   \xdb   \xdb \xdb  \xdb \xdb \xdb \xde  \xdc\xdf   \xde \xdb    \xdb      \n");
-  vga_printf("    \xde  \xdb\xdf\xdc    \xdb\xdc\xdc\xdc\xdc\xdc  \xde  \xdb\xdf\xdf\xdb\xdf  \xde  \xdb  \xdf\xdb   \xdb\xdc\xdc\xdc\xdc\xdc  \xde    \xdb      \n");
-  vga_printf("      \xdb   \xdb   \xdb    \xdd   \xdc\xdf    \xdb    \xdb   \xdb    \xdb    \xdd      \xdb       \n");
-  vga_printf("    \xdc\xdf   \xdb   \xdc\xdf\xdc\xdc\xdc\xdc   \xdb     \xdb   \xdc\xdf   \xdb    \xdc\xdf\xdc\xdc\xdc\xdc     \xdc\xdf\xdc\xdc\xdc\xdc\xdc\xdc\xdf \n");
-  vga_printf("    \xdb    \xde   \xdb    \xde   \xde     \xde   \xdb    \xde    \xdb    \xde     \xdb         \n");
-  vga_printf("    \xde    \xdc\xdf\xdf\xdc\xdf\xdf\xdf\xdc  \xdc\xdf\xdf\xdb\xdc   \xdc\xdf\xdf\xdc \xdf\xdc  \xdc\xdf\xdf\xdb\xdf\xdc\xde   \xdc\xdf\xdc\xdc\xdc\xdc \xde         \n");
-  vga_printf("        \xdb   \xdb   \xdb \xde \xdc\xdf \xdf\xdc \xdb  \xdb \xdb \xdb \xdb   \xdb  \xdb  \xdb \xdb    \xdd          \n");
-  vga_printf("        \xde  \xdb\xdf\xdf\xdf\xdf    \xdb\xdc\xdc\xdc\xdb \xde  \xdb  \xdf\xdb \xde   \xdb  \xde  \xde \xdb               \n");
-  vga_printf("           \xdb       \xdc\xdf   \xdb   \xdb   \xdb      \xdb       \xdb               \n");
-  vga_printf("         \xdc\xdf       \xdb   \xdc\xdf  \xdc\xdf   \xdb    \xdc\xdf\xdf\xdf\xdf\xdf\xdc   \xdc\xdf\xdc\xdc\xdc\xdc\xdf          \n");
-  vga_printf("        \xdb         \xde   \xde   \xdb    \xde   \xdb       \xdb \xdb     \xde           \n");
-  vga_printf("        \xde                 \xde        \xde       \xde \xde                 \n");
+  kprintf("     \xdc\xdf\xdf\xdc \xdb  \xdc\xdf\xdf\xdb\xdc\xdc\xdc\xdc  \xdc\xdf\xdf\xdc\xdf\xdf\xdf\xdc  \xdc\xdf\xdf\xdc \xdf\xdc  \xdc\xdf\xdf\xdb\xdc\xdc\xdc\xdc  \xdc\xdf\xdf\xdf\xdf\xdc     \n");
+  kprintf("    \xdb  \xdb \xdc\xdf \xde  \xdc\xdf   \xde \xdb   \xdb   \xdb \xdb  \xdb \xdb \xdb \xde  \xdc\xdf   \xde \xdb    \xdb      \n");
+  kprintf("    \xde  \xdb\xdf\xdc    \xdb\xdc\xdc\xdc\xdc\xdc  \xde  \xdb\xdf\xdf\xdb\xdf  \xde  \xdb  \xdf\xdb   \xdb\xdc\xdc\xdc\xdc\xdc  \xde    \xdb      \n");
+  kprintf("      \xdb   \xdb   \xdb    \xdd   \xdc\xdf    \xdb    \xdb   \xdb    \xdb    \xdd      \xdb       \n");
+  kprintf("    \xdc\xdf   \xdb   \xdc\xdf\xdc\xdc\xdc\xdc   \xdb     \xdb   \xdc\xdf   \xdb    \xdc\xdf\xdc\xdc\xdc\xdc     \xdc\xdf\xdc\xdc\xdc\xdc\xdc\xdc\xdf \n");
+  kprintf("    \xdb    \xde   \xdb    \xde   \xde     \xde   \xdb    \xde    \xdb    \xde     \xdb         \n");
+  kprintf("    \xde    \xdc\xdf\xdf\xdc\xdf\xdf\xdf\xdc  \xdc\xdf\xdf\xdb\xdc   \xdc\xdf\xdf\xdc \xdf\xdc  \xdc\xdf\xdf\xdb\xdf\xdc\xde   \xdc\xdf\xdc\xdc\xdc\xdc \xde         \n");
+  kprintf("        \xdb   \xdb   \xdb \xde \xdc\xdf \xdf\xdc \xdb  \xdb \xdb \xdb \xdb   \xdb  \xdb  \xdb \xdb    \xdd          \n");
+  kprintf("        \xde  \xdb\xdf\xdf\xdf\xdf    \xdb\xdc\xdc\xdc\xdb \xde  \xdb  \xdf\xdb \xde   \xdb  \xde  \xde \xdb               \n");
+  kprintf("           \xdb       \xdc\xdf   \xdb   \xdb   \xdb      \xdb       \xdb               \n");
+  kprintf("         \xdc\xdf       \xdb   \xdc\xdf  \xdc\xdf   \xdb    \xdc\xdf\xdf\xdf\xdf\xdf\xdc   \xdc\xdf\xdc\xdc\xdc\xdc\xdf          \n");
+  kprintf("        \xdb         \xde   \xde   \xdb    \xde   \xdb       \xdb \xdb     \xde           \n");
+  kprintf("        \xde                 \xde        \xde       \xde \xde                 \n");
 
-  vga_printf("\n\n");
-  vga_printf("  eip:%x err:%x num:%x %s\n", regs->eip, regs->err, regs->num, isr_names[regs->num]);
-  vga_printf("  eax:%x ebx:%x ecx:%x edx:%x flg:%x\n", regs->eax, regs->ebx, regs->ecx, regs->edx, regs->err);
-  vga_printf("  esp:%x ebp:%x esi:%x edi:%x  cs:%x\n", regs->esp, regs->ebp, regs->esi, regs->edi, regs->cs);
-  vga_printf("   ds:%x  es:%x  fs:%x  gs:%x  ss:%x\n", regs->ds, regs->es, regs->fs, regs->gs, regs->ss);
-  vga_printf("\n");
+  kprintf("\n\n");
+  kprintf("  eip:%x err:%x num:%x %s\n", regs->eip, regs->err, regs->num, isr_names[regs->num]);
+  kprintf("  eax:%x ebx:%x ecx:%x edx:%x flg:%x\n", regs->eax, regs->ebx, regs->ecx, regs->edx, regs->err);
+  kprintf("  esp:%x ebp:%x esi:%x edi:%x  cs:%x\n", regs->esp, regs->ebp, regs->esi, regs->edi, regs->cs);
+  kprintf("   ds:%x  es:%x  fs:%x  gs:%x  ss:%x\n", regs->ds, regs->es, regs->fs, regs->gs, regs->ss);
+  kprintf("\n");
 
-  vga_printf("  Process which was running: %s\n", current_proc->name);
+  kprintf("  Process which was running: %s\n", current_proc->name);
 
   /* print additional informations about the exception */
   if (regs->num == 14 /* page fault */){
@@ -141,38 +142,38 @@ static void screen_of_death(struct intregs *regs)
 
     switch (err){
       case 00:
-        vga_printf("  supervisory process tried to read a non-present page entry\n");
+        kprintf("  supervisory process tried to read a non-present page entry\n");
         break;
       case 01:
-        vga_printf("  supervisory process tried to read a page and caused a protection fault\n");
+        kprintf("  supervisory process tried to read a page and caused a protection fault\n");
         break;
       case 02:
-        vga_printf("  supervisory process tried to write to a non-present page entry\n");
+        kprintf("  supervisory process tried to write to a non-present page entry\n");
         break;
       case 03:
-        vga_printf("  supervisory process tried to write to a page and caused a protection fault\n");
+        kprintf("  supervisory process tried to write to a page and caused a protection fault\n");
         break;
       case 04:
-        vga_printf("  user process tried to read a non-present page entry\n");
+        kprintf("  user process tried to read a non-present page entry\n");
         break;
       case 05:
-        vga_printf("  user process tried to read a page and caused a protection fault\n");
+        kprintf("  user process tried to read a page and caused a protection fault\n");
         break;
       case 06:
-        vga_printf("  user process tried to write to a non-present page entry\n");
+        kprintf("  user process tried to write to a non-present page entry\n");
         break;
       case 07:
-        vga_printf("  user process tried to write to a page and caused a protection fault\n");
+        kprintf("  user process tried to write to a page and caused a protection fault\n");
         break;
       default:
-        vga_printf("  unknown..\n");
+        kprintf("  unknown..\n");
         break;
     }
 
 
     uint32_t cr2;
     __asm volatile("mov %%cr2, %0" : "=b"(cr2));
-    vga_printf("  memory address where fault occured: 0x%x\n", cr2);
+    kprintf("  memory address where fault occured: 0x%x\n", cr2);
     /* }}} */
   }
 
@@ -306,7 +307,7 @@ static inline void irq_remap(void)
   outb(0x21, 0x00);
   outb(0xa1, 0x00);
 
-  vga_printf("[idt] remapping irq 0-15 to int 32-47\n");
+  kprintf("[idt] remapping irq 0-15 to int 32-47\n");
 }
 
 void idt_set_gate(uint8_t num, void *base, uint16_t segm, uint8_t flags)
@@ -397,7 +398,7 @@ void idt_install(void)
     if (isr_handlers[i] == 0)
       isr_handlers[i] = screen_of_death;
 
-  vga_printf("[idt] interrupt vectors were configured\n");
+  kprintf("[idt] interrupt vectors were configured\n");
 }
 
 /*
