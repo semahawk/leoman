@@ -104,6 +104,7 @@ void gdt_set_segment(uint32_t, void *, uint32_t, unsigned, unsigned, unsigned);
 void gdt_set_segment(uint32_t, void *, uint32_t, uint8_t, uint8_t);
 #endif
 void gdt_init(void);
+void gdt_install(void);
 void gdt_flush(void);
 
 #endif /* GDT_H */

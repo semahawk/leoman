@@ -65,12 +65,17 @@ void gdt_init(void)
   /* task switching structure */
   tss_init(SEG_KDATA, (uint32_t)&kernel_stack_top);
 
-  gdt_load(gdt, sizeof(gdt));
-  gdt_flush();
+  gdt_install();
 
   kprintf("[gdt] global descriptors were set up\n");
 
   tss_flush(SEG_TSS);
+}
+
+void gdt_install(void)
+{
+    gdt_load(gdt, sizeof(gdt));
+    gdt_flush();
 }
 
 /*
