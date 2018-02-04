@@ -334,7 +334,7 @@ static inline void idt_load(void *base, uint16_t size)
   __asm volatile("lidt %0" : : "p"(idtr));
 }
 
-void idt_install(void)
+void idt_init(void)
 {
   /* zero out the IDT entries (is it actually necessary?) */
   memset(idt, 0x0, sizeof(idt));

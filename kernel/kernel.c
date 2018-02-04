@@ -209,7 +209,7 @@ void kmain(struct kern_bootinfo *bootinfo)
   /* set up the segments, kernel code and data, &c */
   gdt_init();
   /* install the IDT (ISRs and IRQs) */
-  idt_install();
+  idt_init();
   /* set up the physical memory manager thingies */
   pm_init(bootinfo);
   /* set up the virtual memory manager thingies */
