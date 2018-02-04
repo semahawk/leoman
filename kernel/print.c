@@ -15,7 +15,10 @@
 
 #include <kernel/com.h>
 #include <kernel/print.h>
+#include <kernel/smp.h>
 #include <kernel/vga.h>
+
+DECLARE_LOCK(print_lock);
 
 static inline void putch(char **buf, size_t space_left, char ch)
 {
@@ -148,7 +151,11 @@ void kvformat(char *buf, size_t size, char *fmt, va_list vl)
 
 void kprintf(const char *fmt, ...)
 {
+    LOCK(print_lock);
+
     char buf[KERNEL_MAX_PRINT_SIZE];
+    memset(buf, '\0', sizeof(buf));
+
     va_list vl;
 
     va_start(vl, fmt);
@@ -158,6 +165,8 @@ void kprintf(const char *fmt, ...)
     vga_puts(buf);
 
     va_end(vl);
+
+    UNLOCK(print_lock);
 }
 
 void print_init(void)

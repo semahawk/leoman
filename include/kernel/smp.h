@@ -13,6 +13,8 @@
 #ifndef KERNEL_SMP_H
 #define KERNEL_SMP_H
 
+#include <kernel/common.h>
+
 #define KERNEL_TRAMPOLINE_LOAD_ADDR 0x8000
 #define KERNEL_TRAMPOLINE_MAX_SIZE 0x1000
 #define KERNEL_TRAMPOLINE_STACK_SIZE 256
@@ -119,6 +121,16 @@ struct mp_conf_table_local_int_assign_entry {
     uint8_t dest_apic_id;
     uint8_t dest_apic_intin;
 } __PACKED;
+#endif /* !__ASSEMBLY__ */
+
+#ifndef __ASSEMBLY__
+#define DECLARE_LOCK(name) volatile int name ## Locked
+#define LOCK(name) \
+	while (!__sync_bool_compare_and_swap(& name ## Locked, 0, 1)); \
+	__sync_synchronize();
+#define UNLOCK(name) \
+	__sync_synchronize(); \
+	name ## Locked = 0;
 #endif /* !__ASSEMBLY__ */
 
 #endif /* !KERNEL_SMP_H */
