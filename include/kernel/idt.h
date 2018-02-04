@@ -40,6 +40,7 @@ typedef struct intregs *(*isr_handler_t)(struct intregs *);
 typedef struct intregs *(*irq_handler_t)(struct intregs *);
 typedef struct intregs *(*int_handler_t)(struct intregs *);
 
+void idt_init(void);
 void idt_install(void);
 
 void irq_install_handler(int, irq_handler_t, pde_t);

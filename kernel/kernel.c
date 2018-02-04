@@ -258,10 +258,11 @@ void kmain(struct kern_bootinfo *bootinfo)
 
 void kmain_secondary_cores(uint32_t core_id)
 {
+  gdt_install();
+  idt_install();
+
   /* let the BSP know that we've booted properly */
   atomic_inc(&smp_initialized_cores_num);
-
-  gdt_install();
 
   for (;;)
     halt();

@@ -391,14 +391,19 @@ void idt_init(void)
   idt_set_gate(46, irq14, 0x8, 0x8e);
   idt_set_gate(47, irq15, 0x8, 0x8e);
 
-  /* load the IDT into the processor */
-  idt_load(idt, sizeof(idt));
+  idt_install();
 
   for (int i = 0; i < 32; i++)
     if (isr_handlers[i] == 0)
       isr_handlers[i] = screen_of_death;
 
   kprintf("[idt] interrupt vectors were configured\n");
+}
+
+void idt_install(void)
+{
+  /* load the IDT into the processor */
+  idt_load(idt, sizeof(idt));
 }
 
 /*
